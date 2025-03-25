@@ -24,7 +24,7 @@ const App = () => {
             <div id="page-content-wrapper">
               <Menubar  toggleSidebar={toggleSidebar}/>
                 {/* Top navigation--> */}
-                <ToastContainer/>
+                <ToastContainer/> 
                
                 {/* Page content */}
                 <div className="container-fluid">
