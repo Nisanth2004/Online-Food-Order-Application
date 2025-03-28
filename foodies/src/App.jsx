@@ -6,6 +6,9 @@ import ContactUs from './Pages/Contact/Contact'
 import ExploreFood from './Pages/ExploreFood/ExploreFood'
 import FoodDetails from './Pages/FoodDetails/FoodDetails'
 import Cart from './Pages/Cart/Cart'
+import PlaceOrder from './Pages/PlaceOrder/PlaceOrder'
+import Login from './components/Login/Login'
+import Register from './components/Register/Register'
 
 
 const App = () => {
@@ -20,6 +23,9 @@ const App = () => {
           <Route path='/explore' element={<ExploreFood/>}/>
           <Route path='/food/:id' element={<FoodDetails/>}/>
           <Route path='/cart' element={<Cart/>}/>
+          <Route path='/order' element={<PlaceOrder/>}/>
+          <Route path='/login' element={<Login/>}/>
+          <Route path='/register' element={<Register/>}/>
 
 
         </Routes>
