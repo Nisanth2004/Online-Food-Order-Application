@@ -5,6 +5,7 @@ import com.nisanth.foodapi.io.UserRequest;
 import com.nisanth.foodapi.io.UserResponse;
 import com.nisanth.foodapi.repository.UserRepsitory;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
@@ -14,6 +15,7 @@ public class UserServiceImpl implements UserService{
 
 
    private final UserRepsitory userRepsitory;
+    private final PasswordEncoder passwordEncoder;
     @Override
     public UserResponse registerUser(UserRequest userRequest) {
 
@@ -31,7 +33,7 @@ public class UserServiceImpl implements UserService{
     {
        return UserEntity.builder()
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .build();
     }
