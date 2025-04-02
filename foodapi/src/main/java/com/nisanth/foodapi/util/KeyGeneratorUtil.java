@@ -5,7 +5,10 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
 public class KeyGeneratorUtil {
-    public static KeyPair generateKeyPair() {
+
+    private static final KeyPair keyPair = generateKeyPair(); // Generate once and reuse
+
+    private static KeyPair generateKeyPair() {
         try {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
             keyPairGenerator.initialize(256);
@@ -13,5 +16,9 @@ public class KeyGeneratorUtil {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error generating EC key pair", e);
         }
+    }
+
+    public static KeyPair getKeyPair() {
+        return keyPair;
     }
 }

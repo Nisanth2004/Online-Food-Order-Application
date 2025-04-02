@@ -19,7 +19,8 @@ public class JwtUtil {
 
     @Value("${jwt.secret.key}")
     private String SECRET_KEY;
-    private static final KeyPair keyPair = KeyGeneratorUtil.generateKeyPair(); // Generate EC KeyPair
+    private static final KeyPair keyPair = KeyGeneratorUtil.getKeyPair();
+// Generate EC KeyPair
 
 
     public String generateToken(UserDetails userDetails)
@@ -58,13 +59,13 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(keyPair.getPublic())
+        return Jwts.parserBuilder()
+                .setSigningKey(keyPair.getPublic()) // Use public key for verification
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
     }
+
 
     public Boolean isTokenExpired(String token)
     {
