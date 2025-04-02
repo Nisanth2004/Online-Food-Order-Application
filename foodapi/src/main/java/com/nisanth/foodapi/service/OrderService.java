@@ -20,4 +20,10 @@ public interface OrderService {
    // remove the order for the particular user id
   void   removeOrder(String orderId);
 
+  // admin panel-  retrive all orders
+   List<OrderResponse> getOrdersOfAllUsers();
+
+   // update the order status
+   void  updateOrderStatus(String orderId,String status);
+
 }

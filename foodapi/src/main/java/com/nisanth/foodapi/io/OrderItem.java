@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class OrderItem {
 
     private String foodId;
-    private int qunatity;
+    private Integer quantity;
     private double price;
     private String category;
     private String imageUrl;

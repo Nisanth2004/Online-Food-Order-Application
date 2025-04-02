@@ -57,6 +57,7 @@ public class OrderServiceImpl implements OrderService{
        // get the user id
        String loggedInUserId= userService.findByUserId();
        newOrder.setUserId(loggedInUserId);
+       orderRepository.save(newOrder);
       return convertToResponse(newOrder);
     }
 
@@ -91,6 +92,21 @@ public class OrderServiceImpl implements OrderService{
     public void removeOrder(String orderId) {
         orderRepository.deleteById(orderId);
 
+    }
+
+    @Override
+    public List<OrderResponse> getOrdersOfAllUsers() {
+        List<OrderEntity> list=orderRepository.findAll();
+       return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
+
+    }
+
+    @Override
+    public void updateOrderStatus(String orderId, String status) {
+      OrderEntity entity=  orderRepository.findById(orderId)
+                .orElseThrow(()->new RuntimeException("Order Not found"));
+      entity.setOrderStatus(status);
+      orderRepository.save(entity);
     }
 
     private OrderResponse convertToResponse(OrderEntity newOrder) {
