@@ -3,6 +3,7 @@ package com.nisanth.foodapi.service;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
+import com.nisanth.foodapi.repository.CartRepository;
 import com.nisanth.foodapi.repository.OrderRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
@@ -13,12 +14,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 
 public class OrderServiceImpl implements OrderService{
 
     @Autowired
     private  OrderRepository orderRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
     @Autowired
     private  UserService userService;
 
@@ -52,6 +60,39 @@ public class OrderServiceImpl implements OrderService{
       return convertToResponse(newOrder);
     }
 
+    @Override
+    public void verifyPayment(Map<String, String> paymentData, String status) {
+       String razorpayOrderId= paymentData.get("razorpay_order_id");
+
+       // get the respective order id
+       OrderEntity exisitingOrder=orderRepository.findByRazorpayOrderId(razorpayOrderId)
+               .orElseThrow(()->new RuntimeException("Order Not Found"));
+
+       exisitingOrder.setPaymentStatus(status);
+       exisitingOrder.setRazorPaySignature(paymentData.get("razorpay_signature"));
+       exisitingOrder.setRazorpayPaymentId(paymentData.get("razorpay_payment_id"));
+       orderRepository.save(exisitingOrder);
+
+       if("paid".equalsIgnoreCase(status))
+       {
+           cartRepository.deleteByUserId(exisitingOrder.getUserId());
+       }
+
+    }
+
+    @Override
+    public List<OrderResponse> getUserOrders() {
+        String loggedInUserId=userService.findByUserId();
+      List<OrderEntity> list= orderRepository.findByUserId(loggedInUserId);
+      return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
+    }
+
+    @Override
+    public void removeOrder(String orderId) {
+        orderRepository.deleteById(orderId);
+
+    }
+
     private OrderResponse convertToResponse(OrderEntity newOrder) {
        return OrderResponse.builder()
                 .id(newOrder.getId())
@@ -63,6 +104,7 @@ public class OrderServiceImpl implements OrderService{
                 .orderStatus(newOrder.getOrderStatus())
                .email(newOrder.getEmail())
                .phoneNumber(newOrder.getPhoneNumber())
+               .orderedItems(newOrder.getOrderedItems())
                 .build();
 
     }
