@@ -3,7 +3,7 @@ import { StoreContext } from '../../Context/StoreContext'
 import axios from 'axios';
 import { assets } from '../../assets/assets';
 
-const Orders = () => {
+const MyOrders = () => {
 
    const{token}= useContext(StoreContext);
    const[data,setData]=useState([])
@@ -66,4 +66,4 @@ const Orders = () => {
   )
 }
 
-export default Orders
+export default MyOrders

@@ -11,6 +11,7 @@ import Login from './components/Login/Login'
 import Register from './components/Register/Register'
 
 import { ToastContainer } from 'react-toastify';
+import MyOrders from './Pages/MyOrders/MyOrders'
 
 
 const App = () => {
@@ -29,6 +30,7 @@ const App = () => {
           <Route path='/order' element={<PlaceOrder/>}/>
           <Route path='/login' element={<Login/>}/>
           <Route path='/register' element={<Register/>}/>
+          <Route path='/myorders' element={<MyOrders/>}/>
 
 
         </Routes>

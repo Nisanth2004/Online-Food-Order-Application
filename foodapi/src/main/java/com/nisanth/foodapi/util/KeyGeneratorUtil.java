@@ -6,7 +6,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class KeyGeneratorUtil {
 
-    private static final KeyPair keyPair = generateKeyPair(); // Generate once and reuse
+    private static final KeyPair keyPair = generateKeyPair();  // ✅ Call the actual method
 
     private static KeyPair generateKeyPair() {
         try {

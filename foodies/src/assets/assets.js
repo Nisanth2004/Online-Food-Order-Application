@@ -8,11 +8,13 @@ import rolls from './rolls.jpeg'
 import salads from './salads.jpeg'
 import burger from './burger.jpeg'
 import profile from './profile.png'
+import delivery from './delivery.jpeg'
 
 export const assets={
     logo,
     cart,
-    profile
+    profile,
+    delivery
     
 
 }
