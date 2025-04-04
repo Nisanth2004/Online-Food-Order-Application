@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import Menubar from './components/Menubar'
 import {  Route, Routes } from 'react-router-dom'
 import Home from './Pages/Home/Home'
@@ -12,9 +12,12 @@ import Register from './components/Register/Register'
 
 import { ToastContainer } from 'react-toastify';
 import MyOrders from './Pages/MyOrders/MyOrders'
+import { StoreContext } from './Context/StoreContext'
 
 
 const App = () => {
+
+  const {token}=useContext(StoreContext);
   return (
     <div>
        
@@ -27,10 +30,10 @@ const App = () => {
           <Route path='/explore' element={<ExploreFood/>}/>
           <Route path='/food/:id' element={<FoodDetails/>}/>
           <Route path='/cart' element={<Cart/>}/>
-          <Route path='/order' element={<PlaceOrder/>}/>
-          <Route path='/login' element={<Login/>}/>
-          <Route path='/register' element={<Register/>}/>
-          <Route path='/myorders' element={<MyOrders/>}/>
+          <Route path='/order' element={token?<PlaceOrder/>:<Login/>}/>
+          <Route path='/login' element={token?<Home/>:<Login/>}/>
+          <Route path='/register' element={token?<Home/>:<Register/>}/>
+          <Route path='/myorders' element={token?<MyOrders/>:<Login/>}/>
 
 
         </Routes>

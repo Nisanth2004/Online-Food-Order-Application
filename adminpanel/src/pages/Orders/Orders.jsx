@@ -1,27 +1,31 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { StoreContext } from '../../Context/StoreContext'
+import React, {  useEffect, useState } from 'react'
+
 import axios from 'axios';
 import { assets } from '../../assets/assets';
 
 const Orders = () => {
 
-   const{token}= useContext(StoreContext);
-   const[data,setData]=useState([])
+  const[data,setData]=useState([]);
+
+  const fetchOrders=async()=>{
+  const response= await axios.get('http://localhost:8080/api/orders/all');
+  setData(response.data);
 
 
-   const fetchOrders=async ()=>{
-   const response= await axios.get('http://localhost:8080/api/orders',{headers:{'Authorization':`Bearer ${token}`}})
-   setData(response.data);
+  }
 
+  const updateStatus=async(event,orderId)=>{
+   const response= await axios.patch(`http://localhost:8080/api/orders/status/${orderId}?status=${event.target.value}`)
+   if(response.status===200)
+   {
+   await fetchOrders();
    }
 
-   useEffect(()=>{
-    if(token)
-    {
-        fetchOrders()
-    }
+  }
 
-   },[token])
+  useEffect(()=>{
+     fetchOrders()
+  },[ ])
   return (
     <div className='container'>
         <div className="py-5 row justify-content-center">
@@ -33,9 +37,11 @@ const Orders = () => {
                                 return(
                                     <tr key={index}>
                                     <td>
-                                        <img src={assets.delivery} height={48} width={48}/>
+                                        <img src={assets.parcel} height={48} width={48}/>
                                     </td>
-                                    <td>{order.orderedItems.map((item,index)=>{
+                                    <td>
+                                      <div>
+                                      {order.orderedItems.map((item,index)=>{
                                         if(index===order.orderedItems.length-1)
                                         {
                                             return item.name+" x"+item.quantity
@@ -43,14 +49,27 @@ const Orders = () => {
                                         else{
                                             return item.name+" x"+item.quantity+","
                                         }
-                                    })}</td>
+                                    })}
+                                    </div>
+                                    <div>
+                                      {order.userAddress}
+                                    </div>
+                                    
+                                    
+                  
+                                    </td>
                                     <td>&#x20B9;{order.amount.toFixed(2)}</td>
                                     <td>Items: {order.orderedItems.length}</td>
-                                    <td className='fw-bold text-capitalize'>&#x25cf;{order.orderStatus}</td>
+
                                     <td>
-                                        <button className='btn btn-sm btn-warning'onClick={fetchOrders}>
-                                            <i className='bi bi-arrow-clockwise'></i>
-                                        </button>
+                                        <select  className="form-control" onChange={(event)=>updateStatus(event,order.id)} value={order.orderStatus}>
+
+                                          <option value="In Kitchen">In Kitchen</option>
+
+                                          <option value="Out For Delivery">Out For Delivery</option>
+
+                                          <option value="Delivered">Delivered</option>
+                                        </select>
                                     </td>
 
                                     </tr>

@@ -47,15 +47,15 @@ const logout=()=>{
     <div className="d-flex align-items-center gap-4">
         <Link to={'/cart'}>
         <div className="position relative">
-            <img src={assets.cart} alt='' height={32} width={32} className='position-relative'/>
+            <img src={assets.cart} alt='' height={30} width={30} className='position-relative'/>
             <span className='position absolute top 0 start-100 translate-middle badge rounded-pill bg-warning'>{uniqueItemsInCart}</span>
         </div>
         </Link>
 
         {
            !token?(<>
-           <button className='btn btn-outline-primary' onClick={()=>navigate('/login')}>Login</button>
-           <button className='btn btn-outline-success' onClick={()=>navigate('/register')}>Register</button>
+           <button className='btn btn-outline-primary btn-sm' onClick={()=>navigate('/login')}>Login</button>
+           <button className='btn btn-outline-success btn-sm' onClick={()=>navigate('/register')}>Register</button>
            </>):(
            <div className='dropdown text-end'>
             <a href='' className='d-block link-body-emphasis text-decoration-none dropdown-toggle' data-bs-toggle="dropdown" aria-expanded="false">
