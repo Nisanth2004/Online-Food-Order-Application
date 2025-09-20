@@ -79,13 +79,16 @@ const AddFood = () => {
                 <label htmlFor="category" className="form-label">Category</label>
                 <select name="category" id="category" className="form-control" onChange={onChangeHandler} value={data.category}>
                   <option value="Biriyani">Biriyani</option>
-                  <option value="Cake">Cake</option>
+                  <option value="Cakes">Cakes</option>
                   <option value="Pizza">Pizza</option>
                   <option value="Burger">Burger</option>
                   <option value="Rolls">Rolls</option>
                   <option value="Salad">Salad</option>
-                  <option value="Icecream">Icecream</option>
-                  <option value="Chicken Wings">Chicken Wings</option>
+                  <option value="Ice Creams">Ice Creams</option>
+                  <option value="Mutton">Mutton</option>
+                  <option value="Popcorn">Popcorn</option>
+                  <option value="South Indian">South Indian</option>
+                  <option value="North Indian">North Indian</option>
                 </select>
               </div>
 

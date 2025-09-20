@@ -60,7 +60,7 @@ const PlaceOrder = () => {
     };
 
     try {
-    const response=await  axios.post("http://localhost:8080/api/orders/create",orderData,{headers:{'Authorization':`Bearer ${token}`}})
+    const response=await  axios.post("https://foodapi-latest-new1.onrender.com/api/orders/create",orderData,{headers:{'Authorization':`Bearer ${token}`}})
       
     if(response.status===201 && response.data.razorpayOrderId)
     {
@@ -68,9 +68,11 @@ const PlaceOrder = () => {
       initiateRazorpayPayment(response.data);
     }
     else{
+      console.error(error.response?.data || error.message);
       toast.error("Unable to place order.Please try again..")
     }
     } catch (error) {
+      console.error(error.response?.data || error.message);
       toast.error("Unable to place order.Please try again..");
       
     }
@@ -126,7 +128,7 @@ const PlaceOrder = () => {
     };
 
   try {
-    const response= await axios.post("http://localhost:8080/api/orders/verify",paymentData,{headers:{'Authorization':`Bearer ${token}`}})
+    const response= await axios.post("https://foodapi-latest-new1.onrender.com/api/orders/verify",paymentData,{headers:{'Authorization':`Bearer ${token}`}})
   if(response.status===200)
   {
     toast.success("Payment Sucessful.")
@@ -147,7 +149,7 @@ const PlaceOrder = () => {
 
   const deleteOrder=async(orderId)=>{
     try {
-     await axios.delete("http://localhost:8080/api/orders/"+orderId,{headers:{'Authorization':`Bearer ${token}`}})
+     await axios.delete("https://foodapi-latest-new1.onrender.com/api/orders/"+orderId,{headers:{'Authorization':`Bearer ${token}`}})
       
     } catch (error) {
       toast.error('Something went wrong,Conatct Support');
@@ -158,7 +160,7 @@ const PlaceOrder = () => {
 
   const clearCart=async ()=>{
     try {
-      await axios.delete("http://localhost:8080/api/cart",{headers:{'Authorization':`Bearer ${token}`}})
+      await axios.delete("https://foodapi-latest-new1.onrender.com/api/cart",{headers:{'Authorization':`Bearer ${token}`}})
       setQuantities({});
       
     } catch (error) {

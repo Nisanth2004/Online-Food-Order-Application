@@ -11,7 +11,7 @@ const MyOrders = () => {
 
 
    const fetchOrders=async ()=>{
-   const response= await axios.get('http://localhost:8080/api/orders',{headers:{'Authorization':`Bearer ${token}`}})
+   const response= await axios.get('https://foodapi-latest-new1.onrender.com/api/orders',{headers:{'Authorization':`Bearer ${token}`}})
    setData(response.data);
 
    }

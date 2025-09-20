@@ -19,7 +19,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="foodapi" target="19" />
+      <module name="foodapi" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
