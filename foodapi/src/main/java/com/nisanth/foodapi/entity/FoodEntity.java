@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 @Document(collection = "foods") // collection name
 @Data
@@ -22,5 +21,8 @@ public class FoodEntity {
     private double price;
     private String category;
     private String imageUrl;
+    private boolean sponsored;
+    private boolean featured;
+
 
 }

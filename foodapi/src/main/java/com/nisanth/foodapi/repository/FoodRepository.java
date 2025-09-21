@@ -10,4 +10,5 @@ import java.util.List;
 public interface FoodRepository extends MongoRepository<FoodEntity,String> {
     long countByCategory(String category);
     List<FoodEntity> findByCategory(String category);
+    List<FoodEntity> findAllByOrderBySponsoredDescFeaturedDesc();
 }

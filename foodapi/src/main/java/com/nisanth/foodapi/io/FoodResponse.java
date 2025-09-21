@@ -17,4 +17,7 @@ public class FoodResponse {
     private String imageUrl;
     private double price;
     private String category;
+    private boolean sponsored;
+    private boolean featured;
+
 }

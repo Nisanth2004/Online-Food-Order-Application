@@ -5,7 +5,17 @@ import FoodItem from "../FoodItem/FoodItem";
 const FoodDisplay = ({ category, searchText }) => {
   const { foodList } = useContext(StoreContext);
 
-  const filteredFoods = foodList.filter(
+  // Sort first by sponsored, then featured, then others
+  const sortedFoods = [...foodList].sort((a, b) => {
+    if (a.sponsored && !b.sponsored) return -1;
+    if (!a.sponsored && b.sponsored) return 1;
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return 0; // keep original order otherwise
+  });
+
+  // Filter by category and search text
+  const filteredFoods = sortedFoods.filter(
     (food) =>
       (category === "All" || food.category === category) &&
       food.name.toLowerCase().includes(searchText.toLowerCase())

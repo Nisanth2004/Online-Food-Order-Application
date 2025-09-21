@@ -82,19 +82,19 @@ public class FoodServiceImpl implements FoodService{
      return convertToResponse(newFoodEntity);
     }
 
-    @Override
+    // Get all foods (Sponsored -> Featured -> Normal)
     public List<FoodResponse> readFoods() {
-       List<FoodEntity> databaseEntries= foodRepository.findAll();
-     return  databaseEntries.stream().map(object->convertToResponse(object)).collect(Collectors.toList());
-
+        return foodRepository.findAllByOrderBySponsoredDescFeaturedDesc()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    @Override
+    // Get single food by ID
     public FoodResponse readFood(String id) {
-       FoodEntity existingFood= foodRepository.findById(id)
-               .orElseThrow(()->new RuntimeException("Food not found with this id : "+id));
-       return convertToResponse(existingFood);
-
+        FoodEntity food = foodRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
+        return convertToResponse(food);
     }
 
     @Override
@@ -144,20 +144,20 @@ public class FoodServiceImpl implements FoodService{
                 .price(request.getPrice())
                 .description(request.getDescription())
                 .category(request.getCategory())
-                .build();
+                .sponsored(request.isSponsored()).featured(request.isFeatured()).build();
     }
 
 
     // convert to resposne object
     public FoodResponse convertToResponse(FoodEntity entity)
     {
-      return  FoodResponse.builder()
-                 .id(entity.getId())
-                .name(entity.getName())
-                .price(entity.getPrice())
-                .description(entity.getDescription())
-                .category(entity.getCategory())
-                .imageUrl(entity.getImageUrl())
-                .build();
+      return FoodResponse.builder()
+              .id(entity.getId())
+              .name(entity.getName())
+              .price(entity.getPrice())
+              .description(entity.getDescription())
+              .category(entity.getCategory())
+              .imageUrl(entity.getImageUrl())
+              .sponsored(entity.isSponsored()).featured(entity.isFeatured()).build();
     }
 }
