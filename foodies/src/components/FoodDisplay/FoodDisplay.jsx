@@ -1,42 +1,38 @@
-import React, { useContext } from 'react';
-import { StoreContext } from '../../Context/StoreContext';
-import FoodItem from '../FoodItem/FoodItem';
+import React, { useContext } from "react";
+import { StoreContext } from "../../Context/StoreContext";
+import FoodItem from "../FoodItem/FoodItem";
 
-const FoodDisplay = ({category,searchText}) => {
-   const { foodList } = useContext(StoreContext);
-   
+const FoodDisplay = ({ category, searchText }) => {
+  const { foodList } = useContext(StoreContext);
 
-   // filter based on category
- const  filteredFoods=  foodList.filter(food=>(
-    (category==='All' || food.category === category) && 
-    food.name.toLowerCase().includes(searchText.toLowerCase())
-   ))
+  const filteredFoods = foodList.filter(
+    (food) =>
+      (category === "All" || food.category === category) &&
+      food.name.toLowerCase().includes(searchText.toLowerCase())
+  );
 
-   return (
-    <div className='container'>
-        <div className="row">
-            {filteredFoods.length > 0 ? (
-                filteredFoods.map((food,index)=>(
-           <FoodItem 
-                   key={index}
-                   name={food.name}
-                   description={food.description}
-                   id={food.id}
-                   price={food.price}
-                   imageUrl={food.imageUrl}
+  return (
+    <div className="container">
+      <div className="row">
+        {filteredFoods.length > 0 ? (
+          filteredFoods.map((food, index) => (
+            <FoodItem
+              key={index}
+              id={food.id}
+              name={food.name}
+              description={food.description}
+              price={food.price}
+              imageUrl={food.imageUrl}
             />
-                ))
-               
-            ) : (
-                <div className='text-center mt-4'>
-                <h4>No foods found</h4>
-            </div>
-               
-                
-            )}
-        </div>
+          ))
+        ) : (
+          <div className="text-center mt-4">
+            <h4>No foods found</h4>
+          </div>
+        )}
+      </div>
     </div>
-   );
-}
+  );
+};
 
 export default FoodDisplay;

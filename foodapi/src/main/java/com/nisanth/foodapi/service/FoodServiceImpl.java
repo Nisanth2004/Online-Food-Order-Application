@@ -124,6 +124,16 @@ public class FoodServiceImpl implements FoodService{
        }
 
     }
+    public List<String> getCategories() {
+        return foodRepository.findAll().stream()
+                .map(FoodEntity::getCategory)
+                .filter(cat -> cat != null && !cat.isBlank())
+                .map(String::trim)
+                .map(String::toLowerCase) // normalize case
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
 
 
     // convert to entity

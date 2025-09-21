@@ -1,7 +1,8 @@
 import axios from "axios";
 
 
-const API_URL="https://foodapi-latest-new1.onrender.com/api/foods"
+//const API_URL="https://foodapi-latest-new1.onrender.com/api/foods"
+const API_URL="http://localhost:8080/api/foods"
 export const addFood=async(foodData,image)=>{
 
     // Create FormData and send values

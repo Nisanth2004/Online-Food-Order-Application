@@ -60,7 +60,7 @@ const PlaceOrder = () => {
     };
 
     try {
-    const response=await  axios.post("https://foodapi-latest-new1.onrender.com/api/orders/create",orderData,{headers:{'Authorization':`Bearer ${token}`}})
+    const response=await  axios.post("http://localhost:8080/api/orders/create",orderData,{headers:{'Authorization':`Bearer ${token}`}})
       
     if(response.status===201 && response.data.razorpayOrderId)
     {
@@ -128,7 +128,7 @@ const PlaceOrder = () => {
     };
 
   try {
-    const response= await axios.post("https://foodapi-latest-new1.onrender.com/api/orders/verify",paymentData,{headers:{'Authorization':`Bearer ${token}`}})
+    const response= await axios.post("http://localhost:8080/api/orders/verify",paymentData,{headers:{'Authorization':`Bearer ${token}`}})
   if(response.status===200)
   {
     toast.success("Payment Sucessful.")
@@ -149,7 +149,7 @@ const PlaceOrder = () => {
 
   const deleteOrder=async(orderId)=>{
     try {
-     await axios.delete("https://foodapi-latest-new1.onrender.com/api/orders/"+orderId,{headers:{'Authorization':`Bearer ${token}`}})
+     await axios.delete("http://localhost:8080/api/orders/"+orderId,{headers:{'Authorization':`Bearer ${token}`}})
       
     } catch (error) {
       toast.error('Something went wrong,Conatct Support');
@@ -160,7 +160,7 @@ const PlaceOrder = () => {
 
   const clearCart=async ()=>{
     try {
-      await axios.delete("https://foodapi-latest-new1.onrender.com/api/cart",{headers:{'Authorization':`Bearer ${token}`}})
+      await axios.delete("http://localhost:8080/api/cart",{headers:{'Authorization':`Bearer ${token}`}})
       setQuantities({});
       
     } catch (error) {
@@ -280,9 +280,46 @@ const PlaceOrder = () => {
                name="city" onChange={onChangeHandler} value={data.city}
               >City</label>
               <select className="form-select" id="city" required>
-                <option value="">Choose...</option>
-                <option>Coimbatore</option>
-              </select>
+    <option value="">Choose...</option>
+    <option value="Ariyalur">Ariyalur</option>
+    <option value="Chengalpattu">Chengalpattu</option>
+    <option value="Chennai">Chennai</option>
+    <option value="Coimbatore">Coimbatore</option>
+    <option value="Cuddalore">Cuddalore</option>
+    <option value="Dharmapuri">Dharmapuri</option>
+    <option value="Dindigul">Dindigul</option>
+    <option value="Erode">Erode</option>
+    <option value="Kallakurichi">Kallakurichi</option>
+    <option value="Kancheepuram">Kancheepuram</option>
+    <option value="Kanniyakumari">Kanniyakumari</option>
+    <option value="Karur">Karur</option>
+    <option value="Krishnagiri">Krishnagiri</option>
+    <option value="Madurai">Madurai</option>
+    <option value="Mayiladuthurai">Mayiladuthurai</option>
+    <option value="Nagapattinam">Nagapattinam</option>
+    <option value="Namakkal">Namakkal</option>
+    <option value="Nilgiris">Nilgiris</option>
+    <option value="Perambalur">Perambalur</option>
+    <option value="Pudukkottai">Pudukkottai</option>
+    <option value="Ramanathapuram">Ramanathapuram</option>
+    <option value="Ranipet">Ranipet</option>
+    <option value="Salem">Salem</option>
+    <option value="Sivaganga">Sivaganga</option>
+    <option value="Tenkasi">Tenkasi</option>
+    <option value="Thanjavur">Thanjavur</option>
+    <option value="Theni">Theni</option>
+    <option value="Thoothukudi">Thoothukudi</option>
+    <option value="Tiruchirappalli">Tiruchirappalli</option>
+    <option value="Tirunelveli">Tirunelveli</option>
+    <option value="Tirupattur">Tirupattur</option>
+    <option value="Tiruppur">Tiruppur</option>
+    <option value="Tiruvallur">Tiruvallur</option>
+    <option value="Tiruvannamalai">Tiruvannamalai</option>
+    <option value="Tiruvarur">Tiruvarur</option>
+    <option value="Vellore">Vellore</option>
+    <option value="Viluppuram">Viluppuram</option>
+    <option value="Virudhunagar">Virudhunagar</option>
+  </select>
              
             </div>
 

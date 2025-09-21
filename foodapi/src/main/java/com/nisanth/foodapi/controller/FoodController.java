@@ -74,6 +74,10 @@ public class FoodController {
     {
         foodService.deleteFood(id);
     }
+    @GetMapping("/categories")
+    public List<String> getCategories() {
+        return foodService.getCategories();
+    }
 
 
 }

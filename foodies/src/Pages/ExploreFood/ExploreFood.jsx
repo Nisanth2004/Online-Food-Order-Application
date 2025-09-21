@@ -1,48 +1,69 @@
-import React, { useState } from 'react'
-import FoodDisplay from '../../components/FoodDisplay/FoodDisplay'
+import React, { useState, useEffect } from "react";
+import FoodDisplay from "../../components/FoodDisplay/FoodDisplay";
+import { fetchCategories } from "../../service/CategoryService";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ExploreFood = () => {
+  const [category, setCategory] = useState("All");
+  const [searchText, setSearchText] = useState("");
+  const [categories, setCategories] = useState([]);
 
-  const[category,setCategory]=useState('All')
-  const [searchText,setSearchText]=useState('')
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await fetchCategories();
+        const categoryNames = res.data.map((cat) => cat.name);
+        setCategories(["All", ...categoryNames]);
+      } catch (err) {
+        toast.error("Failed to fetch categories");
+      }
+    };
+    loadCategories();
+  }, []);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+  };
+
   return (
-
-    <>
-    <div className='container'>
-       <div className="row justify-content-center">
-        <div className="col-md-6">
-          <form action={(e)=>e.preventDefault()}>
-            <div className="input-group mb-3">
-              <select className='form-select mt-2' style={{'maxWidth':'150px '}}
-              onChange={(e)=>setCategory(e.target.value)}
+    <div className="container mt-5">
+      <div className="row justify-content-center mb-4">
+        <div className="col-md-8 col-lg-6">
+          <form onSubmit={handleSearchSubmit}>
+            <div className="input-group shadow-sm p-2 rounded">
+              <select
+                className="form-select"
+                style={{ maxWidth: "120px" }}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
               >
- <option value="All">All</option>
-                <option value="Biriyani">Biriyani</option>
-                <option value="Burger">Burger</option>
-                <option value="Cakes">Cakes</option>
-                <option value="Ice Creams">Ice Creams</option>
-                <option value="Pizza">Pizza</option>
-                <option value="Rolls">Rolls</option>
-                <option value="Salad">Salad</option>
+                {categories.map((cat, index) => (
+                  <option key={index} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
-              <input type='text' className='form-control mt-2' placeholder='Search your favourite dish...'
-              onChange={(e)=>setSearchText(e.target.value)} value={searchText}
-              ></input>
-              <button className='btn btn-primary mt-2' type='submit'>
-                <i className='bi bi-search'></i>
+
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search your favourite dish..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+
+              <button className="btn btn-primary" type="submit">
+                <i className="bi bi-search"></i>
               </button>
             </div>
-
-
           </form>
         </div>
-       </div>
-      
+      </div>
+
+      <FoodDisplay category={category} searchText={searchText} />
     </div>
-<FoodDisplay category={category} searchText={searchText}/> 
+  );
+};
 
-    </>
-  )
-}
-
-export default ExploreFood
+export default ExploreFood;

@@ -21,4 +21,6 @@ public interface FoodService {
  boolean deleteFile(String filename);
 
  void deleteFood(String id);
+
+    List<String> getCategories();
 }

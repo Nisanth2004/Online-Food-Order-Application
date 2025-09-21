@@ -1,42 +1,63 @@
-.explore-menu-list::-webkit-scrollbar{
-    display: none;
+/* Hide scrollbar but keep scroll functionality */
+.explore-menu-list::-webkit-scrollbar {
+  display: none;
 }
 
-.explore-menu-list{
-    scrollbar-width: none;
+.explore-menu-list {
+  scrollbar-width: none;
+  padding: 10px 0;
 }
 
-.explore-menu-list-item img{
-    cursor: pointer;
-}
-.explore-menu-list-item .active{
-    border:5px solid tomato;
-    padding: 2px;
+.explore-menu-list-item {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
 }
 
-.explore-menu-list-item p{
-    color:  #747474;
-    cursor:pointer  ;
+.explore-menu-list-item:hover {
+  transform: translateY(-3px);
 }
-.scroll-icon{
-    font-size: 24px;
-    cursor: pointer;
-    margin-left: 10px;
-    color: #747474;
-    transition: color 0.2s;
+
+/* Category pill design */
+.category-box {
+  border: 2px solid transparent;
+  border-radius: 20px;
+  padding: 8px 18px;
+  background: #f8f9fa;
+  display: inline-block;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
+
+.category-box p {
+  margin: 0;
+  color: #555;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Active category */
+.category-box.active {
+  border: 2px solid tomato;
+  background: #fff5f2;
+  box-shadow: 0 4px 10px rgba(255, 99, 71, 0.2);
+}
+
+/* Scroll icons */
+.scroll-icon {
+  font-size: 26px;
+  cursor: pointer;
+  margin-left: 12px;
+  color: #888;
+  transition: color 0.2s;
+}
+
 .scroll-icon:hover {
-    color: tomato;
+  color: tomato;
 }
 
-.explore-menu hr
-{
-    margin:10px 0px;
-    height: 2px;
-    background-color: #e2e2e2;
-    border: none;
-}
-.explore-menu-list-item .active{
-    border:4px solid tomato;
-     
+.explore-menu hr {
+  margin: 12px 0;
+  height: 2px;
+  background-color: #e2e2e2;
+  border: none;
 }
