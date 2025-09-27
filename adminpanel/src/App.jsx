@@ -5,7 +5,7 @@ import ListFood from './pages/ListFood/ListFood'
 import Orders from './pages/Orders/Orders'
 import Sidebar from './components/Sidebar/Sidebar'
 import Menubar from './components/Menubar/Menubar'
-
+import AdminReview from './components/Reviews/AdminReview';
 import { ToastContainer } from 'react-toastify';
 const App = () => {
 
@@ -36,6 +36,8 @@ const App = () => {
                       <Route path='/list' element={<ListFood/>}/>
 
                       <Route path='/orders' element={<Orders/>}/>
+
+                      <Route path="/reviews" element={<AdminReview />} />
                     </Routes>
                 </div>
             </div>

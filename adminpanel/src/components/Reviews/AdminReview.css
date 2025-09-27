@@ -1,0 +1,23 @@
+.admin-reviews .card {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rating-badge {
+  display:inline-block;
+  padding: 6px 10px;
+  background: linear-gradient(90deg, #ffd54a, #ffc107);
+  color: #222;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.comment-cell {
+  max-width: 420px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+}

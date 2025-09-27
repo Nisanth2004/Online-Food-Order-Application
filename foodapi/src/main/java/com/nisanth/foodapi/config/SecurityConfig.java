@@ -50,6 +50,7 @@ public class SecurityConfig {
                                         "/api/foods/**",
                                         "api/categories/**",
                                         "/api/orders/all",
+                                        "api/admin/**",
                                         "/api/orders/status/**")
                                 .permitAll()
                                 .anyRequest().authenticated()

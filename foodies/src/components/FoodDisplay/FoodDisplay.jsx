@@ -35,6 +35,8 @@ const FoodDisplay = ({ category, searchText }) => {
   imageUrl={food.imageUrl}
   sponsored={food.sponsored}
   featured={food.featured}
+  averageRating={food.averageRating}
+  reviewCount={food.reviewCount}
 />
 
           ))

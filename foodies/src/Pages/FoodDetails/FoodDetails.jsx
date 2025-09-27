@@ -39,31 +39,30 @@ setReviews(Array.isArray(res.data) ? res.data : []);
   };
 
   const handleReviewSubmit = async (e) => {
-    e.preventDefault();
-    if (newReview.rating === 0 || !newReview.comment.trim()) {
-      toast.warning("Please add a rating and comment");
-      return;
-    }
+  e.preventDefault();
+  if (newReview.rating === 0 || !newReview.comment.trim()) {
+    toast.warning("Please add a rating and comment");
+    return;
+  }
 
-    const reviewObj = {
-      id: Date.now(),
+  try {
+    // Send review WITHOUT verifiedPurchase
+    const res = await axios.post(`/api/foods/${id}/reviews`, {
       rating: newReview.rating,
       comment: newReview.comment,
-      user:user|| "Anonymous User",
-      createdAt: new Date().toISOString(),
-      verifiedPurchase: true, // ✅ assume added after buying
-    };
+      user: user || "Anonymous User",
+    });
 
-    setReviews([reviewObj, ...reviews]);
+    // backend should return the saved review (with verifiedPurchase value)
+    setReviews([res.data, ...reviews]);
     setNewReview({ rating: 0, comment: "" });
 
-    try {
-      await axios.post(`/api/foods/${id}/reviews`, reviewObj);
-      toast.success("Review submitted successfully!");
-    } catch (error) {
-      toast.error("Error saving review");
-    }
-  };
+    toast.success("Review submitted successfully!");
+  } catch (error) {
+    toast.error("Error saving review");
+  }
+};
+
 
   const renderStars = (rating) => {
   return [...Array(5)].map((_, i) => (

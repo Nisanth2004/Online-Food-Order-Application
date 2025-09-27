@@ -1,9 +1,12 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { StoreContext } from "../../Context/StoreContext";
+import { renderStars } from "../../util/renderStars.jsx"; 
 
-const FoodItem = ({ name, description, id, imageUrl, price, sponsored, featured }) => {
+const FoodItem = ({ name, description, id, imageUrl, price, sponsored, featured,averageRating, reviewCount}) => {
   const { increaseQty, decreaseQty, quantities } = useContext(StoreContext);
+// helper function
+
 
   return (
     <div className="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center">
@@ -26,14 +29,13 @@ const FoodItem = ({ name, description, id, imageUrl, price, sponsored, featured 
 
           <div className="d-flex justify-content-between align-items-center">
             <span className="h5 mb-0">&#8377;{price}</span>
-            <div>
-              <i className="bi bi-star-fill text-warning"></i>
-              <i className="bi bi-star-fill text-warning"></i>
-              <i className="bi bi-star-fill text-warning"></i>
-              <i className="bi bi-star-fill text-warning"></i>
-              <i className="bi bi-star-half text-warning"></i>
-              <small className="text-muted">(4.5)</small>
-            </div>
+            <div className="d-flex align-items-center gap-1">
+          {renderStars(averageRating, 20)} 
+          <small className="text-muted ms-1">
+            ({averageRating.toFixed(1)} / {reviewCount})
+          </small>
+        </div>
+
           </div>
         </div>
 

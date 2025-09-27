@@ -1,9 +1,11 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.FoodEntity;
+import com.nisanth.foodapi.entity.ReviewEntity;
 import com.nisanth.foodapi.io.FoodRequest;
 import com.nisanth.foodapi.io.FoodResponse;
 import com.nisanth.foodapi.repository.FoodRepository;
+import com.nisanth.foodapi.repository.ReviewRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,9 @@ public class FoodServiceImpl implements FoodService{
 
     @Autowired
     private  FoodRepository foodRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @Value("${aws.s3.bucketname}")
     private String bucketName;
@@ -149,15 +154,30 @@ public class FoodServiceImpl implements FoodService{
 
 
     // convert to resposne object
-    public FoodResponse convertToResponse(FoodEntity entity)
-    {
-      return FoodResponse.builder()
-              .id(entity.getId())
-              .name(entity.getName())
-              .price(entity.getPrice())
-              .description(entity.getDescription())
-              .category(entity.getCategory())
-              .imageUrl(entity.getImageUrl())
-              .sponsored(entity.isSponsored()).featured(entity.isFeatured()).build();
+    public FoodResponse convertToResponse(FoodEntity food) {
+        FoodResponse res = new FoodResponse();
+        res.setId(food.getId());
+        res.setName(food.getName());
+        res.setDescription(food.getDescription());
+        res.setImageUrl(food.getImageUrl());
+        res.setPrice(food.getPrice());
+        res.setSponsored(food.isSponsored());
+        res.setFeatured(food.isFeatured());
+
+        List<ReviewEntity> reviews = reviewRepository.findByFoodId(food.getId());
+        if (!reviews.isEmpty()) {
+            double avg = reviews.stream()
+                    .mapToInt(ReviewEntity::getRating)
+                    .average()
+                    .orElse(0.0);
+            res.setAverageRating(avg);
+            res.setReviewCount(reviews.size());
+        } else {
+            res.setAverageRating(0.0);
+            res.setReviewCount(0);
+        }
+
+        return res;
     }
+
 }

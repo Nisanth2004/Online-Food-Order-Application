@@ -19,5 +19,8 @@ public class FoodResponse {
     private String category;
     private boolean sponsored;
     private boolean featured;
+    private double averageRating;
+    private int reviewCount;
+
 
 }
