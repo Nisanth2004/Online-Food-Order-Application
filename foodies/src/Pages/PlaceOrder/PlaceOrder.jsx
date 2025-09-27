@@ -176,7 +176,7 @@ const PlaceOrder = () => {
 
 
  <div className="py-5 text-center">
-      <img className="d-block mx-auto" src={assets.logo} alt="" width="98" height="98"/>
+      <img className="d-block mx-auto" src={assets.main_logo} alt="" width="188" height="168"/>
      
       
     </div>

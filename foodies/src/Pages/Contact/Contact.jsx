@@ -58,12 +58,21 @@ const Contact = () => {
                       required
                     />
                   </div>
-                  <div className="col-12">
+                  <div className="col-md-6">
                     <input
                       type="email"
                       name="email"
                       className="form-control custom-input"
                       placeholder="Email Address"
+                      required
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                      type="tel"
+                      name="phone"
+                      className="form-control custom-input"
+                      placeholder="Phone Number"
                       required
                     />
                   </div>

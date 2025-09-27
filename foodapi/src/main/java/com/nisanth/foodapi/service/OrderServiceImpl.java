@@ -121,6 +121,9 @@ public class OrderServiceImpl implements OrderService{
                .email(newOrder.getEmail())
                .phoneNumber(newOrder.getPhoneNumber())
                .orderedItems(newOrder.getOrderedItems())
+               .createdDate(newOrder.getCreatedDate() != null
+                       ? newOrder.getCreatedDate().toString()
+                       : null) //
                 .build();
 
     }

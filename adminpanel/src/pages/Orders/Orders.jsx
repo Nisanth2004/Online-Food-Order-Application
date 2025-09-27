@@ -1,88 +1,190 @@
-import React, {  useEffect, useState } from 'react'
-
-import axios from 'axios';
-import { assets } from '../../assets/assets';
+import React, { useEffect, useState, useMemo } from "react";
+import axios from "axios";
+import { assets } from "../../assets/assets";
 
 const Orders = () => {
+  const [data, setData] = useState([]);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
-  const[data,setData]=useState([]);
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/api/orders/all");
+      // assume backend returns in ascending order, so reverse to show latest first
+      setData(response.data.reverse());
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
+  };
 
-  const fetchOrders=async()=>{
-  const response= await axios.get('http://localhost:8080/api/orders/all');
-  setData(response.data);
+  const updateStatus = async (event, orderId) => {
+    try {
+      const response = await axios.patch(
+        `http://localhost:8080/api/orders/status/${orderId}?status=${event.target.value}`
+      );
+      if (response.status === 200) {
+        await fetchOrders();
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
 
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-  }
+  // ✅ Memoized filtered data
+  const filteredOrders = useMemo(() => {
+    return data
+      .filter((order) => {
+        // filter by status
+        if (statusFilter !== "All" && order.orderStatus !== statusFilter) {
+          return false;
+        }
 
-  const updateStatus=async(event,orderId)=>{
-   const response= await axios.patch(`http://localhost:8080/api/orders/status/${orderId}?status=${event.target.value}`)
-   if(response.status===200)
-   {
-   await fetchOrders();
-   }
+        // filter by price range
+        if (minPrice && order.amount < parseFloat(minPrice)) return false;
+        if (maxPrice && order.amount > parseFloat(maxPrice)) return false;
 
-  }
+        // search by name, address, pincode, etc.
+        const term = searchTerm.toLowerCase();
+        if (term) {
+          const matchText = `
+            ${order.userAddress || ""}
+            ${order.orderedItems.map((i) => i.name).join(",")}
+            ${order.id || ""}
+            ${order.amount}
+          `.toLowerCase();
+          return matchText.includes(term);
+        }
 
-  useEffect(()=>{
-     fetchOrders()
-  },[ ])
+        return true;
+      })
+      .sort((a, b) => {
+        // keep latest orders on top (assuming backend gives createdDate field)
+        if (a.createdDate && b.createdDate) {
+          return new Date(b.createdDate) - new Date(a.createdDate);
+        }
+        return 0;
+      });
+  }, [data, statusFilter, searchTerm, minPrice, maxPrice]);
+
   return (
-    <div className='container'>
-        <div className="py-5 row justify-content-center">
-            <div className="col-11 card">
-                <table className='table table-responsive'>
-                    <tbody>
-                        {
-                            data.map((order,index)=>{
-                                return(
-                                    <tr key={index}>
-                                    <td>
-                                        <img src={assets.parcel} height={48} width={48}/>
-                                    </td>
-                                    <td>
-                                      <div>
-                                      {order.orderedItems.map((item,index)=>{
-                                        if(index===order.orderedItems.length-1)
-                                        {
-                                            return item.name+" x"+item.quantity
-                                        }
-                                        else{
-                                            return item.name+" x"+item.quantity+","
-                                        }
-                                    })}
-                                    </div>
-                                    <div>
-                                      {order.userAddress}
-                                    </div>
-                                    
-                                    
-                  
-                                    </td>
-                                    <td>&#x20B9;{order.amount.toFixed(2)}</td>
-                                    <td>Items: {order.orderedItems.length}</td>
-
-                                    <td>
-                                        <select  className="form-control" onChange={(event)=>updateStatus(event,order.id)} value={order.orderStatus}>
-
-                                          <option value="In Kitchen">In Kitchen</option>
-
-                                          <option value="Out For Delivery">Out For Delivery</option>
-
-                                          <option value="Delivered">Delivered</option>
-                                        </select>
-                                    </td>
-
-                                    </tr>
-                                )
-                            })
-                        }
-                    </tbody>
-                </table>
-            </div>
+    <div className="container">
+      {/* Filters Section */}
+      <div className="row mt-4 mb-3">
+        <div className="col-md-2">
+          <select
+            className="form-control"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="All">All Orders</option>
+            <option value="In Kitchen">In Kitchen</option>
+            <option value="Out For Delivery">Out For Delivery</option>
+            <option value="Delivered">Delivered</option>
+          </select>
         </div>
-      
-    </div>
-  )
-}
 
-export default Orders
+        <div className="col-md-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by name, pincode..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-2">
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Min Price"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-2">
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Max Price"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+          />
+        </div>
+
+        <div className="col-md-2">
+          <button
+            className="btn btn-secondary w-100"
+            onClick={() => {
+              setStatusFilter("All");
+              setSearchTerm("");
+              setMinPrice("");
+              setMaxPrice("");
+            }}
+          >
+            Reset Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Orders Table */}
+      <div className="py-4 row justify-content-center">
+        <div className="col-11 card">
+          <table className="table table-responsive">
+            <tbody>
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order, index) => (
+                  <tr key={index}>
+                    <td>
+                      <img src={assets.parcel} height={48} width={48} alt="" />
+                    </td>
+                    <td>
+                      <div>
+                        {order.orderedItems.map((item, idx) => {
+                          if (idx === order.orderedItems.length - 1) {
+                            return item.name + " x" + item.quantity;
+                          } else {
+                            return item.name + " x" + item.quantity + ", ";
+                          }
+                        })}
+                      </div>
+                      <div>{order.userAddress}</div>
+                    </td>
+                    <td>&#x20B9;{order.amount.toFixed(2)}</td>
+                    <td>Items: {order.orderedItems.length}</td>
+                    <td>
+                      <select
+                        className="form-control"
+                        onChange={(event) => updateStatus(event, order.id)}
+                        value={order.orderStatus}
+                      >
+                        <option value="In Kitchen">In Kitchen</option>
+                        <option value="Out For Delivery">Out For Delivery</option>
+                        <option value="Delivered">Delivered</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="text-center">
+                    No orders found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Orders;

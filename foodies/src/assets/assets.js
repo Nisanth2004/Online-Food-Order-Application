@@ -1,5 +1,7 @@
 import logo from './logo.png'
-import logo4 from './logo4.jpg'
+import main_logo from './main_logo.jpeg'
+import second_logo from './second_logo.jpeg'
+import second_logo1 from './second_logo.png'
 import logo5 from './logo5.png'
 import cart from './cart.png'
 import biriyani from './biriyani.jpeg'
@@ -15,12 +17,18 @@ import mutton from './mutton.png'
 import south from './south.jpg'
 import popcorn from './popcorn.jpeg'
 import north from './north.jpeg'
+import youtube from './youtube.png'
+import instagram from './instagram.png'
+import whatsapp from './whatsapp.png'
 export const assets={
     logo,
+    main_logo,
+    second_logo,
+    second_logo1,
     cart,
     profile,
     delivery,
-    logo5
+    logo5,youtube,instagram,whatsapp
     
 
 }

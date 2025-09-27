@@ -27,13 +27,16 @@ const FoodDisplay = ({ category, searchText }) => {
         {filteredFoods.length > 0 ? (
           filteredFoods.map((food, index) => (
             <FoodItem
-              key={index}
-              id={food.id}
-              name={food.name}
-              description={food.description}
-              price={food.price}
-              imageUrl={food.imageUrl}
-            />
+  key={food.id}
+  id={food.id}
+  name={food.name}
+  description={food.description}
+  price={food.price}
+  imageUrl={food.imageUrl}
+  sponsored={food.sponsored}
+  featured={food.featured}
+/>
+
           ))
         ) : (
           <div className="text-center mt-4">

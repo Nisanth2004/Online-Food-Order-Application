@@ -50,7 +50,7 @@ const ListFood = () => {
               <th>Name</th>
               <th>Category</th>
               <th>Price</th>
-              <th>Sponsored / Featured</th>
+              <th>Sponsored / Best Seller</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -73,7 +73,7 @@ const ListFood = () => {
                   <td>&#8377;{item.price}.00</td>
                   <td>
                     {item.sponsored && <span className="badge bg-danger me-1">Sponsored</span>}
-                    {item.featured && <span className="badge bg-warning text-dark">Featured</span>}
+                    {item.featured && <span className="badge bg-warning text-dark">Best Seller</span>}
                   </td>
                   <td className="text-danger">
                     <i

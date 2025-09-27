@@ -9,10 +9,13 @@ import Cart from './Pages/Cart/Cart'
 import PlaceOrder from './Pages/PlaceOrder/PlaceOrder'
 import Login from './components/Login/Login'
 import Register from './components/Register/Register'
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 
 import { ToastContainer } from 'react-toastify';
 import MyOrders from './Pages/MyOrders/MyOrders'
 import { StoreContext } from './Context/StoreContext'
+import Footer from './components/Footer/Footer'
 
 
 const App = () => {
@@ -37,6 +40,7 @@ const App = () => {
 
 
         </Routes>
+        <Footer/>
 
 
 

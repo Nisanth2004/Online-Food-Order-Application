@@ -20,6 +20,7 @@ public class OrderResponse {
 
     private String orderStatus;
     private List<OrderItem> orderedItems;
+    private String createdDate; // Add this
 
 
 }

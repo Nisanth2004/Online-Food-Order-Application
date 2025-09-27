@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import  axios  from 'axios';
 import { fetchFoodList } from "../service/FoodService";
+import {jwtDecode}from "jwt-decode";
 import { addToCart, getCartData, removeQtyFromCart } from "../service/cartService";
 
 
@@ -12,6 +13,7 @@ export const StoreContextProvider=(props)=>{
     const [foodList,setFoodList]=useState([]);
     const[quantities,setQuantities]=useState({})
     const[token,setToken]=useState('')
+     const [user, setUser] = useState(null); 
 
 
     const increaseQty=async (foodId)=>{
@@ -40,23 +42,29 @@ export const StoreContextProvider=(props)=>{
        setQuantities(items)
     }
 
-    useEffect(()=>{
-        async function loadData()
-        {
-          const data= await fetchFoodList()
-          setFoodList(data);
-          if(localStorage.getItem('token'))
-          {
-            setToken(localStorage.getItem('token'))
+    useEffect(() => {
+  async function loadData() {
+    const data = await fetchFoodList();
+    setFoodList(data);
 
-        await  loadCartData(localStorage.getItem('token'))
-          }
+    const storedToken = localStorage.getItem("token"); // ✅ define it here
+    if (storedToken) {
+      setToken(storedToken);
 
- 
-        }
-        loadData()
+      try {
+        const decoded = jwtDecode(storedToken); // ✅ now use storedToken
+        setUser(decoded.username || decoded.sub || "Unknown User");
+      } catch (err) {
+        console.error("Invalid token", err);
+      }
 
-    },[])
+      await loadCartData(storedToken); // ✅ pass storedToken
+    }
+  }
+
+  loadData();
+}, []);
+
 
     const contextValue={
         foodList,
@@ -65,6 +73,7 @@ export const StoreContextProvider=(props)=>{
         quantities,
         removeFromCart,
         token,
+        user,
         setToken,
         setQuantities,
         loadCartData
