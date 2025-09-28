@@ -3,6 +3,7 @@ package com.nisanth.foodapi.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nisanth.foodapi.entity.Category;
 import com.nisanth.foodapi.io.FoodRequest;
 import com.nisanth.foodapi.io.FoodResponse;
 import com.nisanth.foodapi.service.FoodService;
@@ -74,8 +75,9 @@ public class FoodController {
     {
         foodService.deleteFood(id);
     }
+
     @GetMapping("/categories")
-    public List<String> getCategories() {
+    public List<Category> getCategories() {
         return foodService.getCategories();
     }
 

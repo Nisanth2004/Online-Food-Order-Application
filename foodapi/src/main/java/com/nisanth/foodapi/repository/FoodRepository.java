@@ -7,8 +7,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface FoodRepository extends MongoRepository<FoodEntity,String> {
-    long countByCategory(String category);
-    List<FoodEntity> findByCategory(String category);
+public interface FoodRepository extends MongoRepository<FoodEntity, String> {
+
+    // Count how many foods are linked to a specific categoryId
+    long countByCategoryIdsContaining(String categoryId);
+
+    // Find all foods that belong to a specific categoryId
+    List<FoodEntity> findByCategoryIdsContaining(String categoryId);
+
+    // Order foods: sponsored first, then featured, then others
     List<FoodEntity> findAllByOrderBySponsoredDescFeaturedDesc();
 }

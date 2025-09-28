@@ -15,9 +15,9 @@ const AddFood = () => {
     name: "",
     description: "",
     price: "",
-    category: "",      // will store category name string
-    sponsored: false,  // new
-    featured: false    // new
+    categories: [], // array of selected category IDs
+    sponsored: false,
+    featured: false,
   });
 
   // fetch categories on mount
@@ -25,11 +25,7 @@ const AddFood = () => {
     const loadCategories = async () => {
       try {
         const res = await fetchCategories();
-        // res.data expected to be [{id, name}, ...]
         setCategories(res.data || []);
-        if (res.data && res.data.length > 0) {
-          setData((prev) => ({ ...prev, category: res.data[0].name }));
-        }
       } catch (err) {
         console.error(err);
         toast.error("Failed to fetch categories");
@@ -40,7 +36,21 @@ const AddFood = () => {
 
   const onChangeHandler = (event) => {
     const { name, value, type, checked } = event.target;
-    if (type === "checkbox") {
+
+    if (type === "checkbox" && name === "categories") {
+      // handle category checkbox selection
+      if (checked) {
+        setData((prev) => ({
+          ...prev,
+          categories: [...prev.categories, value],
+        }));
+      } else {
+        setData((prev) => ({
+          ...prev,
+          categories: prev.categories.filter((id) => id !== value),
+        }));
+      }
+    } else if (type === "checkbox") {
       setData((prev) => ({ ...prev, [name]: checked }));
     } else {
       setData((prev) => ({ ...prev, [name]: value }));
@@ -55,9 +65,12 @@ const AddFood = () => {
     }
     try {
       const res = await addCategory({ name: newCategory.trim() });
-      // res.data should be the created category object { id, name }
       setCategories((prev) => [...prev, res.data]);
-      setData((prev) => ({ ...prev, category: res.data.name }));
+      // select the new category automatically
+      setData((prev) => ({
+        ...prev,
+        categories: [...prev.categories, res.data.id],
+      }));
       setNewCategory("");
       toast.success("Category added");
     } catch (err) {
@@ -74,29 +87,28 @@ const AddFood = () => {
       return;
     }
 
-    // prepare foodData object - ensure proper types
     const foodData = {
       name: data.name,
       description: data.description,
       price: parseFloat(data.price) || 0,
-      category: data.category,
+      categoryIds: data.categories,
       sponsored: !!data.sponsored,
-      featured: !!data.featured
-      // don't include imageUrl here - backend will set after S3 upload
+      featured: !!data.featured,
     };
 
     setSubmitting(true);
     try {
       await addFood(foodData, image);
       toast.success("Food added successfully");
+
       // reset form
       setData({
         name: "",
         description: "",
         price: "",
-        category: categories.length > 0 ? categories[0].name : "",
+        categories: [],
         sponsored: false,
-        featured: false
+        featured: false,
       });
       setImage(null);
     } catch (err) {
@@ -168,26 +180,28 @@ const AddFood = () => {
                 />
               </div>
 
-              {/* Category */}
+              {/* Categories with checkboxes */}
               <div className="mb-3">
-                <label htmlFor="category" className="form-label">
-                  Category
-                </label>
-                <select
-                  name="category"
-                  id="category"
-                  className="form-control"
-                  onChange={onChangeHandler}
-                  value={data.category}
-                  required
-                >
-                  {categories.length === 0 && <option value="">No categories</option>}
+                <label className="form-label">Categories</label>
+                <div className="d-flex flex-wrap gap-2">
+                  {categories.length === 0 && <span>No categories</span>}
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </option>
+                    <div className="form-check" key={cat.id}>
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`cat-${cat.id}`}
+                        name="categories"
+                        value={cat.id}
+                        checked={data.categories.includes(cat.id)}
+                        onChange={onChangeHandler}
+                      />
+                      <label className="form-check-label" htmlFor={`cat-${cat.id}`}>
+                        {cat.name}
+                      </label>
+                    </div>
                   ))}
-                </select>
+                </div>
 
                 {/* Add new category inline */}
                 <div className="d-flex mt-2">

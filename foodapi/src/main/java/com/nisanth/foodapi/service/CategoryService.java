@@ -25,7 +25,11 @@ public class CategoryService {
     public List<CategoryWithCount> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
-                .map(cat -> new CategoryWithCount(cat.getId(), cat.getName(), foodRepository.countByCategory(cat.getName())))
+                .map(cat -> new CategoryWithCount(
+                        cat.getId(),
+                        cat.getName(),
+                        foodRepository.countByCategoryIdsContaining(cat.getId()) // ✅ use ID not name
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -41,12 +45,17 @@ public class CategoryService {
     public void deleteCategory(String id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
-        long count = foodRepository.countByCategory(category.getName());
+
+        long count = foodRepository.countByCategoryIdsContaining(category.getId()); // ✅ use ID
         if (count > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete category with foods");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,  // 409 is more semantically correct
+                    "Cannot delete category because it still contains foods. Please remove foods first."
+            );
         }
-        categoryRepository.deleteById(id);
+
     }
+
 
 
     // DTO class

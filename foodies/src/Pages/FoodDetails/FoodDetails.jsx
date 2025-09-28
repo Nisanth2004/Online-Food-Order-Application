@@ -107,9 +107,18 @@ setReviews(Array.isArray(res.data) ? res.data : []);
           </div>
           <div className="col-md-6">
             <div className="fs-5 mb-1">
-              Category:{" "}
-              <span className="badge text-bg-warning">{data.category}</span>
-            </div>
+  Category:{" "}
+  {data.categories && data.categories.length > 0 ? (
+    data.categories.map((cat, index) => (
+      <span key={index} className="badge text-bg-warning me-1">
+        {cat}
+      </span>
+    ))
+  ) : (
+    <span className="text-muted">No category</span>
+  )}
+</div>
+
             <h1 className="display-5 fw-bolder">{data.name}</h1>
 
             <div className="d-flex align-items-center mb-2">

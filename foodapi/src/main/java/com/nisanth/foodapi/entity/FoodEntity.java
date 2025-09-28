@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Document(collection = "foods") // collection name
 @Data
 @AllArgsConstructor
@@ -19,7 +21,7 @@ public class FoodEntity {
     private String name;
     private String description;
     private double price;
-    private String category;
+    private List<String> categoryIds;
     private String imageUrl;
     private boolean sponsored;
     private boolean featured;

@@ -17,7 +17,7 @@ const FoodDisplay = ({ category, searchText }) => {
   // Filter by category and search text
   const filteredFoods = sortedFoods.filter(
     (food) =>
-      (category === "All" || food.category === category) &&
+      (category === "All" || food.categories.includes(category)) &&
       food.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -25,20 +25,19 @@ const FoodDisplay = ({ category, searchText }) => {
     <div className="container">
       <div className="row">
         {filteredFoods.length > 0 ? (
-          filteredFoods.map((food, index) => (
+          filteredFoods.map((food) => (
             <FoodItem
-  key={food.id}
-  id={food.id}
-  name={food.name}
-  description={food.description}
-  price={food.price}
-  imageUrl={food.imageUrl}
-  sponsored={food.sponsored}
-  featured={food.featured}
-  averageRating={food.averageRating}
-  reviewCount={food.reviewCount}
-/>
-
+              key={food.id}
+              id={food.id}
+              name={food.name}
+              description={food.description}
+              price={food.price}
+              imageUrl={food.imageUrl}
+              sponsored={food.sponsored}
+              featured={food.featured}
+              averageRating={food.averageRating}
+              reviewCount={food.reviewCount}
+            />
           ))
         ) : (
           <div className="text-center mt-4">

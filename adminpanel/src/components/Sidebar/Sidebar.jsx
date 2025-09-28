@@ -21,14 +21,19 @@ const Sidebar = ({ sidebarVisible, setCategory }) => {
   }, []);
 
   const handleDelete = async (id) => {
-    try {
-      await deleteCategory(id);
-      toast.success("Category deleted");
-      loadCategories();
-    } catch (err) {
+  try {
+    await deleteCategory(id);
+    toast.success("Category deleted");
+    loadCategories();
+  } catch (err) {
+    if (err.response?.status === 409) {
+      toast.error("This category still has foods. Remove them before deleting.");
+    } else {
       toast.error(err.response?.data?.message || "Failed to delete category");
     }
-  };
+  }
+};
+
 
   return (
     <div
