@@ -9,26 +9,38 @@ const Orders = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
+  // ✅ Fetch all orders
   const fetchOrders = async () => {
     try {
       const response = await axios.get("http://localhost:8080/api/orders/all");
-      // assume backend returns in ascending order, so reverse to show latest first
-      setData(response.data.reverse());
+      setData(response.data.reverse()); // Show latest first
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
   };
 
+  // ✅ Update order status (instant frontend reflect)
   const updateStatus = async (event, orderId) => {
+    const newStatus = event.target.value;
     try {
-      const response = await axios.patch(
-        `http://localhost:8080/api/orders/status/${orderId}?status=${event.target.value}`
+      await axios.patch(
+        `http://localhost:8080/api/orders/status/${orderId}`,
+        {},
+        {
+          params: { status: newStatus },
+          headers: { "Content-Type": "application/json" },
+        }
       );
-      if (response.status === 200) {
-        await fetchOrders();
-      }
+
+      // ✅ Instantly update UI without reloading all data
+      setData((prevData) =>
+        prevData.map((order) =>
+          order.id === orderId ? { ...order, orderStatus: newStatus } : order
+        )
+      );
     } catch (error) {
-      console.error("Error updating order status:", error);
+      console.error("Error updating order status:", error.response || error);
+      alert("Failed to update order status. Please check backend or CORS.");
     }
   };
 
@@ -36,20 +48,14 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
-  // ✅ Memoized filtered data
+  // ✅ Filter and search logic
   const filteredOrders = useMemo(() => {
     return data
       .filter((order) => {
-        // filter by status
-        if (statusFilter !== "All" && order.orderStatus !== statusFilter) {
-          return false;
-        }
-
-        // filter by price range
+        if (statusFilter !== "All" && order.orderStatus !== statusFilter) return false;
         if (minPrice && order.amount < parseFloat(minPrice)) return false;
         if (maxPrice && order.amount > parseFloat(maxPrice)) return false;
 
-        // search by name, address, pincode, etc.
         const term = searchTerm.toLowerCase();
         if (term) {
           const matchText = `
@@ -60,17 +66,43 @@ const Orders = () => {
           `.toLowerCase();
           return matchText.includes(term);
         }
-
         return true;
       })
       .sort((a, b) => {
-        // keep latest orders on top (assuming backend gives createdDate field)
         if (a.createdDate && b.createdDate) {
           return new Date(b.createdDate) - new Date(a.createdDate);
         }
         return 0;
       });
   }, [data, statusFilter, searchTerm, minPrice, maxPrice]);
+
+  // ✅ Convert enum to readable text
+  const getDisplayName = (status) => {
+    switch (status) {
+      case "PREPARING":
+        return "In Kitchen";
+      case "OUT_FOR_DELIVERY":
+        return "Out For Delivery";
+      case "DELIVERED":
+        return "Delivered";
+      default:
+        return status;
+    }
+  };
+
+  // ✅ Convert display name to enum (for sending to backend)
+  const mapDisplayToEnum = (displayName) => {
+    switch (displayName) {
+      case "In Kitchen":
+        return "PREPARING";
+      case "Out For Delivery":
+        return "OUT_FOR_DELIVERY";
+      case "Delivered":
+        return "DELIVERED";
+      default:
+        return displayName;
+    }
+  };
 
   return (
     <div className="container">
@@ -83,9 +115,9 @@ const Orders = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="All">All Orders</option>
-            <option value="In Kitchen">In Kitchen</option>
-            <option value="Out For Delivery">Out For Delivery</option>
-            <option value="Delivered">Delivered</option>
+            <option value="PREPARING">In Kitchen</option>
+            <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
+            <option value="DELIVERED">Delivered</option>
           </select>
         </div>
 
@@ -147,13 +179,11 @@ const Orders = () => {
                     </td>
                     <td>
                       <div>
-                        {order.orderedItems.map((item, idx) => {
-                          if (idx === order.orderedItems.length - 1) {
-                            return item.name + " x" + item.quantity;
-                          } else {
-                            return item.name + " x" + item.quantity + ", ";
-                          }
-                        })}
+                        {order.orderedItems.map((item, idx) =>
+                          idx === order.orderedItems.length - 1
+                            ? `${item.name} x${item.quantity}`
+                            : `${item.name} x${item.quantity}, `
+                        )}
                       </div>
                       <div>{order.userAddress}</div>
                     </td>
@@ -162,8 +192,17 @@ const Orders = () => {
                     <td>
                       <select
                         className="form-control"
-                        onChange={(event) => updateStatus(event, order.id)}
-                        value={order.orderStatus}
+                        onChange={(event) =>
+                          updateStatus(
+                            {
+                              target: {
+                                value: mapDisplayToEnum(event.target.value),
+                              },
+                            },
+                            order.id
+                          )
+                        }
+                        value={getDisplayName(order.orderStatus)}
                       >
                         <option value="In Kitchen">In Kitchen</option>
                         <option value="Out For Delivery">Out For Delivery</option>

@@ -26,4 +26,10 @@ public interface OrderService {
    // update the order status
    void  updateOrderStatus(String orderId,String status);
 
+   void cancelOrder(String orderId);
+
+    void requestCancelOrder(String orderId);       // customer requests cancel
+    void approveCancelOrder(String orderId);      // admin approves cancel
+
+
 }

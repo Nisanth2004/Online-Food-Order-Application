@@ -1,6 +1,7 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.OrderEntity;
+import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
 import com.nisanth.foodapi.repository.CartRepository;
@@ -103,39 +104,116 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public void updateOrderStatus(String orderId, String status) {
-      OrderEntity entity=  orderRepository.findById(orderId)
-                .orElseThrow(()->new RuntimeException("Order Not found"));
-      entity.setOrderStatus(status);
-      orderRepository.save(entity);
+        OrderEntity entity = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order Not found"));
+
+        try {
+            OrderStatus orderStatus = OrderStatus.fromString(status);
+            entity.setOrderStatus(orderStatus);
+            orderRepository.save(entity);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid order status: " + status);
+        }
+
     }
 
+
+
+    @Override
+    public void cancelOrder(String orderId) {
+        String loggedInUserId = userService.findByUserId();
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Allow cancellation only if order belongs to logged-in user
+        if (!order.getUserId().equals(loggedInUserId)) {
+            throw new RuntimeException("You are not authorized to cancel this order");
+        }
+
+        // Only allow cancel if not already delivered or cancelled
+        if (order.getOrderStatus() == OrderStatus.DELIVERED ||
+                order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new RuntimeException("This order cannot be cancelled");
+        }
+
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+    }
+
+
     private OrderResponse convertToResponse(OrderEntity newOrder) {
-       return OrderResponse.builder()
+        return OrderResponse.builder()
                 .id(newOrder.getId())
                 .amount(newOrder.getAmount())
                 .userAddress(newOrder.getUserAddress())
                 .userId(newOrder.getUserId())
                 .razorpayOrderId(newOrder.getRazorpayOrderId())
                 .paymentStatus(newOrder.getPaymentStatus())
-                .orderStatus(newOrder.getOrderStatus())
-               .email(newOrder.getEmail())
-               .phoneNumber(newOrder.getPhoneNumber())
-               .orderedItems(newOrder.getOrderedItems())
-               .createdDate(newOrder.getCreatedDate() != null
-                       ? newOrder.getCreatedDate().toString()
-                       : null) //
+                .orderStatus(newOrder.getOrderStatus() != null
+                        ? newOrder.getOrderStatus().name()
+                        : null)  // convert enum to String
+                .email(newOrder.getEmail())
+                .phoneNumber(newOrder.getPhoneNumber())
+                .orderedItems(newOrder.getOrderedItems())
+                .createdDate(newOrder.getCreatedDate() != null
+                        ? newOrder.getCreatedDate().toString()
+                        : null)
                 .build();
-
     }
 
+
     private OrderEntity convertToEntity(OrderRequest request) {
-       return OrderEntity.builder()
+        OrderStatus status = null;
+        if (request.getOrderStatus() != null) {
+            try {
+                status = OrderStatus.valueOf(request.getOrderStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid order status: " + request.getOrderStatus());
+            }
+        }
+
+        return OrderEntity.builder()
                 .userAddress(request.getUserAddress())
                 .amount(request.getAmount())
                 .orderedItems(request.getOrderedItems())
-               .phoneNumber(request.getPhoneNumber())
-               .email(request.getEmail())
-               .orderStatus(request.getOrderStatus())
+                .phoneNumber(request.getPhoneNumber())
+                .email(request.getEmail())
+                .orderStatus(status)
                 .build();
     }
+
+
+    @Override
+    public void requestCancelOrder(String orderId) {
+        String loggedInUserId = userService.findByUserId();
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getUserId().equals(loggedInUserId)) {
+            throw new RuntimeException("You are not authorized to cancel this order");
+        }
+
+        if (order.getOrderStatus() == OrderStatus.DELIVERED ||
+                order.getOrderStatus() == OrderStatus.CANCELLED ||
+                order.getOrderStatus() == OrderStatus.CANCEL_REQUESTED) {
+            throw new RuntimeException("This order cannot be cancelled");
+        }
+
+        order.setOrderStatus(OrderStatus.CANCEL_REQUESTED);
+        orderRepository.save(order);
+    }
+
+    @Override
+    public void approveCancelOrder(String orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getOrderStatus() != OrderStatus.CANCEL_REQUESTED) {
+            throw new RuntimeException("This order has not been requested for cancellation");
+        }
+
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+    }
+
 }

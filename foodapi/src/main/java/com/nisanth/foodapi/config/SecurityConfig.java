@@ -1,6 +1,5 @@
 package com.nisanth.foodapi.config;
 
-
 import com.nisanth.foodapi.filters.JwtAuthenticationFilter;
 import com.nisanth.foodapi.service.AppUserDetailsService;
 import lombok.AllArgsConstructor;
@@ -10,7 +9,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configurers.userdetails.DaoAuthenticationConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
@@ -31,73 +28,72 @@ import java.util.List;
 @AllArgsConstructor
 public class SecurityConfig {
 
-    private final AppUserDetailsService  userDetailsService;
-
+    private final AppUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
-    {
-
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth->
-                        auth.requestMatchers(
+                .authorizeHttpRequests(auth -> auth
+                        // ✅ Public endpoints
+                        .requestMatchers(
                                 "/api/register",
-                                        "/api/login",
-                                        "/api/foods/**",
-                                        "api/categories/**",
-                                        "/api/orders/all",
-                                        "api/admin/**",
-                                        "/api/orders/status/**")
-                                .permitAll()
-                                .anyRequest().authenticated()
-                        )
-                .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                "/api/login",
+                                "/api/foods/**",
+                                "/api/categories/**",
+                                "/api/orders/all",
+                                "/api/orders/status/**",
+                                "/api/orders/*/approve-cancel/**",
+                                "/api/admin/**"
+                        ).permitAll()
+
+                        // ✅ User endpoints — avoid using invalid `/**/.../**`
+                        .requestMatchers(
+                                "/api/orders/cancel/**",
+                                "/api/orders/request-cancel/**"
+                        ).authenticated()
+
+                        // ✅ Any other endpoints require authentication
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-
-
-
-
-                 return http.build();
-
-    }
-
-
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder( );
+        return http.build();
     }
 
     @Bean
-    public CorsFilter corsFilter ()
-    {
-        return new CorsFilter(corsConfigurationSource());
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
-    private UrlBasedCorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config=new CorsConfiguration();
-        //config.setAllowedOrigins(List.of("https://admin-foodies.netlify.app","https://snfoods.netlify.app"));
-        config.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:5174"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
-        config.setAllowedHeaders(List.of( "Authorization","Content-Type"));
+    // ✅ CORS for both admin and user apps
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:5174"
+                // Add production URLs when deploying
+                // "https://admin-foodies.netlify.app",
+                // "https://snfoods.netlify.app"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**",config);
-        return source;
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
     }
 
-
     @Bean
-    public AuthenticationManager authenticationManager()
-    {
-        DaoAuthenticationProvider authProvider=new DaoAuthenticationProvider();
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(authProvider);
-
     }
 }

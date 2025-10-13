@@ -69,6 +69,13 @@ const Sidebar = ({ sidebarVisible, setCategory }) => {
         >
           <i className="bi bi-star me-2"></i> Reviews
         </Link>
+        <Link
+         className="list-group-item list-group-item-action list-group-item-light p-3"
+         to="/admin-cancel-requests"
+        >
+         <i className="bi bi-x-circle me-2"></i>Cancel Requests
+      </Link>
+
 
         <hr />
 

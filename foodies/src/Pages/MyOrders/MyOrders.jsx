@@ -3,6 +3,10 @@ import { StoreContext } from "../../Context/StoreContext";
 import axios from "axios";
 import { assets } from "../../assets/assets";
 import "./MyOrders.css";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
 
 const MyOrders = () => {
   const { token } = useContext(StoreContext);
@@ -23,43 +27,57 @@ const MyOrders = () => {
     }
   };
 
+ const cancelOrder = async (orderId) => {
+  confirmAlert({
+    title: "Cancel Order?",
+    message: "Your cancel request will be sent to admin for approval.",
+    buttons: [
+      {
+        label: "Yes, Request Cancel",
+        onClick: async () => {
+          try {
+            await axios.patch(
+             `http://localhost:8080/api/orders/${orderId}/request-cancel`,
+              {},
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(
+              "Your cancel request has been sent to admin. Check status in orders page.",
+              { position: "top-center" }
+            );
+            fetchOrders();
+          } catch (error) {
+            toast.error(
+              error.response?.data?.message || "Failed to request cancellation",
+              { position: "top-center" }
+            );
+          }
+        },
+      },
+      { label: "No", onClick: () => {} },
+    ],
+  });
+};
+
+
+
   useEffect(() => {
     if (token) fetchOrders();
   }, [token]);
 
-  const calculateOrderTime = (date) => {
-    if (!date) return "—";
-    const orderDate = new Date(date);
-    const now = new Date();
-    const diffMs = now - orderDate;
-
-    const diffMinutes = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-    if (diffMinutes > 0) return `${diffMinutes} min${diffMinutes > 1 ? "s" : ""} ago`;
-    return "Just now";
+  const formatOrderDate = (isoDate) => {
+    if (!isoDate) return "—";
+    return new Date(isoDate).toLocaleString();
   };
-const formatOrderDate = (isoDate) => {
-  if (!isoDate) return "—";
-  return new Date(isoDate).toLocaleString(); // e.g., 26/09/2025, 6:30 PM
-};
 
-  // ✅ Filtering + Sorting (Latest first)
   const filteredOrders = useMemo(() => {
     let filtered = [...data];
-
-    // Sort: latest first
     filtered.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
 
-    // Status filter
     if (statusFilter !== "All") {
       filtered = filtered.filter((order) => order.orderStatus === statusFilter);
     }
 
-    // Search filter (food name, address, pincode)
     if (search.trim() !== "") {
       filtered = filtered.filter((order) => {
         const matchName = order.orderedItems.some((item) =>
@@ -75,7 +93,6 @@ const formatOrderDate = (isoDate) => {
       });
     }
 
-    // Price range filter
     if (minPrice !== "" && maxPrice !== "") {
       filtered = filtered.filter(
         (order) => order.amount >= minPrice && order.amount <= maxPrice
@@ -85,7 +102,6 @@ const formatOrderDate = (isoDate) => {
     return filtered;
   }, [data, statusFilter, search, minPrice, maxPrice]);
 
-  // Reset all filters to default
   const resetFilters = () => {
     setStatusFilter("All");
     setSearch("");
@@ -107,8 +123,10 @@ const formatOrderDate = (isoDate) => {
             <option value="In Kitchen">In Kitchen</option>
             <option value="Out For Delivery">Out For Delivery</option>
             <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
           </select>
         </div>
+
         <div className="col-md-3">
           <input
             type="text"
@@ -118,6 +136,7 @@ const formatOrderDate = (isoDate) => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
         <div className="col-md-3 d-flex">
           <input
             type="number"
@@ -134,12 +153,12 @@ const formatOrderDate = (isoDate) => {
             onChange={(e) => setMaxPrice(e.target.value)}
           />
         </div>
+
         <div className="col-md-2 d-grid">
           <button className="btn btn-secondary" onClick={resetFilters}>
             Reset Filters
           </button>
         </div>
-        
       </div>
 
       {/* Orders Table */}
@@ -154,7 +173,7 @@ const formatOrderDate = (isoDate) => {
                 <th>Total Items</th>
                 <th>Status</th>
                 <th>Order Time</th>
-                <th>Refresh</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -166,7 +185,12 @@ const formatOrderDate = (isoDate) => {
                 </tr>
               ) : (
                 filteredOrders.map((order, index) => (
-                  <tr key={index}>
+                  <tr
+                    key={index}
+                    className={
+                      order.orderStatus === "Cancelled" ? "cancelled-row" : ""
+                    }
+                  >
                     <td className="align-middle">
                       <img src={assets.delivery} height={48} width={48} />
                     </td>
@@ -177,20 +201,55 @@ const formatOrderDate = (isoDate) => {
                           : `${item.name} x${item.quantity}, `
                       )}
                     </td>
-                    <td className="align-middle">&#x20B9;{order.amount.toFixed(2)}</td>
-                    <td className="align-middle">{order.orderedItems.length}</td>
-                    <td className="align-middle fw-bold text-capitalize">
-                      &#x25cf; {order.orderStatus}
+                    <td className="align-middle">
+                      &#x20B9;{order.amount.toFixed(2)}
                     </td>
-                  <td className="align-middle">{formatOrderDate(order.createdDate)}</td>
+                    <td className="align-middle">
+                      {order.orderedItems.length}
+                    </td>
+
+                    <td
+                      className={`align-middle fw-bold text-capitalize ${
+                        order.orderStatus === "Cancelled"
+                          ? "text-danger text-decoration-line-through"
+                          : order.orderStatus === "Delivered"
+                          ? "text-success"
+                          : order.orderStatus === "Out For Delivery"
+                          ? "text-primary"
+                          : order.orderStatus === "In Kitchen"
+                          ? "text-warning"
+                          : ""
+                      }`}
+                    >
+                      {order.orderStatus === "Cancelled" ? "❌ " : "● "}
+                      {order.orderStatus}
+                    </td>
 
                     <td className="align-middle">
-                      <button
-                        className="btn btn-sm btn-warning"
-                        onClick={fetchOrders}
-                      >
-                        <i className="bi bi-arrow-clockwise"></i>
-                      </button>
+                      {formatOrderDate(order.createdDate)}
+                    </td>
+
+                    <td className="align-middle">
+                      <div className="d-flex gap-2">
+                        <button
+                          className="btn btn-sm btn-warning"
+                          onClick={fetchOrders}
+                          title="Refresh Orders"
+                        >
+                          <i className="bi bi-arrow-clockwise"></i>
+                        </button>
+
+                        {order.orderStatus !== "Delivered" &&
+                          order.orderStatus !== "Cancelled" && (
+                            <button
+                              className="btn btn-sm btn-danger"
+                              onClick={() => cancelOrder(order.id)}
+                              title="Cancel Order"
+                            >
+                              <i className="bi bi-x-circle"></i>
+                            </button>
+                          )}
+                      </div>
                     </td>
                   </tr>
                 ))

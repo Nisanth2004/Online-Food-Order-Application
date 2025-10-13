@@ -7,6 +7,7 @@ import Sidebar from './components/Sidebar/Sidebar'
 import Menubar from './components/Menubar/Menubar'
 import AdminReview from './components/Reviews/AdminReview';
 import { ToastContainer } from 'react-toastify';
+import AdminCancelRequests from './components/CancelledOrders/AdminCancelRequests'
 const App = () => {
 
 
@@ -38,6 +39,7 @@ const App = () => {
                       <Route path='/orders' element={<Orders/>}/>
 
                       <Route path="/reviews" element={<AdminReview />} />
+                       <Route path="/admin-cancel-requests" element={<AdminCancelRequests />} /> 
                     </Routes>
                 </div>
             </div>

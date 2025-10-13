@@ -1,5 +1,6 @@
 package com.nisanth.foodapi.entity;
 
+import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.OrderItem;
 import lombok.Builder;
 import lombok.Data;
@@ -27,12 +28,10 @@ public class OrderEntity {
     private String razorpayOrderId;
     private String razorPaySignature;
     private String razorpayPaymentId;
-    private String orderStatus;
+
+    // Use enum instead of String
+    private OrderStatus orderStatus;
 
     @CreatedDate
     private Instant createdDate;
-
-
-
-
 }

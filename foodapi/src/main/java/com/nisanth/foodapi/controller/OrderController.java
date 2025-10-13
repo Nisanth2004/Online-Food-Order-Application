@@ -4,8 +4,9 @@ import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
 import com.nisanth.foodapi.service.OrderService;
 import com.razorpay.RazorpayException;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,56 +14,72 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
 
+    // ✅ Create order and initiate Razorpay payment
     @PostMapping("/create")
-    @ResponseStatus(HttpStatus.CREATED)
-    public OrderResponse createOrderWithPayment(@RequestBody OrderRequest request) throws RazorpayException {
-        OrderResponse response=orderService.createOrderWithPayment(request);
-        return response;
+    public ResponseEntity<OrderResponse> createOrderWithPayment(@RequestBody OrderRequest request) throws RazorpayException {
+        OrderResponse response = orderService.createOrderWithPayment(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-
-    // verify the payment
+    // ✅ Verify Razorpay payment
     @PostMapping("/verify")
-    public void verifyPayment(@RequestBody Map<String,String> paymentData)
-    {
-        orderService.verifyPayment(paymentData,"Paid");
+    public ResponseEntity<String> verifyPayment(@RequestBody Map<String, String> paymentData) {
+        orderService.verifyPayment(paymentData, "paid");
+        return ResponseEntity.ok("Payment verified successfully");
     }
 
-
-    // get all the orders
+    // ✅ Get all orders for logged-in user
     @GetMapping
-    public List<OrderResponse> getAllOrders()
-    {
-
-       return orderService.getUserOrders();
+    public ResponseEntity<List<OrderResponse>> getUserOrders() {
+        return ResponseEntity.ok(orderService.getUserOrders());
     }
 
-    // delete the order for particular user
+    // ✅ Delete a specific order (user or admin)
     @DeleteMapping("/{orderId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteOrder(@PathVariable String orderId)
-    {
+    public ResponseEntity<Void> deleteOrder(@PathVariable String orderId) {
         orderService.removeOrder(orderId);
+        return ResponseEntity.noContent().build();
     }
 
-    // admin panel - get all orders for all users
+    // ✅ Admin: Get all orders across all users
     @GetMapping("/all")
-    public List<OrderResponse> getOrdersOfAllUsers()
-    {
-        return orderService.getOrdersOfAllUsers();
-
+    public ResponseEntity<List<OrderResponse>> getOrdersOfAllUsers() {
+        return ResponseEntity.ok(orderService.getOrdersOfAllUsers());
     }
 
-
-    // update the order status - admin panel
+    // ✅ Admin: Update order status (e.g., DISPATCHED, DELIVERED, CANCELLED)
     @PatchMapping("/status/{orderId}")
-    public void updateOrderStatus(@PathVariable String orderId,@RequestParam String status)
-    {
-       orderService.updateOrderStatus(orderId, status);
+    public ResponseEntity<String> updateOrderStatus(
+            @PathVariable String orderId,
+            @RequestParam String status) {
+
+        orderService.updateOrderStatus(orderId, status);
+        return ResponseEntity.ok("Order status updated to " + status);
+    }
+
+    // ✅ User: Directly cancel their own order
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<String> cancelOrder(@PathVariable String orderId) {
+        orderService.cancelOrder(orderId);
+        return ResponseEntity.ok("Order cancelled successfully");
+    }
+
+    // ✅ User: Request cancellation
+    @PatchMapping("/{orderId}/request-cancel")
+    public ResponseEntity<String> requestCancelOrder(@PathVariable String orderId) {
+        orderService.requestCancelOrder(orderId);
+        return ResponseEntity.ok("Cancellation request sent");
+    }
+
+    // ✅ Admin: Approve cancellation
+    @PatchMapping("/{orderId}/approve-cancel")
+    public ResponseEntity<String> approveCancelOrder(@PathVariable String orderId) {
+        orderService.approveCancelOrder(orderId);
+        return ResponseEntity.ok("Order cancellation approved");
     }
 }
