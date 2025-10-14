@@ -1,27 +1,17 @@
-import axios from "axios";
-//const API_URL='https://foodapi-latest-new1.onrender.com/api';
-const API_URL='http://localhost:8080/api';
-
-export const registerUser=async(data)=>{
- try {
-    const response=await  axios.post(API_URL+'/register',data)
-    return response;
-    
- } catch (error) {
+import api from "./CustomAxiosInstance";
+export const login = async (data) => {
+  try {
+    return await api.post("/api/login", data); // ✅ return full response
+  } catch (error) {
     throw error;
-    
- }
-   
-} 
+  }
+};
 
-export const login= async(data)=>{
-    try {
-        const response=await  axios.post(API_URL+'/login',data)
-        return response;
-        
-     } catch (error) {
-        throw error;
-        
-     }
+export const registerUser = async (data) => {
+  try {
+    return await api.post("/api/register", data); // ✅ return full response
+  } catch (error) {
+    throw error;
+  }
+};
 
-}

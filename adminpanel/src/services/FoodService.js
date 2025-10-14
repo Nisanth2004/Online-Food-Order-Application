@@ -1,34 +1,26 @@
-import axios from "axios";
+import api from "./CustomAxiosInstance";
 
-const API_URL = "http://localhost:8080/api/foods";
 
-// foodData is a plain object (name, description, price, category, sponsored, featured, ...)
+const FOOD_API = "/api/foods";
+
 export const addFood = async (foodData, image) => {
   const formData = new FormData();
   formData.append("food", JSON.stringify(foodData));
   if (image) formData.append("file", image);
 
-  // Let axios set the multipart/form-data boundary header automatically
-  const res = await axios.post(API_URL, formData);
+  // Let axios set Content-Type automatically
+  const res = await api.post(FOOD_API, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
 export const getFoodList = async () => {
-  try {
-    const response = await axios.get(API_URL);
-    return response.data;
-  } catch (err) {
-    console.error("Error fetching food list", err);
-    throw err;
-  }
+  const response = await api.get(FOOD_API);
+  return response.data;
 };
 
 export const deleteFood = async (id) => {
-  try {
-    const response = await axios.delete(`${API_URL}/${id}`);
-    return response.status === 204; // backend returns 204 NO_CONTENT
-  } catch (err) {
-    console.error("Error deleting food", err);
-    throw err;
-  }
+  const response = await api.delete(`${FOOD_API}/${id}`);
+  return response.status === 204;
 };

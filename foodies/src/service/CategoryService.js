@@ -1,8 +1,13 @@
-// src/services/CategoryService.js
-import axios from 'axios';
-
-const API_BASE = "http://localhost:8080/api/categories"; // Your backend endpoint
+import api from "./CustomAxiosInstance";
 
 export const fetchCategories = async () => {
-  return await axios.get(API_BASE);
+  return await api.get("/api/categories");
+};
+
+export const addCategory = async (category) => {
+  return await api.post("/api/categories", category);
+};
+
+export const deleteCategory = async (id) => {
+  return await api.delete(`/api/categories/${id}`);
 };

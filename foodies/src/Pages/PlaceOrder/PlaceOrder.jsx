@@ -6,6 +6,7 @@ import axios from 'axios';
 import {RAZORPAY_KEY,RAZORPAY_SECRET} from '../../util/constant'
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import api from '../../service/CustomAxiosInstance';
 //import Razorpay from 'razorpay'
 
 const PlaceOrder = () => {
@@ -38,46 +39,43 @@ const PlaceOrder = () => {
    }
 
 
-  const onSubmitHandler=async(event)=>{
-    event.preventDefault();
+ const onSubmitHandler = async (event) => {
+  event.preventDefault();
 
-    // api call to create the order
-    const orderData={
-      userAddress:`${data.firstName} ${data.lastName},${data.address},${data.city},${data.state},${data.zip}`,
-      phoneNumber:data.phoneNumber,
-      email:data.email,
-      orderedItems:cartItems.map(item=> ({
-        foodId:item.foodId,
-        quantity:quantities[item.id],
-        price:item.price*quantities[item.id],
-        category:item.category,
-        imageUrl:item.imageUrl,
-        description:item.description,
-        name:item.name
-      })),
-      amount:total.toFixed(2),
-      orderStatus:"Preparing"
-    };
+  const orderData = {
+    userAddress: `${data.firstName} ${data.lastName},${data.address},${data.city},${data.state},${data.zip}`,
+    phoneNumber: data.phoneNumber,
+    email: data.email,
+    orderedItems: cartItems.map((item) => ({
+      foodId: item.foodId,
+      quantity: quantities[item.id],
+      price: item.price * quantities[item.id],
+      category: item.category,
+      imageUrl: item.imageUrl,
+      description: item.description,
+      name: item.name,
+    })),
+    amount: total.toFixed(2),
+    orderStatus: "Preparing",
+  };
 
-    try {
-    const response=await  axios.post("http://localhost:8080/api/orders/create",orderData,{headers:{'Authorization':`Bearer ${token}`}})
-      
-    if(response.status===201 && response.data.razorpayOrderId)
-    {
-      // initiate the payment
+  try {
+    const response = await api.post("/api/orders/create", orderData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 201 && response.data.razorpayOrderId) {
+      // initiate payment
       initiateRazorpayPayment(response.data);
+    } else {
+      console.error(response.data || "Unknown error");
+      toast.error("Unable to place order. Please try again.");
     }
-    else{
-      console.error(error.response?.data || error.message);
-      toast.error("Unable to place order.Please try again..")
-    }
-    } catch (error) {
-      console.error(error.response?.data || error.message);
-      toast.error("Unable to place order.Please try again..");
-      
-    }
-
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    toast.error("Unable to place order. Please try again.");
   }
+};
 
   const initiateRazorpayPayment=async(order)=>{
 
@@ -120,54 +118,57 @@ const PlaceOrder = () => {
 
   }
 
-  const verifyPayment=async (razorpayResponse)=>{
-    const paymentData={
-      razorpay_payment_id:razorpayResponse.razorpay_payment_id,
-      razorpay_order_id:razorpayResponse.razorpay_order_id,
-      razorpay_signature:razorpayResponse.razorpay_signature
-    };
+  const verifyPayment = async (razorpayResponse) => {
+  const paymentData = {
+    razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+    razorpay_order_id: razorpayResponse.razorpay_order_id,
+    razorpay_signature: razorpayResponse.razorpay_signature,
+  };
 
   try {
-    const response= await axios.post("http://localhost:8080/api/orders/verify",paymentData,{headers:{'Authorization':`Bearer ${token}`}})
-  if(response.status===200)
-  {
-    toast.success("Payment Sucessful.")
-    await clearCart();
-    navigate('/myorders');
-  }
-  else{
-    toast.error("Payment failed.Please try again.")
-    navigate('/')
-  }
-    
+    const response = await api.post("/api/orders/verify", paymentData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 200) {
+      toast.success("✅ Payment Successful!");
+      await clearCart();
+      navigate("/myorders");
+    } else {
+      toast.error("❌ Payment failed. Please try again.");
+      navigate("/");
+    }
   } catch (error) {
-    toast.error('Payment failed.Please try again')
-    
+    console.error(error.response?.data || error.message);
+    toast.error("❌ Payment failed. Please try again.");
+    navigate("/");
   }
+};
 
+const deleteOrder = async (orderId) => {
+  try {
+    await api.delete(`/api/orders/${orderId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    toast.success("🗑️ Order deleted successfully!");
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    toast.error("❌ Something went wrong. Contact support.");
   }
+};
 
-  const deleteOrder=async(orderId)=>{
-    try {
-     await axios.delete("http://localhost:8080/api/orders/"+orderId,{headers:{'Authorization':`Bearer ${token}`}})
-      
-    } catch (error) {
-      toast.error('Something went wrong,Conatct Support');
-      
-      
-    }
+ const clearCart = async () => {
+  try {
+    await api.delete("/api/cart", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setQuantities({});
+    toast.success("🛒 Cart cleared successfully!");
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    toast.error("❌ Error while clearing the cart");
   }
-
-  const clearCart=async ()=>{
-    try {
-      await axios.delete("http://localhost:8080/api/cart",{headers:{'Authorization':`Bearer ${token}`}})
-      setQuantities({});
-      
-    } catch (error) {
-      toast.error('Error while clearing the cart');
-      
-    }
-  }
+};
 
 
   return (

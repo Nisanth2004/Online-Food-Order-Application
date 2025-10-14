@@ -8,9 +8,12 @@ import com.nisanth.foodapi.io.FoodResponse;
 import com.nisanth.foodapi.repository.CategoryRepository;
 import com.nisanth.foodapi.repository.FoodRepository;
 import com.nisanth.foodapi.repository.ReviewRepository;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -96,6 +99,20 @@ public class FoodServiceImpl implements FoodService {
         FoodEntity food = foodRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
         return convertToResponse(food);
+    }
+
+    @Override
+    public Page<FoodResponse> getFoodsPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FoodEntity> foodPage = foodRepository.findAllByOrderBySponsoredDescFeaturedDesc(pageable);
+
+        // Convert entities to responses
+        List<FoodResponse> responseList = foodPage.getContent()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responseList, pageable, foodPage.getTotalElements());
     }
 
     @Override

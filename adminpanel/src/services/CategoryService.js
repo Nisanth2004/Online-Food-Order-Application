@@ -1,15 +1,16 @@
-import axios from "axios";
+import api from "./CustomAxiosInstance";
 
-const API_BASE = "http://localhost:8080/api/categories";
+
+const CATEGORY_API = "/api/categories";
 
 export const fetchCategories = async () => {
-  return axios.get(API_BASE);
+  return api.get(CATEGORY_API);
 };
 
 export const addCategory = async (category) => {
-  return axios.post(API_BASE, category);
+  return api.post(CATEGORY_API, category);
 };
 
 export const deleteCategory = async (id) => {
-  return axios.delete(`${API_BASE}/${id}`);
+  return api.delete(`${CATEGORY_API}/${id}`);
 };

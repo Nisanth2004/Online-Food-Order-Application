@@ -1,6 +1,8 @@
 package com.nisanth.foodapi.repository;
 
 import com.nisanth.foodapi.entity.FoodEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +19,6 @@ public interface FoodRepository extends MongoRepository<FoodEntity, String> {
 
     // Order foods: sponsored first, then featured, then others
     List<FoodEntity> findAllByOrderBySponsoredDescFeaturedDesc();
+
+    Page<FoodEntity> findAllByOrderBySponsoredDescFeaturedDesc(Pageable pageable);
 }

@@ -1,17 +1,18 @@
-import axios from "axios";
+import api from "./CustomAxiosInstance";
 
-const BASE = "http://localhost:8080/api";
+
+const ADMIN_API = "/api/admin/reviews";
 
 export const fetchAdminReviews = async () => {
-  return await axios.get(`${BASE}/admin/reviews`);
+  return await api.get(ADMIN_API);
 };
 
 export const deleteAdminReview = async (id, token) => {
-  return await axios.delete(`${BASE}/admin/reviews/${id}`, {
+  return await api.delete(`${ADMIN_API}/${id}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 };
 
 export const updateVerifiedStatus = async (id, verified) => {
-  return await axios.put(`${BASE}/admin/reviews/${id}/verify?verified=${verified}`);
+  return await api.put(`${ADMIN_API}/${id}/verify?verified=${verified}`);
 };

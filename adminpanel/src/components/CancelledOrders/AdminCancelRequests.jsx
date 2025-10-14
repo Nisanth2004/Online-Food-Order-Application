@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+// ✅ use global axios instance
 import { toast } from "react-toastify";
+import api from "../../services/CustomAxiosInstance";
 
 const AdminCancelRequests = () => {
   const [requests, setRequests] = useState([]);
 
-  // Fetch all orders
+  // ✅ Fetch all orders
   const fetchRequests = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/orders/all");
+      const res = await api.get("/api/orders/all");
 
       // filter orders with CANCEL_REQUESTED
       const cancelRequests = res.data.filter(
@@ -20,18 +21,14 @@ const AdminCancelRequests = () => {
     }
   };
 
-  // Handle approve/reject actions
+  // ✅ Handle approve/reject actions
   const handleDecision = async (orderId, action) => {
     try {
       if (action === "approve") {
-        await axios.patch(
-          `http://localhost:8080/api/orders/${orderId}/approve-cancel`
-        );
+        await api.patch(`/api/orders/${orderId}/approve-cancel`);
         toast.success("Order cancelled successfully");
       } else if (action === "reject") {
-        await axios.patch(
-          `http://localhost:8080/api/orders/status/${orderId}?status=PREPARING`
-        );
+        await api.patch(`/api/orders/status/${orderId}?status=PREPARING`);
         toast.success("Cancel request rejected, order kept");
       }
 

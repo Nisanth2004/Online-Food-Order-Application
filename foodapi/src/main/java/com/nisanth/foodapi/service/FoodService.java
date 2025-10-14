@@ -3,6 +3,7 @@ package com.nisanth.foodapi.service;
 import com.nisanth.foodapi.entity.Category;
 import com.nisanth.foodapi.io.FoodRequest;
 import com.nisanth.foodapi.io.FoodResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -19,7 +20,9 @@ public interface FoodService {
  FoodResponse readFood(String id);
 
 
- boolean deleteFile(String filename);
+    Page<FoodResponse> getFoodsPaginated(int page, int size);
+
+    boolean deleteFile(String filename);
 
  void deleteFood(String id);
 

@@ -9,13 +9,16 @@ import com.nisanth.foodapi.io.FoodResponse;
 import com.nisanth.foodapi.service.FoodService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/foods")
@@ -49,14 +52,31 @@ public class FoodController {
 
 
     }
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getFoods(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size) {
+
+        Page<FoodResponse> foodPage = foodService.getFoodsPaginated(page, size);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("foods", foodPage.getContent());
+        response.put("currentPage", foodPage.getNumber());
+        response.put("totalItems", foodPage.getTotalElements());
+        response.put("totalPages", foodPage.getTotalPages());
+
+        return ResponseEntity.ok(response);
+    }
+
+
 
     // Build Get All  Food Rest API
 
-    @GetMapping
+    /*@GetMapping
     public List<FoodResponse> readFoods()
     {
        return foodService.readFoods();
-    }
+    }*/
 
     // Build Get single food REST API
 
