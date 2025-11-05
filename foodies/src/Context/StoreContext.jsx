@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { fetchFoodList } from "../service/FoodService";
-import { jwtDecode } from "jwt-decode";
+import * as jwtDecode from "jwt-decode";
 import { addToCart, getCartData, removeQtyFromCart } from "../service/cartService";
 
 export const StoreContext = createContext(null);
@@ -29,8 +29,8 @@ export const StoreContextProvider = (props) => {
   };
 
   const removeFromCart = (foodId) => {
-    setQuantities((prevQuantities) => {
-      const updated = { ...prevQuantities };
+    setQuantities((prev) => {
+      const updated = { ...prev };
       delete updated[foodId];
       return updated;
     });
@@ -45,20 +45,34 @@ export const StoreContextProvider = (props) => {
     async function loadData() {
       try {
         const data = await fetchFoodList();
-        setFoodList(data.foods || []); // ✅ FIXED here
+        setFoodList(data.foods || []);
 
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
-          setToken(storedToken);
-
           try {
             const decoded = jwtDecode(storedToken);
-            setUser(decoded.username || decoded.sub || "Unknown User");
+            const now = Date.now() / 1000; // current time in seconds
+
+            if (decoded.exp && decoded.exp < now) {
+              // Token expired → clear storage and state
+              localStorage.removeItem("token");
+              setToken("");
+              setUser(null);
+              setQuantities({});
+              console.warn("JWT expired. Cleared token from storage.");
+            } else {
+             
+              setToken(storedToken);
+              setUser(decoded.username || decoded.sub || "Unknown User");
+              await loadCartData(storedToken);
+            }
           } catch (err) {
             console.error("Invalid token", err);
+            localStorage.removeItem("token");
+            setToken("");
+            setUser(null);
+            setQuantities({});
           }
-
-          await loadCartData(storedToken);
         }
       } catch (err) {
         console.error("Error loading initial data", err);

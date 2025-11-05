@@ -73,21 +73,24 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+
+        // ✅ Use exact allowed origins (no wildcard patterns)
         config.setAllowedOrigins(List.of(
+                "https://snfoods.netlify.app",
+                "https://admin-foodies.netlify.app",
                 "http://localhost:5173",
                 "http://localhost:5174"
-                // Add production URLs when deploying
-                // "https://admin-foodies.netlify.app",
-                // "https://snfoods.netlify.app"
         ));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setAllowCredentials(true);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager() {

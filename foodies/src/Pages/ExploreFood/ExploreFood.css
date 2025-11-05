@@ -1,0 +1,45 @@
+.explore-container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ff7a18, #af002d 70%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.filter-bar {
+  background: #fff;
+  border: 1px solid #eee;
+  transition: 0.3s ease-in-out;
+}
+
+.filter-bar:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.form-select,
+.form-control {
+  border-radius: 50px !important;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #ff7a18, #af002d);
+  border: none;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(90deg, #af002d, #ff7a18);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

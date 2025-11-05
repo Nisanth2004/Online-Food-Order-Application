@@ -1,17 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useMemo } from "react";
 import { StoreContext } from "../../Context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
 import { fetchFoodList } from "../../service/FoodService";
-import "./FoodDisplay.css"; // ✅ new CSS file for custom styles
+import "./FoodDisplay.css";
 
-const FoodDisplay = ({ category, searchText }) => {
+const FoodDisplay = ({ category, searchText, sortOption }) => {
   const { foodList, setFoodList } = useContext(StoreContext);
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch paginated foods
   const loadFoods = async (pageNumber = 0) => {
     try {
       setLoading(true);
@@ -30,18 +29,37 @@ const FoodDisplay = ({ category, searchText }) => {
     loadFoods(0);
   }, []);
 
-  // ✅ Safe filtering
-  const filteredFoods = Array.isArray(foodList)
-    ? foodList.filter(
-        (food) =>
-          (category === "All" || food.categories.includes(category)) &&
-          food.name.toLowerCase().includes(searchText.toLowerCase())
-      )
-    : [];
+  // ✅ Filtering + Sorting Logic
+  const filteredFoods = useMemo(() => {
+    let result = Array.isArray(foodList)
+      ? foodList.filter(
+          (food) =>
+            (category === "All" || food.categories.includes(category)) &&
+            food.name.toLowerCase().includes(searchText.toLowerCase())
+        )
+      : [];
+
+    switch (sortOption) {
+      case "highlyOrdered":
+        result.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
+        break;
+      case "priceLowHigh":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "priceHighLow":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        break;
+    }
+
+    return result;
+  }, [foodList, category, searchText, sortOption]);
 
   return (
     <div className="container">
       {loading && <p className="text-center">Loading...</p>}
+
       <div className="row">
         {filteredFoods.length > 0 ? (
           filteredFoods.map((food) => (
@@ -67,7 +85,7 @@ const FoodDisplay = ({ category, searchText }) => {
         )}
       </div>
 
-      {/* ✅ Amazon-style Pagination */}
+      {/* Pagination */}
       <div className="pagination-container mt-5">
         <button
           className="pagination-btn"
@@ -81,9 +99,7 @@ const FoodDisplay = ({ category, searchText }) => {
           {Array.from({ length: totalPages }, (_, index) => (
             <button
               key={index}
-              className={`page-number ${
-                index === page ? "active" : ""
-              }`}
+              className={`page-number ${index === page ? "active" : ""}`}
               onClick={() => loadFoods(index)}
               disabled={loading}
             >

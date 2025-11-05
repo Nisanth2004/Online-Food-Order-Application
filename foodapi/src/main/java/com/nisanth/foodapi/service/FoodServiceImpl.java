@@ -7,6 +7,7 @@ import com.nisanth.foodapi.io.FoodRequest;
 import com.nisanth.foodapi.io.FoodResponse;
 import com.nisanth.foodapi.repository.CategoryRepository;
 import com.nisanth.foodapi.repository.FoodRepository;
+import com.nisanth.foodapi.repository.OrderRepository;
 import com.nisanth.foodapi.repository.ReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,9 @@ public class FoodServiceImpl implements FoodService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     @Value("${aws.s3.bucketname}")
     private String bucketName;
@@ -181,6 +185,9 @@ public class FoodServiceImpl implements FoodService {
             res.setAverageRating(0.0);
             res.setReviewCount(0);
         }
+
+        long orderCount = orderRepository.countByOrderedItemsFoodId(food.getId());
+        res.setOrderCount(orderCount);
 
         return res;
     }

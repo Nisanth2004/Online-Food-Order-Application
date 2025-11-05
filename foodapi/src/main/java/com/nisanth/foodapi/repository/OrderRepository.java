@@ -2,6 +2,8 @@ package com.nisanth.foodapi.repository;
 
 import com.nisanth.foodapi.entity.OrderEntity;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,5 +14,8 @@ public interface OrderRepository extends MongoRepository<OrderEntity,String> {
 
    List<OrderEntity> findByUserId(String userId);
    Optional<OrderEntity> findByRazorpayOrderId(String razorpayOrderId);
+
+   long countByOrderedItemsFoodId(String foodId);
+
 
 }

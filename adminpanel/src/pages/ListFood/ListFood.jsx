@@ -6,12 +6,16 @@ import { deleteFood, getFoodList } from "../../services/FoodService";
 const ListFood = () => {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchList = async () => {
+  const fetchList = async (pageNumber = 0) => {
     try {
       setLoading(true);
-      const data = await getFoodList();
-      setList(data || []);
+      const data = await getFoodList(pageNumber, 15);
+      setList(data.foods || []);
+      setPage(data.currentPage || 0);
+      setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error(error);
       toast.error("Error occurred while getting the food list");
@@ -21,7 +25,7 @@ const ListFood = () => {
   };
 
   useEffect(() => {
-    fetchList();
+    fetchList(0);
   }, []);
 
   const removeFood = async (id) => {
@@ -30,7 +34,7 @@ const ListFood = () => {
       const success = await deleteFood(id);
       if (success) {
         toast.success("Food removed");
-        await fetchList();
+        await fetchList(page);
       } else {
         toast.error("Error occurred while removing the food");
       }
@@ -69,11 +73,17 @@ const ListFood = () => {
                     <img src={item.imageUrl} alt="" height={60} width={60} />
                   </td>
                   <td>{item.name}</td>
-                  <td>{item.category}</td>
+                  <td>{item.categories?.join(", ") || "N/A"}</td>
                   <td>&#8377;{item.price}.00</td>
                   <td>
-                    {item.sponsored && <span className="badge bg-danger me-1">Sponsored</span>}
-                    {item.featured && <span className="badge bg-warning text-dark">Best Seller</span>}
+                    {item.sponsored && (
+                      <span className="badge bg-danger me-1">Sponsored</span>
+                    )}
+                    {item.featured && (
+                      <span className="badge bg-warning text-dark">
+                        Best Seller
+                      </span>
+                    )}
                   </td>
                   <td className="text-danger">
                     <i
@@ -93,6 +103,38 @@ const ListFood = () => {
             )}
           </tbody>
         </table>
+
+        {/* ✅ Pagination Section */}
+        <div className="pagination-container text-center my-3">
+          <button
+            className="btn btn-outline-primary mx-1"
+            onClick={() => fetchList(page - 1)}
+            disabled={page === 0 || loading}
+          >
+            ‹ Previous
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              className={`btn mx-1 ${
+                i === page ? "btn-primary" : "btn-outline-primary"
+              }`}
+              onClick={() => fetchList(i)}
+              disabled={loading}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            className="btn btn-outline-primary mx-1"
+            onClick={() => fetchList(page + 1)}
+            disabled={page + 1 >= totalPages || loading}
+          >
+            Next ›
+          </button>
+        </div>
       </div>
     </div>
   );

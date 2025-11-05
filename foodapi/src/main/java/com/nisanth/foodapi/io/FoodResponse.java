@@ -24,5 +24,5 @@ public class FoodResponse {
     private double averageRating;
     private int reviewCount;
 
-
+    private long orderCount;
 }
