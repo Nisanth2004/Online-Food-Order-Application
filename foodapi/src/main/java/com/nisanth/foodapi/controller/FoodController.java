@@ -55,9 +55,13 @@ public class FoodController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getFoods(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "15") int size) {
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sort
+    ) {
 
-        Page<FoodResponse> foodPage = foodService.getFoodsPaginated(page, size);
+        Page<FoodResponse> foodPage = foodService.getFoodsPaginated(page, size, category, search, sort);
 
         Map<String, Object> response = new HashMap<>();
         response.put("foods", foodPage.getContent());
@@ -67,6 +71,7 @@ public class FoodController {
 
         return ResponseEntity.ok(response);
     }
+
 
 
 

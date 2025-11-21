@@ -32,22 +32,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
 
-        String path1 = request.getServletPath();
-        if (path1.startsWith("/api/login") || path1.startsWith("/api/register") ||
-                path1.startsWith("/api/foods") || path1.startsWith("/api/categories")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+
 
         String path = request.getRequestURI();
-        if (path.startsWith("/api/login") ||
-                path.startsWith("/api/register") ||
-                path.startsWith("/api/categories") ||
-                path.startsWith("/api/foods") ||
-                path.startsWith("/api/orders/all") ||
-                path.startsWith("/api/orders/status") ||
-                path.startsWith("/api/orders/") && path.contains("approve-cancel") ||
-                path.startsWith("/api/admin")) {
+        if (
+                path.startsWith("/api/login")
+                        || path.startsWith("/api/register")
+                        || path.startsWith("/api/categories")
+                        || path.startsWith("/api/foods")
+                        || path.startsWith("/api/orders/all")
+                        || path.startsWith("/api/orders/status")
+                        || (path.startsWith("/api/orders/") && path.contains("approve-cancel"))
+                        || path.startsWith("/api/admin")
+        )
+        {
             filterChain.doFilter(request, response);
             return;
         }

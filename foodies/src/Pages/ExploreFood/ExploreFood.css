@@ -1,3 +1,5 @@
+/* Mobile-first improved responsive styles */
+
 .explore-container {
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -6,12 +8,14 @@
   background: linear-gradient(90deg, #ff7a18, #af002d 70%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-size: 1.4rem;
 }
 
 .filter-bar {
   background: #fff;
   border: 1px solid #eee;
   transition: 0.3s ease-in-out;
+  padding: 1rem;
 }
 
 .filter-bar:hover {
@@ -21,12 +25,16 @@
 .form-select,
 .form-control {
   border-radius: 50px !important;
+  font-size: 0.85rem;
+  height: 40px !important;
 }
 
 .btn-primary {
   background: linear-gradient(90deg, #ff7a18, #af002d);
   border: none;
   font-weight: 500;
+  padding: 6px 14px !important;
+  font-size: 0.8rem;
 }
 
 .btn-primary:hover {
@@ -41,5 +49,49 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Medium screens */
+@media (min-width: 576px) {
+  .form-select,
+  .form-control {
+    font-size: 0.9rem;
+    height: 45px !important;
+  }
+
+  .btn-primary {
+    font-size: 0.9rem;
+    padding: 8px 16px !important;
+  }
+
+  .text-gradient {
+    font-size: 1.8rem !important;
+  }
+
+  .filter-bar {
+    padding: 1.5rem !important;
+  }
+}
+
+/* Large screens */
+@media (min-width: 768px) {
+  .form-select,
+  .form-control {
+    font-size: 1rem;
+    height: 50px !important;
+  }
+
+  .btn-primary {
+    font-size: 1rem;
+    padding: 10px 22px !important;
+  }
+
+  .text-gradient {
+    font-size: 2rem !important;
+  }
+
+  .filter-bar {
+    padding: 2rem !important;
   }
 }

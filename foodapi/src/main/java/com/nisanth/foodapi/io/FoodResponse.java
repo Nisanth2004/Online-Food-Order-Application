@@ -25,4 +25,8 @@ public class FoodResponse {
     private int reviewCount;
 
     private long orderCount;
+
+    private int stock;
+    private boolean outOfStock;
+    private int lowStockThreshold;
 }

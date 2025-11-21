@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { StoreContext } from "../../Context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
 import { fetchFoodList } from "../../service/FoodService";
@@ -14,7 +14,15 @@ const FoodDisplay = ({ category, searchText, sortOption }) => {
   const loadFoods = async (pageNumber = 0) => {
     try {
       setLoading(true);
-      const data = await fetchFoodList(pageNumber, 15);
+
+      const data = await fetchFoodList(
+        pageNumber,
+        15,
+        category,
+        searchText,
+        sortOption
+      );
+
       setFoodList(data.foods || []);
       setTotalPages(data.totalPages || 1);
       setPage(pageNumber);
@@ -25,44 +33,22 @@ const FoodDisplay = ({ category, searchText, sortOption }) => {
     }
   };
 
+  // Reload when filters change
   useEffect(() => {
     loadFoods(0);
-  }, []);
-
-  // ✅ Filtering + Sorting Logic
-  const filteredFoods = useMemo(() => {
-    let result = Array.isArray(foodList)
-      ? foodList.filter(
-          (food) =>
-            (category === "All" || food.categories.includes(category)) &&
-            food.name.toLowerCase().includes(searchText.toLowerCase())
-        )
-      : [];
-
-    switch (sortOption) {
-      case "highlyOrdered":
-        result.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
-        break;
-      case "priceLowHigh":
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case "priceHighLow":
-        result.sort((a, b) => b.price - a.price);
-        break;
-      default:
-        break;
-    }
-
-    return result;
-  }, [foodList, category, searchText, sortOption]);
+  }, [category, searchText, sortOption]);
 
   return (
     <div className="container">
       {loading && <p className="text-center">Loading...</p>}
 
+      <p className="text-center text-muted">
+        Page {page + 1} of {totalPages}
+      </p>
+
       <div className="row">
-        {filteredFoods.length > 0 ? (
-          filteredFoods.map((food) => (
+        {foodList.length > 0 ? (
+          foodList.map((food) => (
             <FoodItem
               key={food.id}
               id={food.id}

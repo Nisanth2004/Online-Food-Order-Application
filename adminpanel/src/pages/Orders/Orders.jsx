@@ -12,7 +12,7 @@ const Orders = () => {
   // ✅ Fetch all orders
   const fetchOrders = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/orders/all");
+      const response = await axios.get("https://oil-8eta.onrender.com/api/orders/all");
       setData(response.data.reverse()); // Show latest first
     } catch (error) {
       console.error("Error fetching orders:", error);

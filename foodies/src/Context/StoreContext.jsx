@@ -1,7 +1,8 @@
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { fetchFoodList } from "../service/FoodService";
-import * as jwtDecode from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
+
 import { addToCart, getCartData, removeQtyFromCart } from "../service/cartService";
 
 export const StoreContext = createContext(null);

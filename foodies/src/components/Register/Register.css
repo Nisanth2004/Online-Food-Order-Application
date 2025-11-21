@@ -1,10 +1,145 @@
-.register-container
-{
-    background-image: url('../../assets/login.jpeg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    height: 100vh;
-    align-items: center;
-    justify-content: center;
+/* Unique namespace: regx- to avoid global collisions */
+:root {
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+
+/* Container: full-screen background with stable overlay */
+.regx-container {
+  min-height: 100vh;
+  width: 100%;
+  background-image: url('../../assets/login.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  position: relative;
+  isolation: isolate; /* keep overlay scoped */
+  z-index: 0;
+}
+
+/* dark translucent overlay for improved contrast */
+.regx-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 0;
+}
+
+/* inner wrapper keeps the layout stable, prevents bootstrap row/col pushing card */
+.regx-inner {
+  width: 100%;
+  max-width: 540px;        /* keeps the entire block narrow on large screens */
+  margin: 0 auto;
+  padding: 12px;
+  position: relative;
+  z-index: 1;              /* above overlay */
+}
+
+/* wrapper for card to avoid bootstrap margins interfering */
+.regx-card-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card styling (glass look) */
+.regx-card {
+  width: 100%;
+  max-width: 480px;        /* card itself won't exceed this width */
+  margin: 0 auto !important; /* override any bootstrap margins that split the layout */
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(10px) !important;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* Card body spacing — keep consistent across viewports */
+.regx-card-body {
+  padding: 2rem !important;
+  color: #fff;
+}
+
+/* Title */
+.regx-title {
+  font-weight: 700;
+  font-size: 1.6rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  color: #fff;
+}
+
+/* Inputs — high specificity to override bootstrap default */
+.regx-input {
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.92) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+/* Buttons */
+.regx-btn {
+  padding: 10px 0 !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  display: block;
+  width: 100%;
+}
+
+/* secondary reset button smaller style */
+.regx-card .btn-outline-danger.regx-btn {
+  border-width: 1px !important;
+}
+
+/* Footer text */
+.regx-footer {
+  margin-top: 12px;
+  text-align: center;
+  color: rgba(255,255,255,0.9);
+}
+
+/* Hover effect on card */
+.regx-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(0,0,0,0.45);
+}
+
+/* responsive tweaks */
+@media (max-width: 576px) {
+  .regx-card-body { padding: 1.25rem !important; }
+  .regx-title { font-size: 1.25rem; }
+  .regx-inner { padding: 6px; }
+  .regx-card { max-width: 100%; border-radius: 12px; }
+}
+
+/* medium screens / tablets */
+@media (min-width: 577px) and (max-width: 991px) {
+  .regx-card-body { padding: 1.6rem !important; }
+  .regx-title { font-size: 1.45rem; }
+}
+
+/* large screens */
+@media (min-width: 992px) {
+  .regx-card-body { padding: 2.3rem !important; }
+  .regx-title { font-size: 1.75rem; }
+}
+
+/* Very important: keep layout from "splitting" if Bootstrap adds margin utilities */
+.regx-card, .regx-card * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.regx-link{
+    text-decoration: none;
+    color: #fff;
 }

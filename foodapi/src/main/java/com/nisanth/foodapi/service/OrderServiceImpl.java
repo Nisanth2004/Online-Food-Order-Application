@@ -1,10 +1,12 @@
 package com.nisanth.foodapi.service;
 
+import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
 import com.nisanth.foodapi.repository.CartRepository;
+import com.nisanth.foodapi.repository.FoodRepository;
 import com.nisanth.foodapi.repository.OrderRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
@@ -30,6 +32,9 @@ public class OrderServiceImpl implements OrderService{
     private CartRepository cartRepository;
     @Autowired
     private  UserService userService;
+
+    @Autowired
+    private FoodRepository foodRepository;
 
     @Value("${razorpay_key}")
     private String RAZORPAY_KEY;
@@ -215,5 +220,9 @@ public class OrderServiceImpl implements OrderService{
         order.setOrderStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
     }
+
+
+    // stock
+
 
 }

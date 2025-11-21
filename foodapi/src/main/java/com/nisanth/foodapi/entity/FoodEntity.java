@@ -26,5 +26,9 @@ public class FoodEntity {
     private boolean sponsored;
     private boolean featured;
 
+    private int stock;                  // current available stock
+    private int lowStockThreshold = 5;  // optional default low-stock threshold
+    private boolean outOfStock;         // derived flag (true if stock <= 0)
+
 
 }

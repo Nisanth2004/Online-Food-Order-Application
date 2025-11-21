@@ -18,4 +18,7 @@ public class FoodRequest {
     private List<String> categoryIds;
     private boolean sponsored;
     private boolean featured;
+    private int stock;
+    private int lowStockThreshold;
+
 }

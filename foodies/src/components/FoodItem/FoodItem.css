@@ -1,0 +1,135 @@
+/* ===================================================
+   FOOD CARD — Clean, Consistent, Responsive
+   =================================================== */
+
+/* Card */
+.food-card {
+  max-width: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.food-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+/* Image */
+.card-img-top {
+  height: 300px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Footer */
+.card-footer {
+  padding: 10px 12px !important;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===================================================
+   VIEW FOOD BUTTON
+   =================================================== */
+.view-food-btn {
+  min-width: 100px;
+  text-align: center;
+
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+
+  background: #ff4e4e;
+  color: white;
+  border: none;
+  transition: 0.25s;
+}
+
+.view-food-btn:hover {
+  background: #ff2f2f;
+}
+
+/* ===================================================
+   QUANTITY SELECTOR ( +  number  - )
+   =================================================== */
+.qty-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 95px;
+}
+
+/* +/- buttons */
+.qty-btn {
+  width: 32px;
+  height: 32px;
+
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  background: #f1f1f1;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.qty-btn:hover {
+  background: #e4e4e4;
+}
+
+.qty-btn:active {
+  transform: scale(0.9);
+}
+
+/* Quantity number */
+.qty-num {
+  width: 26px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* ===================================================
+   MOBILE RESPONSIVE FIXES
+   =================================================== */
+
+@media (max-width: 480px) {
+  .view-food-btn {
+    min-width: 85px;
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
+
+  .qty-box {
+    min-width: 80px;
+  }
+
+  .qty-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .qty-num {
+    width: 22px;
+    font-size: 0.9rem;
+  }
+
+  .card-img-top {
+    height: 220px !important;
+  }
+}

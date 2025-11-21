@@ -1,11 +1,70 @@
+/* Main hero section */
 .header {
-    padding: 5rem;
-    margin-bottom: 1rem;
-    border-radius: 0.3rem;
-    margin-top: 0.25rem;
-    color: whitesmoke;
-    background-image: url(../../assets/header2.png);
-    background-size: cover;
-    background-position: center;
-    background-repeat:  no-repeat;
+  padding: 4rem;
+  border-radius: 0.3rem;
+  margin-bottom: 1rem;
+  margin-top: 0.25rem;
+  color: whitesmoke;
+
+  background-image: url(../../assets/header2.png);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  align-items: center;
+  min-height: 380px;        /* ensures proper hero height */
+}
+
+/* Text container */
+.header .container-fluid {
+  max-width: 700px;
+}
+
+/* Mobile Fixes */
+@media (max-width: 768px) {
+  .header {
+    padding: 2.5rem 1.5rem;
+    min-height: 300px;
+    text-align: center;        /* center text */
+  }
+
+  .header .container-fluid {
+    padding: 0;
+  }
+
+  .header h1 {
+    font-size: 1.8rem !important; /* resize title */
+  }
+
+  .header p {
+    font-size: 1rem !important;   /* smaller subtitle */
+    margin: 10px auto;
+  }
+
+  .header .btn {
+    font-size: 0.9rem;
+    padding: 8px 20px;
+  }
+}
+
+/* Extra small (phones <480px) */
+@media (max-width: 480px) {
+  .header {
+    padding: 2rem 1rem;
+    min-height: 260px;
+  }
+
+  .header h1 {
+    font-size: 1.6rem !important;
+  }
+
+  .header p {
+    font-size: 0.9rem !important;
+  }
+
+  .header .btn {
+    padding: 7px 18px;
+    font-size: 0.85rem;
+  }
 }

@@ -5,105 +5,148 @@ import { Link, useNavigate } from 'react-router-dom'
 import { calculateCartTotals } from '../../util/cartUtils'
 
 const Cart = () => {
-   const navigate= useNavigate();
+   const navigate = useNavigate();
 
+   const { increaseQty, decreaseQty, quantities, foodList, removeFromCart, setQuantities } =
+      useContext(StoreContext);
 
-    const{increaseQty,decreaseQty,quantities,foodList,removeFromCart}=useContext(StoreContext)
+   const cartItems = foodList.filter((food) => quantities[food.id] > 0);
 
-    // cart items
+   const { subtotal, shipping, tax, total } = calculateCartTotals(cartItems, quantities);
 
-    const cartItems=foodList.filter((food)=>quantities[food.id]>0);
+   // CLEAR CART FUNCTION
+   const clearCart = () => {
+      const updated = {};
+      foodList.forEach(food => { updated[food.id] = 0; });
+      setQuantities(updated);
+   };
 
-      const {subtotal,shipping,tax,total}= calculateCartTotals(cartItems,quantities);
-  return (
-    <div className="container py-5">
-    <h1 className="mb-5">Your Shopping Cart</h1>
-    <div className="row">
-        <div className="col-lg-8">
-          
-          {
-            cartItems.length===0?(
-                <p>Your cart is Empty.</p>
-            ):(
-                <div className="card mb-4">
-                <div className="card-body">
-                  {
-                    cartItems.map((food)=>(
-                        <div key={food.id} className="row cart-item mb-3">
-                        <div className="col-md-3">
-                            <img src={ food.imageUrl} alt={food.name} className="img-fluid rounded"
-                            width={100}/>
+   return (
+      <div className="container py-5 cart-page">
+
+         <h1 className="cart-title text-center mb-5">
+            <span className="gradient-text">Your Cart</span>
+         </h1>
+
+         <div className="row">
+
+            {/* LEFT SIDE */}
+            <div className="col-lg-8">
+
+               {cartItems.length === 0 ? (
+                  <div className="empty-cart text-center p-5 shadow-soft rounded-4">
+                     <h4>Your cart is empty</h4>
+                     <p className="text-muted">Add items to checkout faster!</p>
+                     <Link to="/" className="btn btn-gradient mt-3">Start Shopping</Link>
+                  </div>
+               ) : (
+                  <div className="card cart-card shadow-soft border-0 mb-4">
+                     <div className="card-body">
+
+                        {/* Clear Cart Button */}
+                        <div className="d-flex justify-content-end mb-3">
+                           <button className="clear-cart-btn" onClick={clearCart}>
+                              Clear Cart
+                           </button>
                         </div>
-                        <div className="col-md-5">
-                            <h5 className="card-title">{food.name}</h5>
-                            <p className="text-muted">Category:{food.category}</p>
-                        </div>
-                        <div className="col-md-2">
-                            <div className="input-group">
-                                <button className="btn btn-outline-secondary btn-sm" type="button" 
-                                onClick={()=>decreaseQty(food.id)}
-                                >-</button>
-                                <input style={{"maxWidth":"100px"}}type="text" value={quantities[food.id]} readOnly className="form-control  form-control-sm text-center quantity-input" />
-                                <button className="btn btn-outline-secondary btn-sm" type="button"
-                                onClick={()=>increaseQty(food.id)}
-                                >+</button>
-                            </div>
-                        </div>
-                        <div className="col-md-2 text-end">
-                            <p className="fw-bold">&#8377;{(food.price * quantities[food.id]).toFixed(2)}</p>
-                            <button className="btn btn-sm btn-outline-danger" onClick={()=>removeFromCart(food.id)}>
-                                    <i className="bi bi-trash"></i>
-                                </button>
-                        </div>
-                        <hr/> 
-                    </div>
-                    ))
-                  }
-                
-                    
-                    
-                </div>
+
+                        {cartItems.map((food) => (
+                           <div key={food.id} className="row cart-item align-items-center mb-4">
+
+                              {/* Image */}
+                              <div className="col-4 col-md-3 text-center">
+                                 <div className="img-wrapper">
+                                    <img src={food.imageUrl} alt={food.name} className="cart-img zoom-img" />
+                                 </div>
+                              </div>
+
+                              {/* Name */}
+                              <div className="col-8 col-md-4">
+                                 <h5 className="fw-semibold">{food.name}</h5>
+                                 <p className="text-muted small mb-0">Category: {food.category}</p>
+                              </div>
+
+                              {/* Quantity */}
+                              <div className="col-12 col-md-3 mt-3 mt-md-0 d-flex justify-content-center">
+                                 <div className="quantity-box animated-box">
+                                    <button className="qty-btn" onClick={() => decreaseQty(food.id)}>−</button>
+                                    <span className="qty-display">{quantities[food.id]}</span>
+                                    <button className="qty-btn" onClick={() => increaseQty(food.id)}>+</button>
+                                 </div>
+                              </div>
+
+                              {/* Price */}
+                              <div className="col-12 col-md-2 text-center text-md-end mt-3 mt-md-0">
+                                 <p className="fw-bold fs-5 price-animate">
+                                    ₹{(food.price * quantities[food.id]).toFixed(2)}
+                                 </p>
+                                 <button
+                                    className="btn btn-sm btn-remove"
+                                    onClick={() => removeFromCart(food.id)}
+                                 >
+                                    Remove
+                                 </button>
+                              </div>
+
+                           </div>
+                        ))}
+
+                     </div>
+                  </div>
+               )}
+
+               <div className="text-start mb-4">
+                  <Link to="/" className="btn btn-outline-secondary back-btn">
+                     ← Continue Shopping
+                  </Link>
+               </div>
             </div>
-            )
-        }
-        
-           
-            <div className="text-start mb-4">
-                <Link  to="/" className="btn btn-outline-primary">
-                    <i className="bi bi-arrow-left me-2"></i>Continue Shopping
-                </Link>
-            </div>
-        </div>
-        <div className="col-lg-4">
-           {/* <!-- Cart Summary -->*/}   
-            <div className="card cart-summary">
-                <div className="card-body">
-                    <h5 className="card-title mb-4">Order Summary</h5>
-                    <div className="d-flex justify-content-between mb-3">
+
+            {/* RIGHT SIDE SUMMARY */}
+            <div className="col-lg-4">
+               <div className="card cart-summary shadow-soft border-0">
+                  <div className="card-body">
+                     
+                     <h4 className="fw-bold mb-4">Order Summary</h4>
+
+                     <div className="summary-line">
                         <span>Subtotal</span>
-                        <span>&#8377;{subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-3">
-                        <span>Shipping</span>
-                        <span>&#8377;{shipping===0?0.0:shipping.toFixed(2)}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-3">
-                        <span>Tax</span>
-                        <span>&#8377;{tax.toFixed(2)}</span>
-                    </div>
-                    <hr/>
-                    <div className="d-flex justify-content-between mb-4">
-                        <strong>Total</strong>
-                        <strong>&#8377;{subtotal===0?0.0:total.toFixed(2)}</strong>
-                    </div>
-                    <button className="btn btn-primary w-100" disabled={cartItems.length==0} onClick={()=>navigate ('/order')}>Proceed to Checkout</button>
-                </div>
-            </div>
-        
-        </div>
-    </div>
-</div>
-  )
-}
+                        <span>₹{subtotal.toFixed(2)}</span>
+                     </div>
 
-export default Cart
+                     <div className="summary-line">
+                        <span>Shipping</span>
+                        <span>₹{shipping === 0 ? 0.0 : shipping.toFixed(2)}</span>
+                     </div>
+
+                     <div className="summary-line">
+                        <span>Tax</span>
+                        <span>₹{tax.toFixed(2)}</span>
+                     </div>
+
+                     <hr />
+
+                     <div className="summary-line total">
+                        <strong>Total</strong>
+                        <strong>₹{subtotal === 0 ? 0.0 : total.toFixed(2)}</strong>
+                     </div>
+
+                     <button
+                        className="btn btn-gradient w-100 mt-3"
+                        disabled={cartItems.length === 0}
+                        onClick={() => navigate('/order')}
+                     >
+                        Proceed to Checkout
+                     </button>
+
+                  </div>
+               </div>
+            </div>
+
+         </div>
+
+      </div>
+   );
+};
+
+export default Cart;

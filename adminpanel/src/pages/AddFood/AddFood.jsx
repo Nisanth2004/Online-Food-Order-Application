@@ -18,9 +18,9 @@ const AddFood = () => {
     categories: [], // array of selected category IDs
     sponsored: false,
     featured: false,
+    stock: "", // <-- new field
   });
 
-  // fetch categories on mount
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -38,7 +38,6 @@ const AddFood = () => {
     const { name, value, type, checked } = event.target;
 
     if (type === "checkbox" && name === "categories") {
-      // handle category checkbox selection
       if (checked) {
         setData((prev) => ({
           ...prev,
@@ -57,7 +56,6 @@ const AddFood = () => {
     }
   };
 
-  // Add category inline (admin)
   const handleAddCategory = async () => {
     if (!newCategory.trim()) {
       toast.error("Category name cannot be empty");
@@ -66,7 +64,6 @@ const AddFood = () => {
     try {
       const res = await addCategory({ name: newCategory.trim() });
       setCategories((prev) => [...prev, res.data]);
-      // select the new category automatically
       setData((prev) => ({
         ...prev,
         categories: [...prev.categories, res.data.id],
@@ -94,6 +91,7 @@ const AddFood = () => {
       categoryIds: data.categories,
       sponsored: !!data.sponsored,
       featured: !!data.featured,
+      stock: parseInt(data.stock || "0", 10) || 0, // NEW
     };
 
     setSubmitting(true);
@@ -109,6 +107,7 @@ const AddFood = () => {
         categories: [],
         sponsored: false,
         featured: false,
+        stock: "",
       });
       setImage(null);
     } catch (err) {
@@ -127,7 +126,6 @@ const AddFood = () => {
             <h2 className="mb-4">Add Food</h2>
 
             <form onSubmit={onSubmitHandler}>
-              {/* Image Upload */}
               <div className="mb-3">
                 <label htmlFor="image" className="form-label" style={{ cursor: "pointer" }}>
                   <img
@@ -146,11 +144,8 @@ const AddFood = () => {
                 />
               </div>
 
-              {/* Name */}
               <div className="mb-3">
-                <label htmlFor="name" className="form-label">
-                  Name
-                </label>
+                <label htmlFor="name" className="form-label">Name</label>
                 <input
                   type="text"
                   placeholder="Chicken Biriyani"
@@ -163,11 +158,8 @@ const AddFood = () => {
                 />
               </div>
 
-              {/* Description */}
               <div className="mb-3">
-                <label htmlFor="description" className="form-label">
-                  Description
-                </label>
+                <label htmlFor="description" className="form-label">Description</label>
                 <textarea
                   className="form-control"
                   placeholder="Write the description"
@@ -180,7 +172,6 @@ const AddFood = () => {
                 />
               </div>
 
-              {/* Categories with checkboxes */}
               <div className="mb-3">
                 <label className="form-label">Categories</label>
                 <div className="d-flex flex-wrap gap-2">
@@ -203,7 +194,6 @@ const AddFood = () => {
                   ))}
                 </div>
 
-                {/* Add new category inline */}
                 <div className="d-flex mt-2">
                   <input
                     type="text"
@@ -218,11 +208,8 @@ const AddFood = () => {
                 </div>
               </div>
 
-              {/* Price */}
               <div className="mb-3">
-                <label htmlFor="price" className="form-label">
-                  Price
-                </label>
+                <label htmlFor="price" className="form-label">Price</label>
                 <input
                   type="number"
                   placeholder="Rs.100"
@@ -235,7 +222,23 @@ const AddFood = () => {
                 />
               </div>
 
-              {/* Sponsored / Featured */}
+              {/* Inventory (stock) */}
+              <div className="mb-3">
+                <label htmlFor="stock" className="form-label">Stock (units)</label>
+                <input
+                  type="number"
+                  placeholder="100"
+                  className="form-control"
+                  id="stock"
+                  name="stock"
+                  onChange={onChangeHandler}
+                  value={data.stock}
+                  min={0}
+                  required
+                />
+                <small className="form-text text-muted">Set available quantity. Set 0 to mark as out-of-stock.</small>
+              </div>
+
               <div className="mb-3 d-flex gap-3">
                 <div className="form-check">
                   <input
@@ -246,9 +249,7 @@ const AddFood = () => {
                     checked={data.sponsored}
                     onChange={onChangeHandler}
                   />
-                  <label className="form-check-label" htmlFor="sponsored">
-                    Sponsored
-                  </label>
+                  <label className="form-check-label" htmlFor="sponsored">Sponsored</label>
                 </div>
 
                 <div className="form-check">
@@ -260,9 +261,7 @@ const AddFood = () => {
                     checked={data.featured}
                     onChange={onChangeHandler}
                   />
-                  <label className="form-check-label" htmlFor="featured">
-                    Featured
-                  </label>
+                  <label className="form-check-label" htmlFor="featured">Featured</label>
                 </div>
               </div>
 

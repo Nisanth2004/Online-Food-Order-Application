@@ -131,16 +131,16 @@ const PlaceOrder = () => {
     });
 
     if (response.status === 200) {
-      toast.success("✅ Payment Successful!");
+      toast.success("Payment Successful!");
       await clearCart();
       navigate("/myorders");
     } else {
-      toast.error("❌ Payment failed. Please try again.");
+      toast.error("Payment failed. Please try again.");
       navigate("/");
     }
   } catch (error) {
     console.error(error.response?.data || error.message);
-    toast.error("❌ Payment failed. Please try again.");
+    toast.error("Payment failed. Please try again.");
     navigate("/");
   }
 };
@@ -153,7 +153,7 @@ const deleteOrder = async (orderId) => {
     toast.success("🗑️ Order deleted successfully!");
   } catch (error) {
     console.error(error.response?.data || error.message);
-    toast.error("❌ Something went wrong. Contact support.");
+    toast.error("Something went wrong. Contact support.");
   }
 };
 
@@ -166,7 +166,7 @@ const deleteOrder = async (orderId) => {
     toast.success("🛒 Cart cleared successfully!");
   } catch (error) {
     console.error(error.response?.data || error.message);
-    toast.error("❌ Error while clearing the cart");
+    toast.error("Error while clearing the cart");
   }
 };
 

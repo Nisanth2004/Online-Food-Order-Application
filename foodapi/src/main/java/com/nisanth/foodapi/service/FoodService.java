@@ -20,11 +20,14 @@ public interface FoodService {
  FoodResponse readFood(String id);
 
 
-    Page<FoodResponse> getFoodsPaginated(int page, int size);
+    Page<FoodResponse> getFoodsPaginated(int page, int size, String category, String search, String sort);
 
     boolean deleteFile(String filename);
 
  void deleteFood(String id);
 
  List<Category> getCategories();
+
+   // adjust stock by delta (negative reduces, positive increases)
+    void adjustStock(String foodId, int delta);
 }

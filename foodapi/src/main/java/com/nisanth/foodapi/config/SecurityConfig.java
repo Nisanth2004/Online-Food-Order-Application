@@ -6,9 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -34,28 +32,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Public endpoints
                         .requestMatchers(
                                 "/api/register",
                                 "/api/login",
                                 "/api/foods/**",
                                 "/api/categories/**",
                                 "/api/orders/all",
+                                "/test-s3",
                                 "/api/orders/status/**",
-                                "/api/orders/*/approve-cancel/**",
+                                "/api/orders/approve-cancel/**",
                                 "/api/admin/**"
                         ).permitAll()
-
-                        // ✅ User endpoints — avoid using invalid `/**/.../**`
                         .requestMatchers(
                                 "/api/orders/cancel/**",
                                 "/api/orders/request-cancel/**"
                         ).authenticated()
-
-                        // ✅ Any other endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -69,34 +62,27 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ CORS for both admin and user apps
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-
-        // ✅ Use exact allowed origins (no wildcard patterns)
         config.setAllowedOrigins(List.of(
                 "https://snfoods.netlify.app",
                 "https://admin-foodies.netlify.app",
+                "https://cocogrand-admin.netlify.app",
                 "http://localhost:5173",
+                "https://cocograndorganics.netlify.app",
                 "http://localhost:5174"
         ));
-
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 
-
     @Bean
-    public AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(authProvider);
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }

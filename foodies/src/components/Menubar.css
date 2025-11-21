@@ -1,7 +1,63 @@
-.active
-{
-    color: tomato !important;
+/* Highlight active menu item */
+.active-link {
+  color: tomato !important;
+  font-weight: 700 !important;
 }
-.dropdown-menu li{
-cursor: pointer;
+
+/* Make cart badge look correct */
+.cart-wrapper {
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: tomato;
+  color: #fff;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  border-radius: 50px;
+  font-weight: bold;
+}
+
+/* Fix logo container */
+.menu-logo-wrapper {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dropdown hover pointer */
+.dropdown-menu li {
+  cursor: pointer;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .navbar-nav .nav-link {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .cart-wrapper img {
+    height: 28px;
+    width: 28px;
+  }
+
+  .cart-badge {
+    font-size: 0.65rem;
+    top: -5px;
+    right: -8px;
+  }
 }
