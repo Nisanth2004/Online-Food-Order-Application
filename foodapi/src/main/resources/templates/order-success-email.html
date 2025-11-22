@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Order Confirmation</title>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        .email-container {
+            max-width: 650px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+
+        .header {
+            background: #ff7a18;
+            padding: 25px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .header img {
+            max-width: 110px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #555;
+            font-size: 15px;
+            margin-bottom: 25px;
+        }
+
+        .details-box {
+            background: #fafafa;
+            padding: 20px;
+            border-left: 4px solid #ff7a18;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .details-box strong {
+            color: #222;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+            font-size: 14px;
+        }
+
+        table th {
+            background-color: #f0f0f0;
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .total-row td {
+            font-weight: bold;
+            background: #fafafa;
+            border-top: 2px solid #ccc;
+        }
+
+        .footer {
+            padding: 18px;
+            text-align: center;
+            background: #f7f7f7;
+            color: #777;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="email-container">
+
+    <!-- Header with Logo -->
+    <div class="header">
+        <img src="https://i.postimg.cc/fR1p1yM8/food-land-logo.png" alt="Food Land Logo" />
+        <h2>Order Confirmation</h2>
+        <p style="margin: 5px 0;">Thank you for your purchase!</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+        <p class="title">Hello Customer,</p>
+        <p class="subtitle">
+            Your payment has been received successfully. Here are your full order details:
+        </p>
+
+        <!-- Order Information -->
+        <div class="details-box">
+            <strong>📦 ORDER SUMMARY</strong><br><br>
+
+            <div><strong>Order ID:</strong> <span th:text="${order.id}"></span></div>
+            <div><strong>Payment ID:</strong> <span th:text="${order.razorpayPaymentId}"></span></div>
+            <div><strong>Razorpay Order ID:</strong> <span th:text="${order.razorpayOrderId}"></span></div>
+            <div><strong>Amount Paid:</strong> ₹<span th:text="${order.amount}"></span></div>
+            <div><strong>Status:</strong> <span th:text="${order.orderStatus}"></span></div>
+            <div><strong>Date:</strong> <span th:text="${order.createdDate}"></span></div>
+        </div>
+
+        <!-- Ordered Items -->
+        <h3>🛒 Ordered Items</h3>
+        <table>
+            <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Qty</th>
+                <th>Price (₹)</th>
+                <th>Subtotal (₹)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${order.orderedItems}">
+                <td th:text="${item.name}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td th:text="${item.price}"></td>
+                <td th:text="${item.quantity * item.price}"></td>
+            </tr>
+            </tbody>
+
+            <tr class="total-row">
+                <td colspan="3">Grand Total</td>
+                <td>₹<span th:text="${order.amount}"></span></td>
+            </tr>
+        </table>
+
+        <!-- Delivery Address -->
+        <h3 style="margin-top: 25px;">📍 Delivery Address</h3>
+        <div class="details-box">
+            <p th:text="${order.userAddress}"></p>
+        </div>
+
+        <p style="margin-top: 20px; font-size: 14px;">
+            Our team is preparing your order.
+            You will receive another update once it is dispatched.
+        </p>
+
+        <p style="font-size: 14px;">
+            Thank you for choosing <strong>Food Land</strong>! 🍽️
+            We hope you enjoy your meal!
+        </p>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        © 2025 Food Land — All rights reserved.
+    </div>
+
+</div>
+
+</body>
+</html>

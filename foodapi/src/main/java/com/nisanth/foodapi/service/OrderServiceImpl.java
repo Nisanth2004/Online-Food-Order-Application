@@ -17,6 +17,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +32,15 @@ public class OrderServiceImpl implements OrderService{
     private  OrderRepository orderRepository;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private CartRepository cartRepository;
     @Autowired
     private  UserService userService;
+    @Autowired
+    private SpringTemplateEngine templateEngine;
+
 
     @Autowired
     private FoodRepository foodRepository;
@@ -110,24 +118,29 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public void verifyPayment(Map<String, String> paymentData, String status) {
-        String razorpayOrderId= paymentData.get("razorpay_order_id");
 
-        // get the respective order id
-        OrderEntity exisitingOrder=orderRepository.findByRazorpayOrderId(razorpayOrderId)
-                .orElseThrow(()->new RuntimeException("Order Not Found"));
+        String razorpayOrderId = paymentData.get("razorpay_order_id");
 
-        exisitingOrder.setPaymentStatus(status);
-        exisitingOrder.setRazorPaySignature(paymentData.get("razorpay_signature"));
-        exisitingOrder.setRazorpayPaymentId(paymentData.get("razorpay_payment_id"));
-        orderRepository.save(exisitingOrder);
+        OrderEntity existingOrder = orderRepository.findByRazorpayOrderId(razorpayOrderId)
+                .orElseThrow(() -> new RuntimeException("Order Not Found"));
 
-        if("paid".equalsIgnoreCase(status))
-        {
-            // Stock was already reserved at create, so nothing more to do to stock.
-            // If you want to mark any 'finalized' flag in order, you can add it later.
+        existingOrder.setPaymentStatus(status);
+        existingOrder.setRazorPaySignature(paymentData.get("razorpay_signature"));
+        existingOrder.setRazorpayPaymentId(paymentData.get("razorpay_payment_id"));
+        orderRepository.save(existingOrder);
 
-            // Clear cart for user (only after successful payment)
-            cartRepository.deleteByUserId(exisitingOrder.getUserId());
+        if ("paid".equalsIgnoreCase(status)) {
+
+            // Clear cart
+            cartRepository.deleteByUserId(existingOrder.getUserId());
+
+            // --------------------- SEND EMAIL -----------------------
+            String emailBody = generateOrderEmailHtml(existingOrder);
+            emailService.sendOrderEmail(
+                    existingOrder.getEmail(),
+                    "Your Order Confirmation - " + existingOrder.getId(),
+                    emailBody
+            );
         }
     }
 
@@ -311,6 +324,18 @@ public class OrderServiceImpl implements OrderService{
             }
         }
     }
+
+
+    // send email
+
+
+    public String generateOrderEmailHtml(OrderEntity order) {
+        Context context = new Context();
+        context.setVariable("order", order);
+
+        return templateEngine.process("order-success-email", context);
+    }
+
 
 
 }
