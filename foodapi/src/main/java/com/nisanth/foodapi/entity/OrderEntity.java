@@ -34,4 +34,12 @@ public class OrderEntity {
 
     @CreatedDate
     private Instant createdDate;
+
+
+    @Builder.Default
+    private Boolean stockRestored = false;
+
+    public boolean isStockRestored() {
+        return stockRestored;
+    }
 }

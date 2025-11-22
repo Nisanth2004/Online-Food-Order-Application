@@ -3,18 +3,21 @@ package com.nisanth.foodapi.service;
 import com.nisanth.foodapi.entity.Category;
 import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.entity.ReviewEntity;
+import com.nisanth.foodapi.entity.StockLogEntity;
 import com.nisanth.foodapi.io.FoodRequest;
 import com.nisanth.foodapi.io.FoodResponse;
-import com.nisanth.foodapi.repository.CategoryRepository;
-import com.nisanth.foodapi.repository.FoodRepository;
-import com.nisanth.foodapi.repository.OrderRepository;
-import com.nisanth.foodapi.repository.ReviewRepository;
+import com.nisanth.foodapi.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,10 +29,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +37,9 @@ public class FoodServiceImpl implements FoodService {
 
     @Autowired
     private S3Client s3Client;
+
+    @Autowired
+    private StockLogRepository stockLogRepository;
 
     @Autowired
     private FoodRepository foodRepository;
@@ -49,6 +52,9 @@ public class FoodServiceImpl implements FoodService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @Value("${aws.s3.bucketname}")
     private String bucketName;
@@ -100,6 +106,40 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
+    public FoodResponse updateFood(String id, FoodRequest request, MultipartFile file) {
+
+        // Find existing entity
+        FoodEntity food = foodRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Food not found"));
+
+        // Update simple fields
+        food.setName(request.getName());
+        food.setDescription(request.getDescription());
+        food.setPrice(request.getPrice());
+        food.setSponsored(request.isSponsored());
+        food.setFeatured(request.isFeatured());
+        food.setStock(request.getStock());
+
+        // FIXED: Use correct field name
+        food.setCategoryIds(request.getCategoryIds());
+
+        // Update stock flags
+        food.setOutOfStock(food.getStock() <= 0);
+
+        // If image included → upload & replace
+        if (file != null && !file.isEmpty()) {
+            String newImageUrl = uploadFile(file);
+            food.setImageUrl(newImageUrl);
+        }
+
+        // Save updated entity
+        food = foodRepository.save(food);
+
+        return convertToResponse(food);
+
+    }
+
+    @Override
     public List<FoodResponse> readFoods() {
         return foodRepository.findAllByOrderBySponsoredDescFeaturedDesc()
                 .stream()
@@ -117,12 +157,34 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public void adjustStock(String foodId, int delta) {
         FoodEntity food = foodRepository.findById(foodId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Food not found"));
-        int newStock = food.getStock() + delta;
-        food.setStock(Math.max(newStock, 0));
-        food.setOutOfStock(food.getStock() <= 0);
+                .orElseThrow(() -> new RuntimeException("Food not found"));
+
+        int oldStock = food.getStock();
+        int newStock = Math.max(0, oldStock + delta);
+
+        food.setStock(newStock);
+        food.setOutOfStock(newStock <= 0);
         foodRepository.save(food);
+
+        logStockChange(foodId, food.getName(), oldStock, newStock, "system", "auto_adjust");
     }
+
+
+    @Override
+    public void setStock(String foodId, int newStock) {
+        FoodEntity food = foodRepository.findById(foodId)
+                .orElseThrow(() -> new RuntimeException("Food not found"));
+
+        int oldStock = food.getStock();
+
+        food.setStock(newStock);
+        food.setOutOfStock(newStock <= 0);
+        foodRepository.save(food);
+
+        logStockChange(foodId, food.getName(), oldStock, newStock, "admin", "manual_update");
+    }
+
+
     @Override
     public Page<FoodResponse> getFoodsPaginated(int page, int size, String category, String search, String sort) {
 
@@ -221,8 +283,10 @@ public class FoodServiceImpl implements FoodService {
         res.setOutOfStock(food.isOutOfStock());
         res.setLowStockThreshold(food.getLowStockThreshold());
 
+        // NEW: lowStock if stock <= lowStockThreshold
+        res.setLowStock(food.getStock() <= food.getLowStockThreshold());
+
         // categories, reviews and orderCount logic unchanged...
-        // ... (same as before)
         List<String> categoryNames = Collections.emptyList();
         if (food.getCategoryIds() != null && !food.getCategoryIds().isEmpty()) {
             categoryNames = categoryRepository.findAllById(food.getCategoryIds())
@@ -254,4 +318,72 @@ public class FoodServiceImpl implements FoodService {
     public List<Category> getCategories() {
         return categoryRepository.findAll();
     }
+
+    /**
+     * Atomically decrement stock by qty if enough stock exists.
+     * Returns true if reservation succeeded, false otherwise.
+     */
+    @Override
+    public boolean tryReserveStock(String foodId, int qty) {
+        if (qty <= 0) return false;
+
+        FoodEntity food = foodRepository.findById(foodId)
+                .orElseThrow(() -> new RuntimeException("Food not found"));
+
+        int oldStock = food.getStock();
+
+        if (oldStock < qty) return false;
+
+        int newStock = oldStock - qty;
+
+        food.setStock(newStock);
+        food.setOutOfStock(newStock <= 0);
+        foodRepository.save(food);
+
+        logStockChange(foodId, food.getName(), oldStock, newStock, "user", "order_reservation");
+
+        return true;
+    }
+
+
+    /**
+     * Release previously reserved stock (increment by qty).
+     * If food not found, throws 404.
+     */
+    @Override
+    public void releaseReservedStock(String foodId, int qty) {
+        if (qty <= 0) return;
+
+        FoodEntity food = foodRepository.findById(foodId)
+                .orElseThrow(() -> new RuntimeException("Food not found"));
+
+        int oldStock = food.getStock();
+        int newStock = oldStock + qty;
+
+        food.setStock(newStock);
+        food.setOutOfStock(false);
+        foodRepository.save(food);
+
+        logStockChange(foodId, food.getName(), oldStock, newStock, "system", "cancel_order_restore");
+    }
+
+
+
+    // logs
+    private void logStockChange(String foodId, String foodName, int oldStock, int newStock, String updatedBy, String reason) {
+        StockLogEntity log = StockLogEntity.builder()
+                .foodId(foodId)
+                .foodName(foodName)
+                .oldStock(oldStock)
+                .newStock(newStock)
+                .change(newStock - oldStock)
+                .updatedBy(updatedBy)
+                .reason(reason)
+                .timestamp(new Date())
+                .build();
+
+        stockLogRepository.save(log);
+    }
+
+
 }

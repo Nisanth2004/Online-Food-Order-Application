@@ -3,6 +3,7 @@ package com.nisanth.foodapi.service;
 import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.enumeration.OrderStatus;
+import com.nisanth.foodapi.io.OrderItem;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
 import com.nisanth.foodapi.repository.CartRepository;
@@ -17,12 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-
 public class OrderServiceImpl implements OrderService{
 
     @Autowired
@@ -36,6 +37,10 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     private FoodRepository foodRepository;
 
+    // NEW: Use foodService to adjust/set stock in a central place
+    @Autowired
+    private FoodService foodService;
+
     @Value("${razorpay_key}")
     private String RAZORPAY_KEY;
 
@@ -45,53 +50,93 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public OrderResponse createOrderWithPayment(OrderRequest request) throws RazorpayException {
 
-        // request to entity
-      OrderEntity newOrder = convertToEntity(request);
-     newOrder= orderRepository.save(newOrder);
+        // Basic request validation
+        if (request.getOrderedItems() == null || request.getOrderedItems().isEmpty()) {
+            throw new RuntimeException("No ordered items provided");
+        }
 
-     // create razorpay payment order using razorpay client
-        RazorpayClient razorpayClient=new RazorpayClient(RAZORPAY_KEY,RAZORPAY_SECRET);
-        JSONObject orderRequest=new JSONObject();
-        orderRequest.put("amount",newOrder.getAmount()*100 );
-        orderRequest.put("currency","INR");
-        orderRequest.put("payment_capture",1);
+        // Try to reserve stock for each item atomically.
+        // Keep track of successfully reserved items so we can rollback if some later reservation fails.
+        List<OrderItem> reservedList = new ArrayList<>();
+        try {
+            for (OrderItem item : request.getOrderedItems()) {
+                if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                    throw new RuntimeException("Invalid quantity for item: " + item.getFoodId());
+                }
 
-        // create the order
-       Order razorpayOrder= razorpayClient.orders.create(orderRequest);
-       newOrder.setRazorpayOrderId(razorpayOrder.get("id"));
+                boolean reserved = foodService.tryReserveStock(item.getFoodId(), item.getQuantity());
+                if (!reserved) {
+                    throw new RuntimeException("Insufficient stock or item unavailable: " + item.getName());
+                }
+                reservedList.add(item);
+            }
 
-       // get the user id
-       String loggedInUserId= userService.findByUserId();
-       newOrder.setUserId(loggedInUserId);
-       orderRepository.save(newOrder);
-      return convertToResponse(newOrder);
+            // All reservations succeeded → create order entity & save (orderStatus CREATED)
+            OrderEntity newOrder = convertToEntity(request);
+            if (newOrder.getOrderStatus() == null) {
+                newOrder.setOrderStatus(OrderStatus.PREPARING);
+            }
+            newOrder = orderRepository.save(newOrder);
+
+            // create razorpay payment order using razorpay client
+            RazorpayClient razorpayClient=new RazorpayClient(RAZORPAY_KEY,RAZORPAY_SECRET);
+            JSONObject orderRequest=new JSONObject();
+            orderRequest.put("amount",newOrder.getAmount()*100 );
+            orderRequest.put("currency","INR");
+            orderRequest.put("payment_capture",1);
+
+            // create the order
+            Order razorpayOrder= razorpayClient.orders.create(orderRequest);
+            newOrder.setRazorpayOrderId(razorpayOrder.get("id"));
+
+            // get the user id
+            String loggedInUserId= userService.findByUserId();
+            newOrder.setUserId(loggedInUserId);
+            orderRepository.save(newOrder);
+            return convertToResponse(newOrder);
+
+        } catch (RuntimeException ex) {
+            // rollback any reservations previously made
+            for (OrderItem r : reservedList) {
+                try {
+                    foodService.releaseReservedStock(r.getFoodId(), r.getQuantity() != null ? r.getQuantity() : 0);
+                } catch (Exception ignore) {
+                    // log warning in real app — avoid masking original exception
+                }
+            }
+            throw ex; // rethrow so controller returns error to client
+        }
     }
 
     @Override
     public void verifyPayment(Map<String, String> paymentData, String status) {
-       String razorpayOrderId= paymentData.get("razorpay_order_id");
+        String razorpayOrderId= paymentData.get("razorpay_order_id");
 
-       // get the respective order id
-       OrderEntity exisitingOrder=orderRepository.findByRazorpayOrderId(razorpayOrderId)
-               .orElseThrow(()->new RuntimeException("Order Not Found"));
+        // get the respective order id
+        OrderEntity exisitingOrder=orderRepository.findByRazorpayOrderId(razorpayOrderId)
+                .orElseThrow(()->new RuntimeException("Order Not Found"));
 
-       exisitingOrder.setPaymentStatus(status);
-       exisitingOrder.setRazorPaySignature(paymentData.get("razorpay_signature"));
-       exisitingOrder.setRazorpayPaymentId(paymentData.get("razorpay_payment_id"));
-       orderRepository.save(exisitingOrder);
+        exisitingOrder.setPaymentStatus(status);
+        exisitingOrder.setRazorPaySignature(paymentData.get("razorpay_signature"));
+        exisitingOrder.setRazorpayPaymentId(paymentData.get("razorpay_payment_id"));
+        orderRepository.save(exisitingOrder);
 
-       if("paid".equalsIgnoreCase(status))
-       {
-           cartRepository.deleteByUserId(exisitingOrder.getUserId());
-       }
+        if("paid".equalsIgnoreCase(status))
+        {
+            // Stock was already reserved at create, so nothing more to do to stock.
+            // If you want to mark any 'finalized' flag in order, you can add it later.
 
+            // Clear cart for user (only after successful payment)
+            cartRepository.deleteByUserId(exisitingOrder.getUserId());
+        }
     }
+
 
     @Override
     public List<OrderResponse> getUserOrders() {
         String loggedInUserId=userService.findByUserId();
-      List<OrderEntity> list= orderRepository.findByUserId(loggedInUserId);
-      return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
+        List<OrderEntity> list= orderRepository.findByUserId(loggedInUserId);
+        return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
     }
 
     @Override
@@ -103,7 +148,7 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public List<OrderResponse> getOrdersOfAllUsers() {
         List<OrderEntity> list=orderRepository.findAll();
-       return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
+        return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
 
     }
 
@@ -130,20 +175,30 @@ public class OrderServiceImpl implements OrderService{
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // Allow cancellation only if order belongs to logged-in user
         if (!order.getUserId().equals(loggedInUserId)) {
             throw new RuntimeException("You are not authorized to cancel this order");
         }
 
-        // Only allow cancel if not already delivered or cancelled
-        if (order.getOrderStatus() == OrderStatus.DELIVERED ||
-                order.getOrderStatus() == OrderStatus.CANCELLED) {
-            throw new RuntimeException("This order cannot be cancelled");
+        // idempotent: if already cancelled, do nothing
+        if (order.getOrderStatus() == OrderStatus.CANCELLED) {
+            return;
+        }
+
+        if (order.getOrderStatus() == OrderStatus.DELIVERED) {
+            throw new RuntimeException("Delivered orders cannot be cancelled");
+        }
+
+        // Only release stock if not already restored.
+        if (!order.isStockRestored()) {
+            restoreReservedStock(order);
+            order.setStockRestored(true);
         }
 
         order.setOrderStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
     }
+
+
 
 
     private OrderResponse convertToResponse(OrderEntity newOrder) {
@@ -184,7 +239,7 @@ public class OrderServiceImpl implements OrderService{
                 .phoneNumber(request.getPhoneNumber())
                 .email(request.getEmail())
                 .orderStatus(status)
-                .build();
+                .stockRestored(false).build();
     }
 
 
@@ -208,6 +263,7 @@ public class OrderServiceImpl implements OrderService{
         orderRepository.save(order);
     }
 
+
     @Override
     public void approveCancelOrder(String orderId) {
         OrderEntity order = orderRepository.findById(orderId)
@@ -217,12 +273,44 @@ public class OrderServiceImpl implements OrderService{
             throw new RuntimeException("This order has not been requested for cancellation");
         }
 
+        if (!order.isStockRestored()) {
+            restoreReservedStock(order);
+            order.setStockRestored(true);
+        }
+
         order.setOrderStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
     }
 
 
+
     // stock
+    private void restoreStock(OrderEntity order) {
+        if (order.getOrderedItems() == null) return;
+
+        for (var item : order.getOrderedItems()) {
+            foodService.adjustStock(item.getFoodId(), item.getQuantity());
+        }
+    }
+
+    /**
+            * Helper: restore previously reserved stock for the given order.
+     * This releases quantity back to inventory (idempotent via stockRestored flag).
+            */
+    private void restoreReservedStock(OrderEntity order) {
+        if (order.getOrderedItems() == null) return;
+
+        for (var item : order.getOrderedItems()) {
+            // Release reserved quantity back
+            try {
+                foodService.releaseReservedStock(item.getFoodId(), item.getQuantity() != null ? item.getQuantity() : 0);
+            } catch (Exception e) {
+                // In production: log warning and maybe retry — don't fail restore for other items.
+                // For now, rethrow to surface error. Alternatively, swallow and continue.
+                throw new RuntimeException("Failed to restore stock for item: " + item.getFoodId(), e);
+            }
+        }
+    }
 
 
 }

@@ -60,6 +60,7 @@ const FoodDisplay = ({ category, searchText, sortOption }) => {
               featured={food.featured}
               averageRating={food.averageRating}
               reviewCount={food.reviewCount}
+              stock={food.stock}
             />
           ))
         ) : (

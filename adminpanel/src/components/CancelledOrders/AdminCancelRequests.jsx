@@ -25,7 +25,7 @@ const AdminCancelRequests = () => {
   const handleDecision = async (orderId, action) => {
     try {
       if (action === "approve") {
-        await api.patch(`/api/orders/${orderId}/approve-cancel`);
+        await api.patch(`/api/orders/approve-cancel/${orderId}`);
         toast.success("Order cancelled successfully");
       } else if (action === "reject") {
         await api.patch(`/api/orders/status/${orderId}?status=PREPARING`);

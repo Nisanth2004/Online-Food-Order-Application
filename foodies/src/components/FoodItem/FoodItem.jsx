@@ -14,6 +14,8 @@ const FoodItem = ({
   featured,
   averageRating,
   reviewCount,
+  stock,
+  categories = []
 }) => {
   const { increaseQty, decreaseQty, quantities } = useContext(StoreContext);
 
@@ -27,11 +29,17 @@ const FoodItem = ({
         <div className="card-body">
           <h5 className="card-title d-flex justify-content-between align-items-center">
             {name}
+
             <div>
               {sponsored && <span className="badge bg-danger ms-2">Sponsored</span>}
               {featured && <span className="badge bg-warning text-dark ms-2">Best Seller</span>}
             </div>
           </h5>
+
+          {/* Categories */}
+          <div style={{ fontSize: "12px", color: "#777", marginBottom: "6px" }}>
+            {categories.length > 0 ? categories.join(", ") : "No Category"}
+          </div>
 
           <p className="card-text">{description}</p>
 
@@ -52,20 +60,24 @@ const FoodItem = ({
             View Food
           </Link>
 
-          {quantities[id] > 0 ? (
+          {stock === 0 ? (
+            <button className="btn btn-secondary btn-sm" disabled>
+              Out of Stock
+            </button>
+          ) : quantities[id] > 0 ? (
             <div className="qty-box">
-              <button className="btn btn-danger btn-sm qty-btn" onClick={() => decreaseQty(id)}>
+              <button className="qty-btn" onClick={() => decreaseQty(id)}>
                 <i className="bi bi-dash-circle"></i>
               </button>
 
               <span className="qty-num">{quantities[id]}</span>
 
-              <button className="btn btn-success btn-sm qty-btn" onClick={() => increaseQty(id)}>
+              <button className="qty-btn" onClick={() => increaseQty(id)}>
                 <i className="bi bi-plus-circle"></i>
               </button>
             </div>
           ) : (
-            <button className="btn btn-primary btn-sm qty-btn" onClick={() => increaseQty(id)}>
+            <button className="qty-btn" onClick={() => increaseQty(id)}>
               <i className="bi bi-plus-circle"></i>
             </button>
           )}

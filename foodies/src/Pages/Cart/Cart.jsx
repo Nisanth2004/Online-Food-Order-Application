@@ -1,8 +1,9 @@
-import React, { useContext } from 'react'
-import './Cart.css'
-import { StoreContext } from '../../Context/StoreContext'
-import { Link, useNavigate } from 'react-router-dom'
-import { calculateCartTotals } from '../../util/cartUtils'
+import React, { useContext } from 'react';
+import './Cart.css';
+import { StoreContext } from '../../Context/StoreContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { calculateCartTotals } from '../../util/cartUtils';
+import toast from "react-hot-toast";
 
 const Cart = () => {
    const navigate = useNavigate();
@@ -19,6 +20,7 @@ const Cart = () => {
       const updated = {};
       foodList.forEach(food => { updated[food.id] = 0; });
       setQuantities(updated);
+      toast.success("Cart cleared");
    };
 
    return (
@@ -63,15 +65,36 @@ const Cart = () => {
                               {/* Name */}
                               <div className="col-8 col-md-4">
                                  <h5 className="fw-semibold">{food.name}</h5>
-                                 <p className="text-muted small mb-0">Category: {food.category}</p>
+
+                                 <div style={{ fontSize: 12, color: "#777" }}>
+                                    {(food.categories || []).join(", ")}
+                                 </div>
                               </div>
 
-                              {/* Quantity */}
-                              <div className="col-12 col-md-3 mt-3 mt-md-0 d-flex justify-content-center">
-                                 <div className="quantity-box animated-box">
-                                    <button className="qty-btn" onClick={() => decreaseQty(food.id)}>−</button>
-                                    <span className="qty-display">{quantities[food.id]}</span>
-                                    <button className="qty-btn" onClick={() => increaseQty(food.id)}>+</button>
+                              {/* Quantity + Stock */}
+                              <div className="col-12 col-md-3 mt-3 mt-md-0">
+                                 <div className="qty-stock-wrapper">
+
+                                    {/* Quantity Box */}
+                                    <div className="quantity-box animated-box">
+                                       <button className="qty-btn" onClick={() => decreaseQty(food.id)}>−</button>
+                                       <span className="qty-display">{quantities[food.id]}</span>
+                                       <button
+                                          className="qty-btn"
+                                          onClick={() => {
+                                             if (quantities[food.id] < food.stock) increaseQty(food.id);
+                                             else toast.error(`Only ${food.stock} in stock`);
+                                          }}
+                                       >
+                                          +
+                                       </button>
+                                    </div>
+
+                                    {/* Stock Left */}
+                                    <p className="text-muted small stock-left-text mb-0">
+                                       Stock Left: {food.stock - quantities[food.id]}
+                                    </p>
+
                                  </div>
                               </div>
 

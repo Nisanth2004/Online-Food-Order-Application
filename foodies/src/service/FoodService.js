@@ -3,7 +3,7 @@ import api from "./CustomAxiosInstance";
 // ✅ Fetch all foods (paginated)
 export const fetchFoodList = async (
   page = 0,
-  size = 15,
+  size = 16,
   category = "All",
   search = "",
   sort = ""

@@ -132,8 +132,12 @@ const FoodDetails = () => {
             <h3 className="text-success mb-3">₹{data.price}.00</h3>
 
             <p className="lead">{data.description}</p>
+                    <p className={`fw-bold ${data.stock === 0 ? "text-danger" : "text-success"}`}>
+  {data.stock === 0 ? "Out of Stock" : `In Stock: ${data.stock}`}
+</p>
 
             <button
+            disabled={data.stock === 0}
               className="btn btn-dark btn-lg mt-2"
               onClick={addToCart}
             >

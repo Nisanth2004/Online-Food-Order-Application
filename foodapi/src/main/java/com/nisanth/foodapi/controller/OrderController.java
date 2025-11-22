@@ -34,7 +34,7 @@ public class OrderController {
     }
 
     // ✅ Get all orders for logged-in user
-    @GetMapping
+    @GetMapping("/user")
     public ResponseEntity<List<OrderResponse>> getUserOrders() {
         return ResponseEntity.ok(orderService.getUserOrders());
     }
@@ -77,7 +77,7 @@ public class OrderController {
     }
 
     // ✅ Admin: Approve cancellation
-    @PatchMapping("/{orderId}/approve-cancel")
+    @PatchMapping("/approve-cancel/{orderId}")
     public ResponseEntity<String> approveCancelOrder(@PathVariable String orderId) {
         orderService.approveCancelOrder(orderId);
         return ResponseEntity.ok("Order cancellation approved");

@@ -42,12 +42,15 @@ public class SecurityConfig {
                                 "/api/orders/all",
                                 "/test-s3",
                                 "/api/orders/status/**",
+                                "/api/analytics/**",
                                 "/api/orders/approve-cancel/**",
                                 "/api/admin/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/api/orders/cancel/**",
-                                "/api/orders/request-cancel/**"
+                                "/api/orders/request-cancel/**",
+                                "/api/orders/user/**",
+                                "/api/orders/user"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

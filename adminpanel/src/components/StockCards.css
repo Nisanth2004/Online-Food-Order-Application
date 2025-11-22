@@ -1,0 +1,12 @@
+.card {
+  border-radius: 14px;
+}
+
+.card img {
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.card-title {
+  font-weight: 600;
+}

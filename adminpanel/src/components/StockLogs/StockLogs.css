@@ -1,0 +1,123 @@
+/* ========== FILTER BAR ========== */
+.filter-bar {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+}
+
+.filter-bar input,
+.filter-bar select {
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+/* ========== BADGE COLORS ========== */
+.badge-increase {
+  background-color: #28a745 !important;
+  color: white !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.badge-decrease {
+  background-color: #dc3545 !important;
+  color: white !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.badge-neutral {
+  background-color: #6c757d !important;
+  color: white !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.badge-role {
+  background-color: #0dcaf0 !important;
+  color: black !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* ========== THUMBNAILS ========= */
+.log-thumb {
+  width: 55px;
+  height: 55px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e5e5;
+}
+
+.timeline-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
+/* ========== TABS ========== */
+.tabs {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.tab-btn {
+  padding: 8px 18px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.tab-btn.active {
+  background: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+/* ========== TIMELINE ========== */
+.timeline {
+  position: relative;
+  margin-left: 30px;
+  border-left: 3px solid #ddd;
+  padding-left: 25px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.timeline-dot {
+  width: 14px;
+  height: 14px;
+  background: #0d6efd;
+  border-radius: 50%;
+  position: absolute;
+  left: -33px;
+  top: 5px;
+}
+
+.timeline-content {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+}
+
+/* ========== PAGE LAYOUT ========== */
+.stocklogs-page {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

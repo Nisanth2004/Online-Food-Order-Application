@@ -13,13 +13,26 @@ export const StoreContextProvider = (props) => {
   const [token, setToken] = useState("");
   const [user, setUser] = useState(null);
 
-  const increaseQty = async (foodId) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [foodId]: (prev[foodId] || 0) + 1,
-    }));
-    await addToCart(foodId, token);
-  };
+ const increaseQty = async (foodId) => {
+  const food = foodList.find((f) => f.id === foodId);
+
+  if (!food) return;
+
+  // STOCK CHECK
+  const currentQty = quantities[foodId] || 0;
+  if (currentQty >= food.stock) {
+    toast.warning(`Only ${food.stock} stock available`);
+    return;
+  }
+
+  setQuantities((prev) => ({
+    ...prev,
+    [foodId]: currentQty + 1,
+  }));
+
+  await addToCart(foodId, token);
+};
+
 
   const decreaseQty = async (foodId) => {
     setQuantities((prev) => ({

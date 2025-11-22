@@ -29,4 +29,6 @@ public class FoodResponse {
     private int stock;
     private boolean outOfStock;
     private int lowStockThreshold;
+    // NEW: true when stock <= lowStockThreshold (helps UI for low-stock alerts)
+    private boolean lowStock;
 }

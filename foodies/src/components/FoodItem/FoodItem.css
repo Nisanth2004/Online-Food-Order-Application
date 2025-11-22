@@ -2,7 +2,6 @@
    FOOD CARD — Clean, Consistent, Responsive
    =================================================== */
 
-/* Card */
 .food-card {
   max-width: 320px;
   border-radius: 14px;
@@ -37,11 +36,10 @@
    VIEW FOOD BUTTON
    =================================================== */
 .view-food-btn {
-  min-width: 100px;
-  text-align: center;
-
-  padding: 6px 10px;
-  border-radius: 10px;
+  min-width: 30px;           /* reduced from 100px */
+  padding: 4px 8px;          /* smaller padding */
+  font-size: 0.78rem;        /* smaller text */
+  border-radius: 8px;        /* slightly smaller radius */
   font-weight: 600;
 
   background: #ff4e4e;
@@ -70,14 +68,13 @@
   width: 32px;
   height: 32px;
 
-  padding: 0 !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-
   background: #f1f1f1;
   border-radius: 8px;
   border: 1px solid #ccc;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
   font-size: 1rem;
   font-weight: 700;

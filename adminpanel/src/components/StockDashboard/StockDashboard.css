@@ -1,0 +1,17 @@
+.stock-dashboard .summary-card { border-radius: 8px; }
+.stock-dashboard .summary-title { color: #666; font-size: 13px; }
+.stock-dashboard .summary-value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+
+.table thead.sticky-top { position: sticky; top: 0; z-index: 2; }
+.locate-highlight {
+  animation: highlight 1s ease-out;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: yellow;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

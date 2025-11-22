@@ -21,7 +21,7 @@ const MyOrders = () => {
   // ✅ Fetch all user orders
   const fetchOrders = async () => {
     try {
-      const response = await api.get("/api/orders", {
+      const response = await api.get("/api/orders/user", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setData(response.data);

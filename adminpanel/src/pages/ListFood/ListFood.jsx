@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { deleteFood, getFoodList } from "../../services/FoodService";
 import { toast } from "react-toastify";
 import "./ListFood.css";
-import { deleteFood, getFoodList } from "../../services/FoodService";
 
 const ListFood = () => {
   const [list, setList] = useState([]);
@@ -54,6 +54,7 @@ const ListFood = () => {
               <th>Name</th>
               <th>Category</th>
               <th>Price</th>
+              <th>Stock</th>
               <th>Sponsored / Best Seller</th>
               <th>Actions</th>
             </tr>
@@ -62,7 +63,7 @@ const ListFood = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center">
+                <td colSpan={7} className="text-center">
                   Loading...
                 </td>
               </tr>
@@ -76,27 +77,33 @@ const ListFood = () => {
                   <td>{item.categories?.join(", ") || "N/A"}</td>
                   <td>&#8377;{item.price}.00</td>
                   <td>
-                    {item.sponsored && (
-                      <span className="badge bg-danger me-1">Sponsored</span>
-                    )}
-                    {item.featured && (
-                      <span className="badge bg-warning text-dark">
-                        Best Seller
-                      </span>
-                    )}
+                    <div>
+                      {item.outOfStock ? (
+                        <span className="badge bg-danger">Out</span>
+                      ) : item.lowStock ? (
+                        <span className="badge bg-warning text-dark">Low ({item.stock})</span>
+                      ) : (
+                        <span className="badge bg-success">In ({item.stock})</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    {item.sponsored && <span className="badge bg-danger me-1">Sponsored</span>}
+                    {item.featured && <span className="badge bg-warning text-dark">Best Seller</span>}
                   </td>
                   <td className="text-danger">
                     <i
-                      className="bi bi-x-circle-fill"
+                      className="bi bi-x-circle-fill me-2"
                       style={{ cursor: "pointer", fontSize: "1.2rem" }}
                       onClick={() => removeFood(item.id)}
-                    ></i>
+                    />
+                    <a className="btn btn-sm btn-outline-primary" href={`/edit/${item.id}`}>Edit</a>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="text-center">
+                <td colSpan={7} className="text-center">
                   No foods found
                 </td>
               </tr>
@@ -104,7 +111,7 @@ const ListFood = () => {
           </tbody>
         </table>
 
-        {/* ✅ Pagination Section */}
+        {/* Pagination Section */}
         <div className="pagination-container text-center my-3">
           <button
             className="btn btn-outline-primary mx-1"
@@ -117,9 +124,7 @@ const ListFood = () => {
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i}
-              className={`btn mx-1 ${
-                i === page ? "btn-primary" : "btn-outline-primary"
-              }`}
+              className={`btn mx-1 ${i === page ? "btn-primary" : "btn-outline-primary"}`}
               onClick={() => fetchList(i)}
               disabled={loading}
             >

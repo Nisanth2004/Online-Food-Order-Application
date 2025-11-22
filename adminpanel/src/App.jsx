@@ -8,6 +8,11 @@ import Menubar from './components/Menubar/Menubar'
 import AdminReview from './components/Reviews/AdminReview';
 import { ToastContainer } from 'react-toastify';
 import AdminCancelRequests from './components/CancelledOrders/AdminCancelRequests'
+import StockManagement from './components/StockManagement'
+import EditFood from './components/EditFood'
+import StockDashboard from './components/StockDashboard/StockDashboard'
+import StockAnalytics from './components/StockAnalytics/StockAnalytics'
+import StockLogs from './components/StockLogs/StockLogs'
 const App = () => {
 
 
@@ -37,8 +42,14 @@ const App = () => {
                       <Route path='/list' element={<ListFood/>}/>
 
                       <Route path='/orders' element={<Orders/>}/>
+                      <Route path="/stock-management" element={<StockManagement />} />
+<Route path="/edit/:id" element={<EditFood />} />
 
                       <Route path="/reviews" element={<AdminReview />} />
+                      <Route path="/analytics" element={<StockAnalytics />} />
+                       <Route path="/logs" element={<StockLogs />} />
+                      <Route path="/admin/stock-dashboard" element={<StockDashboard />} />
+
                        <Route path="/admin-cancel-requests" element={<AdminCancelRequests />} /> 
                     </Routes>
                 </div>

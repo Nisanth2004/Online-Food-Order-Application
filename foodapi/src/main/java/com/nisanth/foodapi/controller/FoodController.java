@@ -1,6 +1,5 @@
 package com.nisanth.foodapi.controller;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nisanth.foodapi.entity.Category;
@@ -40,22 +39,42 @@ public class FoodController {
         FoodRequest request=null;
         try
         {
-           request = objectMapper.readValue(foodString,FoodRequest.class);
+            request = objectMapper.readValue(foodString,FoodRequest.class);
 
         }catch (JsonProcessingException exception)
         {
-           throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid JSON Format");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid JSON Format");
 
         }
-      FoodResponse response=  foodService.addFood(request,file);
+        FoodResponse response=  foodService.addFood(request,file);
         return response;
 
 
     }
+
+    @PutMapping("/{id}")
+    public FoodResponse updateFood(
+            @PathVariable String id,
+            @RequestPart("food") String foodString,
+            @RequestPart(value = "file", required = false) MultipartFile file
+    ) {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        FoodRequest request;
+
+        try {
+            request = objectMapper.readValue(foodString, FoodRequest.class);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON format");
+        }
+
+        return foodService.updateFood(id, request, file);
+    }
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> getFoods(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "16") int size,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sort
@@ -106,5 +125,27 @@ public class FoodController {
         return foodService.getCategories();
     }
 
+    // ----------------- NEW endpoints for stock management -----------------
 
+    /**
+     * Adjust stock by delta (positive to increase, negative to decrease).
+     * Example: PATCH /api/foods/{id}/stock?delta=-3
+     */
+    @PatchMapping("/{id}/stock")
+    public ResponseEntity<String> adjustStock(@PathVariable String id,
+                                              @RequestParam int delta) {
+        foodService.adjustStock(id, delta);
+        return ResponseEntity.ok("Stock adjusted by " + delta);
+    }
+
+    /**
+     * Set stock to an absolute value.
+     * Example: PUT /api/foods/{id}/stock?value=10
+     */
+    @PutMapping("/{id}/stock")
+    public ResponseEntity<String> setStock(@PathVariable String id,
+                                           @RequestParam int value) {
+        foodService.setStock(id, value);
+        return ResponseEntity.ok("Stock set to " + value);
+    }
 }

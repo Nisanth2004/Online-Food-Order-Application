@@ -1,6 +1,16 @@
+// Final Orders.jsx with safe handling for null createdDate and orderedItems
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { assets } from "../../assets/assets";
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "Not Available";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "Not Available";
+
+  const pad = (n) => (n < 10 ? `0${n}` : n);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
 
 const Orders = () => {
   const [data, setData] = useState([]);
@@ -9,17 +19,15 @@ const Orders = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
 
-  // ✅ Fetch all orders
   const fetchOrders = async () => {
     try {
-      const response = await axios.get("https://oil-8eta.onrender.com/api/orders/all");
-      setData(response.data.reverse()); // Show latest first
+      const response = await axios.get("http://localhost:8080/api/orders/all");
+      setData((response.data || []).reverse());
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
   };
 
-  // ✅ Update order status (instant frontend reflect)
   const updateStatus = async (event, orderId) => {
     const newStatus = event.target.value;
     try {
@@ -32,7 +40,6 @@ const Orders = () => {
         }
       );
 
-      // ✅ Instantly update UI without reloading all data
       setData((prevData) =>
         prevData.map((order) =>
           order.id === orderId ? { ...order, orderStatus: newStatus } : order
@@ -40,7 +47,7 @@ const Orders = () => {
       );
     } catch (error) {
       console.error("Error updating order status:", error.response || error);
-      alert("Failed to update order status. Please check backend or CORS.");
+      alert("Failed to update order status.");
     }
   };
 
@@ -48,24 +55,27 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
-  // ✅ Filter and search logic
   const filteredOrders = useMemo(() => {
-    return data
+    return (data || [])
       .filter((order) => {
+        if (!order) return false;
+
         if (statusFilter !== "All" && order.orderStatus !== statusFilter) return false;
         if (minPrice && order.amount < parseFloat(minPrice)) return false;
         if (maxPrice && order.amount > parseFloat(maxPrice)) return false;
 
         const term = searchTerm.toLowerCase();
         if (term) {
+          const items = (order.orderedItems || []).map((i) => i?.name || "").join(",");
           const matchText = `
             ${order.userAddress || ""}
-            ${order.orderedItems.map((i) => i.name).join(",")}
+            ${items}
             ${order.id || ""}
-            ${order.amount}
+            ${order.amount || ""}
           `.toLowerCase();
           return matchText.includes(term);
         }
+
         return true;
       })
       .sort((a, b) => {
@@ -76,7 +86,6 @@ const Orders = () => {
       });
   }, [data, statusFilter, searchTerm, minPrice, maxPrice]);
 
-  // ✅ Convert enum to readable text
   const getDisplayName = (status) => {
     switch (status) {
       case "PREPARING":
@@ -90,7 +99,6 @@ const Orders = () => {
     }
   };
 
-  // ✅ Convert display name to enum (for sending to backend)
   const mapDisplayToEnum = (displayName) => {
     switch (displayName) {
       case "In Kitchen":
@@ -106,7 +114,6 @@ const Orders = () => {
 
   return (
     <div className="container">
-      {/* Filters Section */}
       <div className="row mt-4 mb-3">
         <div className="col-md-2">
           <select
@@ -166,7 +173,6 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
       <div className="py-4 row justify-content-center">
         <div className="col-11 card">
           <table className="table table-responsive">
@@ -179,16 +185,19 @@ const Orders = () => {
                     </td>
                     <td>
                       <div>
-                        {order.orderedItems.map((item, idx) =>
-                          idx === order.orderedItems.length - 1
-                            ? `${item.name} x${item.quantity}`
-                            : `${item.name} x${item.quantity}, `
+                        {(order.orderedItems || []).map((item, idx) =>
+                          idx === (order.orderedItems?.length || 0) - 1
+                            ? `${item?.name || "Unknown"} x${item?.quantity || 0}`
+                            : `${item?.name || "Unknown"} x${item?.quantity || 0}, `
                         )}
                       </div>
-                      <div>{order.userAddress}</div>
+                      <div>{order.userAddress || "No Address"}</div>
+                      <div className="text-muted small">
+                        Date: {formatDate(order.createdDate)}
+                      </div>
                     </td>
-                    <td>&#x20B9;{order.amount.toFixed(2)}</td>
-                    <td>Items: {order.orderedItems.length}</td>
+                    <td>₹{order.amount?.toFixed(2) || "0.00"}</td>
+                    <td>Items: {order.orderedItems?.length || 0}</td>
                     <td>
                       <select
                         className="form-control"
