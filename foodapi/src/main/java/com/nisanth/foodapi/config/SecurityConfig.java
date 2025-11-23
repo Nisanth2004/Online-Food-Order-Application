@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "/api/orders/status/**",
                                 "/api/analytics/**",
                                 "/api/orders/approve-cancel/**",
-                                "/api/admin/**"
+                                "/api/admin/**",
+                                "/api/orders/admin/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/api/orders/cancel/**",

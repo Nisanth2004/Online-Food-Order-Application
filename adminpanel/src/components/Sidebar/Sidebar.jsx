@@ -111,6 +111,21 @@ const Sidebar = ({ sidebarVisible, setCategory }) => {
            <i className="bi bi-graph-up"></i> Analytics
         </Link>
 
+          <Link
+          className="list-group-item list-group-item-action list-group-item-light p-3"
+          to="/customers"
+        >
+           <i className="bi bi-people"></i> Our Customers
+        </Link>
+
+          <Link
+          className="list-group-item list-group-item-action list-group-item-light p-3"
+          to="/courier"
+        >
+<i className="bi bi-truck"></i> Courier Companies
+
+        </Link>
+
         <hr />
 
         {/* CATEGORY LIST */}

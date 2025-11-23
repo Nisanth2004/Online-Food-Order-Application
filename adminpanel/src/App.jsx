@@ -13,6 +13,9 @@ import EditFood from './components/EditFood'
 import StockDashboard from './components/StockDashboard/StockDashboard'
 import StockAnalytics from './components/StockAnalytics/StockAnalytics'
 import StockLogs from './components/StockLogs/StockLogs'
+import OrderDetails from './pages/OrderDetails'
+import Customers from './pages/Customers/Customers'
+import CourierManagement from './pages/CourierManagement/CourierManagement'
 const App = () => {
 
 
@@ -48,6 +51,12 @@ const App = () => {
                       <Route path="/reviews" element={<AdminReview />} />
                       <Route path="/analytics" element={<StockAnalytics />} />
                        <Route path="/logs" element={<StockLogs />} />
+                       <Route path="/orders/:id" element={<OrderDetails />} />
+
+                                <Route path="/customers" element={<Customers />} />
+
+                                <Route path="/courier" element={<CourierManagement />} />
+
                       <Route path="/admin/stock-dashboard" element={<StockDashboard />} />
 
                        <Route path="/admin-cancel-requests" element={<AdminCancelRequests />} /> 

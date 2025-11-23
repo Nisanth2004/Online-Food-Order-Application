@@ -1,0 +1,84 @@
+.customer-container {
+  padding: 20px;
+}
+
+.customer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.customer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.customer-table th,
+.customer-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.customer-table th {
+  background: #f4f4f4;
+  cursor: pointer;
+  user-select: none;
+}
+
+.customer-table tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.customer-table tr:hover {
+  background: #eaf4ff;
+  transition: 0.2s;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-small {
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-view {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-download {
+  background: #1976d2;
+  color: white;
+}
+
+.btn-orders {
+  background: #673ab7;
+  color: white;
+}
+
+.pagination-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 8px;
+}
+
+.pagination-btn {
+  border: 1px solid #bbb;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pagination-btn.active {
+  background: #1976d2;
+  color: white;
+}

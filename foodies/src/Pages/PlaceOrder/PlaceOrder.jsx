@@ -162,6 +162,8 @@ const PlaceOrder = () => {
 
       if (response.status === 200) {
         toast.success("Payment Successful!");
+
+           toast.info("Order details have been sent to your registered email.");
         await clearCart();
         navigate("/myorders");
       } else {

@@ -21,6 +21,8 @@ public class OrderResponse {
     private String orderStatus;
     private List<OrderItem> orderedItems;
     private String createdDate; // Add this
+    private String courierName;
+    private String courierTrackingId;
 
-
+    private String courierTrackUrl;
 }

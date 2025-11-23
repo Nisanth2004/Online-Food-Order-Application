@@ -1,28 +1,32 @@
 package com.nisanth.foodapi.service;
 
-import com.nisanth.foodapi.entity.FoodEntity;
+import com.nisanth.foodapi.entity.Courier;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.enumeration.OrderStatus;
+import com.nisanth.foodapi.io.CourierUpdateRequest;
 import com.nisanth.foodapi.io.OrderItem;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
 import com.nisanth.foodapi.repository.CartRepository;
+import com.nisanth.foodapi.repository.CourierRepository;
 import com.nisanth.foodapi.repository.FoodRepository;
 import com.nisanth.foodapi.repository.OrderRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
-import lombok.AllArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +34,9 @@ public class OrderServiceImpl implements OrderService{
 
     @Autowired
     private  OrderRepository orderRepository;
+
+    @Autowired
+    private CourierRepository courierRepository;
 
     @Autowired
     private EmailService emailService;
@@ -54,6 +61,10 @@ public class OrderServiceImpl implements OrderService{
 
     @Value("${razorpay_secret}")
     private String RAZORPAY_SECRET;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
 
     @Override
     public OrderResponse createOrderWithPayment(OrderRequest request) throws RazorpayException {
@@ -157,13 +168,36 @@ public class OrderServiceImpl implements OrderService{
         orderRepository.deleteById(orderId);
 
     }
+    @Override
+    public OrderResponse getOrderById(String orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
+        return convertToResponse(order);
+    }
     @Override
     public List<OrderResponse> getOrdersOfAllUsers() {
         List<OrderEntity> list=orderRepository.findAll();
         return list.stream().map(entity->convertToResponse(entity)).collect(Collectors.toList());
 
     }
+
+    @Override
+    public List<OrderResponse> getOrdersFiltered(String userId, String phone) {
+
+        List<OrderEntity> list;
+
+        if (userId != null && !userId.isBlank()) {
+            list = orderRepository.findByUserId(userId);
+        } else if (phone != null && !phone.isBlank()) {
+            list = orderRepository.findByPhoneNumber(phone);
+        } else {
+            list = orderRepository.findAll();
+        }
+
+        return list.stream().map(this::convertToResponse).collect(Collectors.toList());
+    }
+
 
     @Override
     public void updateOrderStatus(String orderId, String status) {
@@ -174,6 +208,7 @@ public class OrderServiceImpl implements OrderService{
             OrderStatus orderStatus = OrderStatus.fromString(status);
             entity.setOrderStatus(orderStatus);
             orderRepository.save(entity);
+            messagingTemplate.convertAndSend("/topic/orders", convertToResponse(entity));
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Invalid order status: " + status);
         }
@@ -226,6 +261,9 @@ public class OrderServiceImpl implements OrderService{
                         ? newOrder.getOrderStatus().name()
                         : null)  // convert enum to String
                 .email(newOrder.getEmail())
+                .courierName(newOrder.getCourierName())
+                .courierTrackingId(newOrder.getCourierTrackingId())
+
                 .phoneNumber(newOrder.getPhoneNumber())
                 .orderedItems(newOrder.getOrderedItems())
                 .createdDate(newOrder.getCreatedDate() != null
@@ -335,6 +373,28 @@ public class OrderServiceImpl implements OrderService{
 
         return templateEngine.process("order-success-email", context);
     }
+
+
+
+
+    public void updateCourierDetails(String orderId, String courierName, String trackingId) {
+
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NoSuchElementException("Order not found"));
+
+        Courier courier = courierRepository.findByName(courierName)
+                .orElseThrow(() -> new NoSuchElementException("Courier not found"));
+
+        order.setCourierName(courierName);
+        order.setCourierTrackingId(trackingId);
+        order.setCourierTrackUrl(courier.getTrackUrl());
+
+        order.setOrderStatus(OrderStatus.OUT_FOR_DELIVERY);
+
+        orderRepository.save(order);
+    }
+
+
 
 
 

@@ -42,4 +42,10 @@ public class OrderEntity {
     public boolean isStockRestored() {
         return stockRestored;
     }
+
+    private String courierName;
+    private String courierTrackingId;
+    private String courierTrackUrl;
+
+
 }

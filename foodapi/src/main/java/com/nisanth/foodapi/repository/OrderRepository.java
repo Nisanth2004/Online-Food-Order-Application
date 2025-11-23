@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface OrderRepository extends MongoRepository<OrderEntity,String> {
 
    List<OrderEntity> findByUserId(String userId);
+
+   List<OrderEntity> findByPhoneNumber(String phoneNumber);
+
    Optional<OrderEntity> findByRazorpayOrderId(String razorpayOrderId);
 
    long countByOrderedItemsFoodId(String foodId);

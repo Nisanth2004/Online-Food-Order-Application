@@ -1,0 +1,17 @@
+.filter-input {
+  min-width: 160px;
+  height: 42px;
+  border-radius: 8px;
+}
+
+.filter-btn {
+  min-width: 150px;
+  height: 42px;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .filter-input, .filter-btn {
+    width: 100%;
+  }
+}
