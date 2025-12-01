@@ -3,6 +3,7 @@ package com.nisanth.foodapi.io;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -25,4 +26,11 @@ public class OrderResponse {
     private String courierTrackingId;
 
     private String courierTrackUrl;
+    private List<String> deliveryMessages = new ArrayList<>();
+
+    private double subtotal;
+    private double tax;
+    private double taxRate;
+    private double grandTotal;
+
 }

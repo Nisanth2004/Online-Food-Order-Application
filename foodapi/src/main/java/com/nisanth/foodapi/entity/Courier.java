@@ -16,4 +16,7 @@ public class Courier {
 
     private String name;       // DTDC, ST Courier, Blue Dart...
     private String trackUrl;   // base website URL
+
+    private Boolean isDefault;
+
 }

@@ -1,361 +1,450 @@
-// FULL FILE WITH ORDER ITEMS TABLE + CAMERA + BARCODE
-
-import React, { useEffect, useState, useRef } from "react";
+// OrderDetails.jsx (Premium UI, skeleton + timeline + timestamps + subtotal fix)
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import "./OrderDetails.css";
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "Not Available";
-  const d = new Date(dateStr);
-  return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
-};
-
-const parseAddress = (address) => {
-  if (!address) return {};
-  const parts = address.split(",").map((p) => p.trim());
-  return {
-    name: parts[0] || "Not Available",
-    street: parts[1] || "Not Available",
-    city: parts[2] || "Not Available",
-    state: parts[3] || "Not Available",
-    pinCode: parts[4] || "Not Available",
-  };
-};
-
-const OrderDetails = () => {
+export default function OrderDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // data
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // courier
   const [courierName, setCourierName] = useState("");
   const [trackingId, setTrackingId] = useState("");
-  const [updating, setUpdating] = useState(false);
   const [courierList, setCourierList] = useState([]);
+  const [saving, setSaving] = useState(false);
 
-  // camera scanner
-  const [showScanner, setShowScanner] = useState(false);
-  const [hasScanned, setHasScanned] = useState(false);
+  // scanner placeholders (kept for later)
   const videoRef = useRef(null);
   const codeReader = useRef(null);
   const streamRef = useRef(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
-  // Load Data
+  /* ---------------- FETCH ---------------- */
+  const fetchOrder = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`http://localhost:8080/api/orders/admin/${id}`);
+      setOrder(res.data || {});
+      setCourierName(res.data?.courierName || "");
+      setTrackingId(res.data?.courierTrackingId || "");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load order");
+      setOrder(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchCouriers = async () => {
     try {
       const res = await axios.get("http://localhost:8080/api/admin/couriers");
       setCourierList(res.data || []);
     } catch (err) {
-      console.error("Failed to load couriers:", err);
-    }
-  };
-
-  const fetchOrder = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/api/orders/admin/${id}`
-      );
-      setOrder(response.data);
-      setCourierName(response.data.courierName || "");
-      setTrackingId(response.data.courierTrackingId || "");
-    } catch (err) {
-      console.error("Failed to load order:", err);
-    } finally {
-      setLoading(false);
+      console.error(err);
+      toast.error("Could not load courier list");
     }
   };
 
   useEffect(() => {
     fetchOrder();
     fetchCouriers();
+    return () => {
+      try { codeReader.current?.reset(); } catch {}
+      try { streamRef.current?.getTracks().forEach(t => t.stop()); } catch {}
+    };
   }, [id]);
 
-  // USB Scanner
-  useEffect(() => {
-    let buffer = "";
-    let lastTime = Date.now();
-
-    const handler = (e) => {
-      const now = Date.now();
-      if (now - lastTime > 50) buffer = "";
-      lastTime = now;
-
-      if (e.key === "Enter") {
-        if (buffer.length > 3) {
-          setTrackingId(buffer);
-          toast.success("Barcode scanned!");
-        }
-        buffer = "";
-        return;
-      }
-      if (e.key.length === 1) buffer += e.key;
-    };
-
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  // Camera Scanner
-  const startCameraScanner = async () => {
-    if (!("mediaDevices" in navigator)) {
-      toast.error("Camera not supported");
-      return;
-    }
-
-    setHasScanned(false);
-    setShowScanner(true);
-    codeReader.current = new BrowserMultiFormatReader();
-
-    try {
-      const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-      const preferred =
-        devices.find((d) => /back|rear|environment/i.test(d.label)) ||
-        devices[0];
-      const deviceId = preferred?.deviceId;
-
-      codeReader.current.decodeFromVideoDevice(
-        deviceId || null,
-        videoRef.current,
-        (result, err) => {
-          if (result && !hasScanned) {
-            setHasScanned(true);
-            const text = result.text || String(result);
-            setTrackingId(text);
-            setTimeout(() => stopCameraScanner(), 200);
-          }
-        }
-      );
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          deviceId: deviceId ? { exact: deviceId } : undefined,
-          facingMode: "environment",
-        },
-      });
-
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-    } catch (e) {
-      toast.error("Camera error");
-      stopCameraScanner();
-    }
-  };
-
-  const stopCameraScanner = () => {
-    setShowScanner(false);
-    setHasScanned(false);
-
-    try {
-      codeReader.current?.reset();
-      codeReader.current = null;
-    } catch {}
-
-    if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
-      videoRef.current.srcObject = null;
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-  };
-
-  // Save Courier Info
-  const updateCourierInfo = async () => {
-    if (!courierName || !trackingId) {
-      toast.error("Please select courier & tracking ID");
-      return;
-    }
-
-    setUpdating(true);
+  /* ---------------- SAVE COURIER ---------------- */
+  const saveCourier = async () => {
+    if (!courierName || !trackingId) return toast.error("Select courier & tracking ID");
+    setSaving(true);
     try {
       await axios.put(
         `http://localhost:8080/api/orders/admin/courier/${id}`,
-        {
-          courierName,
-          courierTrackingId: trackingId,
-        }
+        { courierName, courierTrackingId: trackingId }
       );
-
-      toast.success("Courier updated!");
-
-      setOrder((prev) => ({
-        ...prev,
-        courierName,
-        courierTrackingId: trackingId,
-        orderStatus: "OUT_FOR_DELIVERY",
-      }));
-
-      setCourierName("");
-      setTrackingId("");
+      toast.success("Courier updated & customer notified");
+      await fetchOrder();
     } catch (err) {
+      console.error(err);
       toast.error("Failed to update courier");
     } finally {
-      setUpdating(false);
+      setSaving(false);
     }
   };
 
-  if (loading) return <h3 className="text-center mt-5">Loading...</h3>;
-  if (!order) return <h3 className="text-center mt-5">Order Not Found</h3>;
+  /* ---------------- DATE HELPERS ---------------- */
+  const parseToDate = (x) => {
+    if (!x) return null;
+    if (x instanceof Date) return x;
+    if (typeof x === "number") return new Date(x);
+    if (typeof x === "string") {
+      // if string doesn't include timezone, assume UTC by appending Z (safe)
+      const isoLike = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?$/;
+      const safe = isoLike.test(x) ? x : x.includes(".") ? x.split(".")[0] + "Z" : x + "Z";
+      const d = new Date(safe);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  };
 
-  const orderAddress = parseAddress(order.userAddress);
+  const formatDate = (d) => {
+    const dt = parseToDate(d);
+    if (!dt) return "N/A";
+    return dt.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
-  return (
-    <div className="container mt-4">
-      <button className="btn btn-outline-dark mb-3" onClick={() => navigate(-1)}>
-        ⬅ Back
-      </button>
+  const timeAgo = (d) => {
+    const dt = parseToDate(d);
+    if (!dt) return "";
+    const diff = Math.floor((Date.now() - dt.getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
 
-      <div className="card p-4">
-        <h3>Order #{order.id}</h3>
+  /* ---------------- TOTALS ---------------- */
+// SUBTOTAL = sum of items
+const computedSubtotal = useMemo(() => {
+  if (!order) return 0;
+  return order.orderedItems?.reduce(
+    (sum, it) => sum + (it.quantity * it.price),
+    0
+  ) ?? 0;
+}, [order]);
 
-        {/* ORDER ITEMS TABLE (ADDED BACK) */}
-        <h4 className="mt-4">Order Items</h4>
-        <table className="table table-bordered mt-2">
-          <thead className="table-light">
-            <tr>
-              <th>#</th>
-              <th>Item</th>
-              <th>Qty</th>
-              <th>Price</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order?.orderedItems?.length > 0 ? (
-              order.orderedItems.map((item, index) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>₹{item.price}</td>
-                  <td>₹{item.quantity * item.price}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="5" className="text-center text-muted">
-                  No items found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
 
-        <hr />
 
-        <strong>Customer Details</strong>
-        <div className="border rounded p-3 mt-2" style={{ background: "#f8f9fa" }}>
-          <p><strong>Name:</strong> {orderAddress.name}</p>
-          <p><strong>Address:</strong> {orderAddress.street}</p>
-          <p><strong>City:</strong> {orderAddress.city}</p>
-          <p><strong>State:</strong> {orderAddress.state}</p>
-          <p><strong>Pincode:</strong> {orderAddress.pinCode}</p>
+// GRAND TOTAL = backend amount (final)
+const computedGrandTotal = Number(order?.amount ?? 0);
+
+
+
+
+
+ const computedTax = useMemo(() => {
+  if (!order) return 0;
+  if (order.tax != null) return Number(order.tax);
+  const rate = Number(order.taxRate ?? 0.05); // 5%
+  return +(computedSubtotal * rate);
+}, [order, computedSubtotal]);
+
+
+
+
+  /* ---------------- TIMELINE NORMALIZATION ---------------- */
+  // extract ISO-ish timestamp embedded in text
+  const extractIsoTimestamp = (text) => {
+    if (!text || typeof text !== "string") return null;
+    const isoRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?/;
+    const m = text.match(isoRegex);
+    return m ? m[0] : null;
+  };
+
+  const normalizedDeliveryMessages = useMemo(() => {
+    const list = Array.isArray(order?.deliveryMessages) ? order.deliveryMessages : [];
+    const mapped = list.map((m) => {
+      if (typeof m === "string") {
+        const ts = extractIsoTimestamp(m);
+        const text = ts ? m.replace(ts, "").trim() : m;
+        return { text: text || "Update", date: ts || null, raw: m };
+      }
+      if (typeof m === "object" && m) {
+        const rawText = m.text || m.message || m.msg || m.title || "";
+        const explicit = m.date || m.timestamp || m.time || m.createdAt || null;
+        const embedded = extractIsoTimestamp(rawText);
+        const date = explicit || embedded || null;
+        const text = embedded ? rawText.replace(embedded, "").trim() : rawText || JSON.stringify(m);
+        return { text: text || "Update", date, raw: m };
+      }
+      return { text: String(m), date: null, raw: m };
+    });
+
+    const withDate = mapped
+      .map(x => ({ ...x, parsed: parseToDate(x.date) }))
+      .filter(x => x.parsed)
+      .sort((a,b) => b.parsed - a.parsed);
+
+    const withoutDate = mapped.filter(x => !parseToDate(x.date));
+
+    return [
+      ...withDate.map(x => ({ text: x.text, date: x.parsed })),
+      ...withoutDate.map(x => ({ text: x.text, date: null }))
+    ];
+  }, [order]);
+
+  /* ---------------- RENDER ---------------- */
+  if (loading) {
+    // Skeleton loading UI (clean, consistent)
+    return (
+      <div className="container py-5 od-wrapper">
+        <div className="order-header d-flex justify-content-between align-items-center mb-3">
+          <div className="skeleton skel-title skel-inline" style={{ width: 220 }} />
+          <div style={{ display: "flex", gap: 12 }}>
+            <div className="skeleton skel-line" style={{ width: 120 }} />
+            <div className="skeleton skel-line" style={{ width: 80 }} />
+          </div>
         </div>
 
-        <p className="mt-3"><strong>Date:</strong> {formatDate(order.createdDate)}</p>
-        <p><strong>Status:</strong> {order.orderStatus}</p>
-
-        {/* Courier Info */}
-        <h4 className="mt-4">Courier Information</h4>
-        <div className="p-3 border rounded" style={{ background: "#f1f1f1" }}>
-          <div className="mb-3">
-            <label><strong>Select Courier</strong></label>
-            <select
-              className="form-control"
-              value={courierName}
-              onChange={(e) => setCourierName(e.target.value)}
-            >
-              <option value="">-- Select Courier --</option>
-              {courierList.map((c) => (
-                <option key={c.id} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mb-3">
-            <label><strong>Tracking ID</strong></label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="form-control"
-                value={trackingId}
-                onChange={(e) => setTrackingId(e.target.value)}
-              />
-              <button className="btn btn-secondary">🔍 Scan</button>
-              <button className="btn btn-dark" onClick={startCameraScanner}>
-                📷 Camera
-              </button>
+        <div className="row g-4">
+          <div className="col-lg-8">
+            <div className="neo-card">
+              <div className="skeleton skel-title" style={{ width: 160 }} />
+              <div className="skel-box skeleton" />
+              <div className="skeleton skel-table-row" />
+              <div className="skeleton skel-table-row" />
+              <div className="skeleton skel-table-row" />
             </div>
           </div>
 
-          <button className="btn btn-primary" onClick={updateCourierInfo}>
-            Save
-          </button>
+          <div className="col-lg-4">
+            <div className="neo-card">
+              <div className="skeleton skel-title" style={{ width: 160 }} />
+              <div className="skel-box skeleton" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="container py-5 od-wrapper">
+        <div className="neo-card p-4">
+          <h4>Order not found</h4>
+          <p className="text-muted">Unable to locate the order — it may have been removed.</p>
+          <button className="back-btn" onClick={() => navigate(-1)}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-4 od-wrapper">
+      {/* header */}
+      <div className="order-header d-flex justify-content-between align-items-center mb-3">
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
+          <button className="back-btn" onClick={fetchOrder}>Refresh</button>
+          <div style={{ marginLeft: 12 }}>
+            <div className="order-id">#{order.id}</div>
+            <div className="text-muted small">Placed: {formatDate(order.createdDate)}</div>
+          </div>
+        </div>
+
+        <div style={{ textAlign: "right" }}>
+          <div className={`status-badge ${"status-" + (String(order.orderStatus || "unknown").toLowerCase().replace(/\s+/g, "-"))}`}>
+            {order.orderStatus || "Unknown"}
+          </div>
+          <div className="small text-muted" style={{ marginTop: 6 }}>{order.userName || order.customerName}</div>
         </div>
       </div>
 
-      {/* CAMERA MODAL */}
-      {showScanner && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 99999,
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              padding: 16,
-              borderRadius: 8,
-              width: "92%",
-              maxWidth: 520,
-              textAlign: "center",
-            }}
-          >
-            <h4>Scan Barcode</h4>
+      <div className="row g-4">
+        {/* left: order summary */}
+        <div className="col-lg-8">
+          <div className="neo-card p-4">
+            <h4 className="section-title">Order Summary</h4>
 
-            <div
-              style={{
-                width: "100%",
-                height: 360,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "#000",
-                borderRadius: 8,
-                overflow: "hidden",
-              }}
-            >
-              <video
-                ref={videoRef}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                playsInline
-                muted
-                autoPlay
-              />
+            <div className="row mb-3">
+              <div className="col-md-6">
+                <h6>Customer</h6>
+                <div className="text-strong">{order.customerName || order.userName}</div>
+                <div className="small text-muted">{order.userAddress}</div>
+                <div className="small text-muted" style={{ marginTop: 6 }}>📞 {order.phoneNumber}</div>
+              </div>
+              <br/>
+              <br/>
+
+              <br/>
+              <br/>
+
+            <div className="payment-status-box">
+  <h6 className="section-title">Payment Status</h6>
+
+  <div className={`payment-status-tag ${order.paymentStatus?.toLowerCase()}`}>
+    {order.paymentStatus || "—"}
+  </div>
+
+  <div className="payment-amount">
+    Amount: ₹{computedGrandTotal.toFixed(2)}
+  </div>
+</div>
+
             </div>
 
-            <button className="btn btn-secondary mt-3" onClick={stopCameraScanner}>
-              Close Scanner
-            </button>
+            <hr />
+
+            <h6>Items</h6>
+            <div className="table-responsive neo-table-wrap mb-3">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Item</th>
+                    <th className="text-center">Qty</th>
+                    <th className="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(order.orderedItems) && order.orderedItems.length ? (
+                    order.orderedItems.map((it, i) => (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td>{it.name}</td>
+                        <td className="text-center">{it.quantity}</td>
+<td className="text-end">
+  ₹{(it.quantity * it.price).toFixed(2)}
+</td>
+
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="text-muted small">No items</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="d-flex justify-content-end">
+              <div className="neo-total p-3">
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted small">Subtotal</span>
+                  <span>₹{computedSubtotal.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted small">Tax</span>
+                  <span>₹{computedTax.toFixed(2)}</span>
+                </div>
+                <hr className="my-2" />
+                <div className="d-flex justify-content-between fw-bold">
+                  <span>Grand Total</span>
+                  <span>₹{computedGrandTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* courier card */}
+          <div className="neo-card p-3 mt-4">
+            <h6>Courier Information</h6>
+            <div className="row gy-2 align-items-end">
+              <div className="col-md-4">
+                <label className="form-label small">Courier</label>
+                <select className="form-select form-select-sm" value={courierName} onChange={(e) => setCourierName(e.target.value)}>
+                  <option value="">Select courier</option>
+                  {courierList.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+
+              <div className="col-md-5">
+                <label className="form-label small">Tracking ID</label>
+                <div className="input-group input-group-sm">
+                  <input className="form-control" value={trackingId} onChange={(e) => setTrackingId(e.target.value)} />
+                  <button className="btn btn-outline-secondary" type="button" onClick={() => setScannerOpen(true)}>📷</button>
+                </div>
+              </div>
+
+              <div className="col-md-3 d-grid">
+                <button className="btn btn-primary btn-sm" disabled={saving} onClick={saveCourier}>{saving ? "Saving…" : "Save & Notify"}</button>
+                <button className="btn btn-outline-secondary btn-sm mt-2" onClick={() => { setCourierName(""); setTrackingId(""); }}>Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* right: timeline */}
+        <div className="col-lg-4">
+          <div className="neo-card p-3 h-100">
+            <h6 className="section-title">Delivery Timeline</h6>
+            <div className="timeline-wrapper" aria-live="polite">
+              {normalizedDeliveryMessages.length ? (
+                <div className="timeline-list">
+                  {normalizedDeliveryMessages.map((m, i) => {
+                    const date = m.date ? parseToDate(m.date) : null;
+                    const clean = (m.text || "").replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?/gi, "").trim();
+                    const low = (clean || "").toLowerCase();
+
+                    let icon = "📦";
+                    let colorClass = "tl-default";
+                    if (low.includes("placed")) colorClass = "tl-placed";
+                    else if (low.includes("packed")) colorClass = "tl-packed";
+                    else if (low.includes("shipped")) { icon = "🚚"; colorClass = "tl-shipped"; }
+                    else if (low.includes("out for")) { icon = "🚚"; colorClass = "tl-out"; }
+                    else if (low.includes("delivered")) { icon = "✔️"; colorClass = "tl-delivered"; }
+                    else if (low.includes("failed") || low.includes("fail")) { icon = "❌"; colorClass = "tl-failed"; }
+
+                    // stagger animation
+                    const delayMs = i * 80;
+
+                    return (
+                      <div key={i} className={`timeline-row ${i === 0 ? "newest" : ""}`} style={{ animationDelay: `${delayMs}ms` }}>
+                        <div className="timeline-marker">
+                          <span className={`dot ${colorClass}`}></span>
+                          {i !== normalizedDeliveryMessages.length - 1 && <span className="connector" />}
+                        </div>
+
+                        <div className="timeline-body">
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div className="timeline-icon" aria-hidden>{icon}</div>
+                            <div style={{ flex: 1 }}>
+                              <div className="timeline-text">{clean || "Update"}</div>
+                              <div className="timeline-time">
+                                {date ? (
+                                  <>
+                                    <div>{formatDate(date)}</div>
+                                    <div className="text-muted small">{timeAgo(date)}</div>
+                                  </>
+                                ) : (
+                                  <div className="text-muted small">—</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-muted small">No updates yet</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* scanner modal skeleton (placeholder) */}
+      {scannerOpen && (
+        <div className="neo-scanner-overlay" role="dialog" aria-modal="true">
+          <div className="neo-scanner-card">
+            <div className="d-flex justify-content-between mb-2">
+              <h6>Scan Barcode</h6>
+              <button className="btn btn-light btn-sm" onClick={() => setScannerOpen(false)}>Close</button>
+            </div>
+            <div className="neo-scanner-video">
+              <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover" }} playsInline muted />
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default OrderDetails;
+}

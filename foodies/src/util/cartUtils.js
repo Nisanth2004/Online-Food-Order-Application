@@ -5,7 +5,7 @@ export const calculateCartTotals=(cartItems ,quantities)=>{
 
     // calculating shiping charge
     const shipping=subtotal===0?0.0:10;
-    const tax=subtotal*0.1 // 10%
+    const tax=subtotal*0.05 // 5%
     const total=subtotal+shipping+tax;
 
     return {subtotal ,shipping,tax,total};

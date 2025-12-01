@@ -250,20 +250,36 @@ public class OrderServiceImpl implements OrderService{
 
 
     private OrderResponse convertToResponse(OrderEntity newOrder) {
+
+        double subtotal = 0;
+        if (newOrder.getOrderedItems() != null) {
+            subtotal = newOrder.getOrderedItems().stream()
+                    .mapToDouble(i -> i.getQuantity() * i.getPrice())
+                    .sum();
+        }
+
+        double taxRate = 0.05; // 5%
+        double tax = subtotal * taxRate;
+        double grandTotal = subtotal + tax;
+
         return OrderResponse.builder()
                 .id(newOrder.getId())
                 .amount(newOrder.getAmount())
+                .subtotal(subtotal)
+                .tax(tax)
+                .taxRate(taxRate)
+                .grandTotal(grandTotal)
                 .userAddress(newOrder.getUserAddress())
                 .userId(newOrder.getUserId())
                 .razorpayOrderId(newOrder.getRazorpayOrderId())
                 .paymentStatus(newOrder.getPaymentStatus())
                 .orderStatus(newOrder.getOrderStatus() != null
                         ? newOrder.getOrderStatus().name()
-                        : null)  // convert enum to String
+                        : null)
                 .email(newOrder.getEmail())
                 .courierName(newOrder.getCourierName())
                 .courierTrackingId(newOrder.getCourierTrackingId())
-
+                .deliveryMessages(newOrder.getDeliveryMessages())
                 .phoneNumber(newOrder.getPhoneNumber())
                 .orderedItems(newOrder.getOrderedItems())
                 .createdDate(newOrder.getCreatedDate() != null
@@ -271,6 +287,7 @@ public class OrderServiceImpl implements OrderService{
                         : null)
                 .build();
     }
+
 
 
     private OrderEntity convertToEntity(OrderRequest request) {
@@ -283,15 +300,38 @@ public class OrderServiceImpl implements OrderService{
             }
         }
 
+        // --- FIX: Ensure each OrderItem includes price from DB ---
+        List<OrderItem> finalItems = new ArrayList<>();
+        for (OrderItem item : request.getOrderedItems()) {
+            var food = foodRepository.findById(item.getFoodId())
+                    .orElseThrow(() -> new RuntimeException("Food not found: " + item.getFoodId()));
+
+            finalItems.add(OrderItem.builder()
+                    .foodId(item.getFoodId())
+                    .quantity(item.getQuantity())
+                    .price(food.getPrice())       // <-- SAVE PRICE HERE
+                    .name(food.getName())
+                    .description(food.getDescription())
+                    .imageUrl(food.getImageUrl())
+                    .build()
+            );
+        }
+
+        double subtotal = finalItems.stream()
+                .mapToDouble(it -> it.getQuantity() * it.getPrice())
+                .sum();
+
         return OrderEntity.builder()
                 .userAddress(request.getUserAddress())
-                .amount(request.getAmount())
-                .orderedItems(request.getOrderedItems())
+                .amount(subtotal)      // <-- amount = total payable
+                .orderedItems(finalItems)
                 .phoneNumber(request.getPhoneNumber())
                 .email(request.getEmail())
                 .orderStatus(status)
-                .stockRestored(false).build();
+                .stockRestored(false)
+                .build();
     }
+
 
 
     @Override

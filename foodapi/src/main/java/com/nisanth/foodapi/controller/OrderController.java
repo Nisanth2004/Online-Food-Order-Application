@@ -3,6 +3,7 @@ package com.nisanth.foodapi.controller;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
+import com.nisanth.foodapi.repository.OrderRepository;
 import com.nisanth.foodapi.service.OrderService;
 import com.nisanth.foodapi.service.SmsService;
 import com.nisanth.foodapi.util.MessageUtil;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -26,6 +29,7 @@ public class OrderController {
 
     private final MessageUtil messageUtil;
 
+    private final OrderRepository orderRepository;
     // ✅ Create order and initiate Razorpay payment
     @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrderWithPayment(@RequestBody OrderRequest request) throws RazorpayException {
@@ -161,4 +165,46 @@ public class OrderController {
         orderService.approveCancelOrder(orderId);
         return ResponseEntity.ok("Order cancellation approved");
     }
+
+
+    @PostMapping("/partner/{id}/message")
+    public ResponseEntity<?> addDeliveryMessage(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+
+        String message = body.get("message");
+
+        if (message == null || message.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Message required");
+        }
+
+        OrderEntity order = orderRepository.findById(id)
+                .orElse(null);
+
+        if (order == null) {
+            return ResponseEntity.status(404).body("Order not found");
+        }
+
+        if (order.getDeliveryMessages() == null) {
+            order.setDeliveryMessages(new ArrayList<>());
+        }
+
+        order.getDeliveryMessages().add(message + " - " + LocalDateTime.now());
+        orderRepository.save(order);
+
+        return ResponseEntity.ok("Message saved");
+    }
+
+    @GetMapping("/orders/{orderId}/messages")
+    public ResponseEntity<?> getDeliveryMessages(@PathVariable String orderId) {
+        OrderEntity order = orderRepository.findById(orderId).orElse(null);
+
+        if (order == null) {
+            return ResponseEntity.status(404).body("Order not found");
+        }
+
+        return ResponseEntity.ok(order.getDeliveryMessages());
+    }
+
+
 }

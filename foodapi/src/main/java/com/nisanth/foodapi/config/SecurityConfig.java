@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 "/api/foods/**",
                                 "/api/categories/**",
                                 "/api/orders/all",
+                                "/api/orders/partner/**",
                                 "/test-s3",
                                 "/api/orders/status/**",
                                 "/api/analytics/**",
@@ -76,7 +77,8 @@ public class SecurityConfig {
                 "https://cocogrand-admin.netlify.app",
                 "http://localhost:5173",
                 "https://cocograndorganics.netlify.app",
-                "http://localhost:5174"
+                "http://localhost:5174",
+                "http://localhost:5175"
         ));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
