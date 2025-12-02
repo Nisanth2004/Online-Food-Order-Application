@@ -1,0 +1,252 @@
+/* PAGE BASE */
+.tracking-page {
+  max-width: 1050px;
+  margin: auto;
+  padding: 35px 20px;
+  font-family: "Poppins", sans-serif;
+  color: #222;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* BACK BUTTON */
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  color: #000;
+}
+
+/* TITLES */
+.tracking-title {
+  text-align: center;
+  font-size: 34px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.tracking-subtitle {
+  text-align: center;
+  font-size: 15px;
+  color: #666;
+}
+
+/* PROGRESS BAR */
+.progress-wrapper {
+  width: 100%;
+  height: 10px;
+  background: #e6e6e6;
+  border-radius: 20px;
+  margin: 25px 0;
+  overflow: hidden;
+}
+
+.progress-bar-filled {
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #000 0%, #444 50%, #777 100%);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+  transition: width 0.7s ease;
+}
+
+/* MAIN LAYOUT */
+.tracking-layout {
+  display: flex;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.left-column,
+.right-column {
+  flex: 1;
+}
+
+/* HEADERS */
+.section-header {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+/* CARD */
+.info-block {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 22px;
+  border: 1px solid #ececec;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+/* TIMELINE */
+.vertical-timeline {
+  margin-top: 10px;
+  position: relative;
+}
+
+.timeline-item {
+  display: flex;
+  position: relative;
+  padding-bottom: 28px;
+}
+
+.timeline-dot {
+  width: 20px;
+  height: 20px;
+  background: #bfbfbf;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: 0.4s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.timeline-dot.active {
+  background: #000;
+  transform: scale(1.15);
+}
+
+.timeline-line {
+  position: absolute;
+  width: 3px;
+  left: 8px;
+  top: 20px;
+  bottom: -32px;
+  background: #d0d0d0;
+}
+
+.timeline-line.active {
+  background: #000;
+}
+
+.timeline-info {
+  margin-left: 20px;
+}
+
+.timeline-title {
+  margin: 0;
+  font-size: 16px;
+  color: #888;
+}
+
+.timeline-title.active {
+  color: #000;
+  font-weight: 600;
+}
+
+.timeline-time {
+  font-size: 13px;
+  color: #999;
+  margin-top: 3px;
+}
+
+/* ITEMS */
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #efefef;
+}
+
+.item-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.item-qty {
+  color: gray;
+  font-size: 12px;
+}
+
+.item-price {
+  font-weight: 600;
+}
+
+/* FULL WIDTH DELIVERY TIMELINE */
+.delivery-section {
+  margin-top: 35px;
+  width: 100%;
+  background: #fff;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+}
+
+.delivery-update {
+  position: relative;
+  padding-left: 40px;
+  margin: 22px 0;
+}
+
+.delivery-line {
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: -22px;
+  width: 3px;
+  background: #d7d7d7;
+}
+
+.delivery-dot {
+  position: absolute;
+  left: 7px;
+  top: 0px;
+  width: 16px;
+  height: 16px;
+  background: #3a6fff;
+  border-radius: 50%;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+
+.delivery-content {
+  background: #eef3ff;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border-left: 5px solid #3a6fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.delivery-text {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.delivery-time {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+/* SUPPORT */
+.support-btn {
+  padding: 9px 18px;
+  background: #000;
+  color: #fff;
+  border-radius: 10px;
+  margin-top: 8px;
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* LOADER */
+.loader {
+  text-align: center;
+  padding: 60px;
+  font-size: 20px;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .tracking-layout {
+    flex-direction: column;
+  }
+}

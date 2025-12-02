@@ -76,8 +76,8 @@ const PlaceOrder = () => {
         description: item.description,
         name: item.name,
       })),
-      amount: parseFloat(total.toFixed(2)), // numeric amount in rupees
-      orderStatus: "Preparing",
+      amount: parseFloat(total.toFixed(2)),
+      // numeric amount in rupees
     };
 
     setSubmitting(true);

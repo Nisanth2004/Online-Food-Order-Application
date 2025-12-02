@@ -1,7 +1,9 @@
+/* MAIN CONTAINER */
 .courier-container {
   padding: 24px;
 }
 
+/* CARD */
 .courier-card {
   background: #ffffff;
   border-radius: 14px;
@@ -10,6 +12,7 @@
   margin-bottom: 24px;
 }
 
+/* TITLE */
 .courier-title {
   font-size: 28px;
   font-weight: 600;
@@ -17,43 +20,68 @@
   color: #333;
 }
 
+/* PRIMARY BUTTON */
 .btn-primary {
   background: #2563eb;
   color: white;
   padding: 10px 18px;
   border-radius: 8px;
   font-size: 15px;
-  transition: 0.3s;
+  transition: 0.3s ease;
 }
 
 .btn-primary:hover {
   background: #1e4fc7;
 }
 
+/* TABLE BASE */
 .courier-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
 }
 
+/* HEADERS */
 .courier-table th {
   text-align: left;
   padding: 12px;
   background: #f3f4f6;
   font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
 }
 
+/* ROW CELLS */
 .courier-table td {
   padding: 12px;
   border-bottom: 1px solid #e5e7eb;
   font-size: 15px;
 }
 
+/* TABLE HOVER EFFECT */
+.table tbody tr {
+  transition: background 0.25s ease;
+}
+
+.table tbody tr:hover {
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+/* STRIPING (EVEN ROWS) */
+.courier-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+/* ACTION BUTTONS */
 .action-btn {
   padding: 6px 12px;
   border-radius: 6px;
   color: white;
   font-size: 14px;
+  transition: 0.25s ease;
 }
 
 .btn-edit {
@@ -73,7 +101,40 @@
   background: #b81f1f;
 }
 
-/* MODAL */
+/* ----- ROW ANIMATIONS ----- */
+
+/* Fade-in animation for each row */
+.fade-row {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Highlight animation when default courier changes */
+.highlight-row {
+  animation: highlightFlash 1.2s ease;
+  background-color: #d1fae5 !important;
+}
+
+@keyframes highlightFlash {
+  0% {
+    background-color: #bbf7d0;
+  }
+  100% {
+    background-color: #ffffff;
+  }
+}
+
+/* ----- MODAL STYLING ----- */
 .modal-bg {
   position: fixed;
   inset: 0;
@@ -89,8 +150,21 @@
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+  animation: modalPop 0.25s ease-out;
 }
 
+@keyframes modalPop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* MODAL CONTENT */
 .modal-title {
   font-size: 22px;
   font-weight: 600;
@@ -115,6 +189,11 @@
   background: #e5e7eb;
   padding: 8px 16px;
   border-radius: 8px;
+  transition: 0.25s ease;
+}
+
+.btn-cancel:hover {
+  background: #d4d4d4;
 }
 
 .btn-save {
@@ -122,4 +201,9 @@
   color: white;
   padding: 8px 16px;
   border-radius: 8px;
+  transition: 0.25s ease;
+}
+
+.btn-save:hover {
+  background: #1e4fc7;
 }

@@ -1,33 +1,23 @@
 package com.nisanth.foodapi.enumeration;
 
 public enum OrderStatus {
-    PENDING("Pending"),
-    CONFIRMED("Confirmed"),
-    PREPARING("In Kitchen"),
-    OUT_FOR_DELIVERY("Out For Delivery"),
-    DELIVERED("Delivered"),
-    CANCELLED("Cancelled"),
-    CANCEL_REQUESTED("Cancel Requested");
+    ORDER_PLACED,        // Customer placed the order
+    ORDER_CONFIRMED,     // Seller accepted
+    ORDER_PACKED,        // Seller packed items
+    SHIPPED,             // Courier picked up
+    OUT_FOR_DELIVERY,    // Delivery partner is delivering
+    DELIVERED,           // Customer received
+    CANCELLED,
+    CANCEL_REQUESTED;
 
-    private final String displayName;
-
-    OrderStatus(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    // Optional: map from DB string to enum
-    public static OrderStatus fromString(String status) {
-        for (OrderStatus os : OrderStatus.values()) {
-            if (os.displayName.equalsIgnoreCase(status) ||
-                    os.name().equalsIgnoreCase(status.replace(" ", "_"))) {
-                return os;
-            }
+    public static OrderStatus fromString(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Order status cannot be null or empty");
         }
-        throw new IllegalArgumentException("Unknown order status: " + status);
+        try {
+            return OrderStatus.valueOf(value.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid order status: " + value);
+        }
     }
 }
-

@@ -1,9 +1,11 @@
 package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.entity.OrderEntity;
+import com.nisanth.foodapi.io.DeliveryMessage;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
 import com.nisanth.foodapi.repository.OrderRepository;
+import com.nisanth.foodapi.service.CourierService;
 import com.nisanth.foodapi.service.OrderService;
 import com.nisanth.foodapi.service.SmsService;
 import com.nisanth.foodapi.util.MessageUtil;
@@ -29,6 +31,8 @@ public class OrderController {
 
     private final MessageUtil messageUtil;
 
+    private final CourierService courierService;
+
     private final OrderRepository orderRepository;
     // ✅ Create order and initiate Razorpay payment
     @PostMapping("/create")
@@ -42,6 +46,12 @@ public class OrderController {
     public ResponseEntity<String> verifyPayment(@RequestBody Map<String, String> paymentData) {
         orderService.verifyPayment(paymentData, "paid");
         return ResponseEntity.ok("Payment verified successfully");
+    }
+
+    // ✅ User: Get single order for tracking
+    @GetMapping("/track/{orderId}")
+    public ResponseEntity<OrderResponse> getUserOrderById(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.getOrderById(orderId));
     }
 
     // ✅ Get all orders for logged-in user
@@ -189,7 +199,12 @@ public class OrderController {
             order.setDeliveryMessages(new ArrayList<>());
         }
 
-        order.getDeliveryMessages().add(message + " - " + LocalDateTime.now());
+        DeliveryMessage deliveryMessage = new DeliveryMessage();
+        deliveryMessage.setMessage(message);
+        deliveryMessage.setTimestamp(String.valueOf(LocalDateTime.now()));
+
+        order.getDeliveryMessages().add(deliveryMessage);
+
         orderRepository.save(order);
 
         return ResponseEntity.ok("Message saved");
@@ -205,6 +220,9 @@ public class OrderController {
 
         return ResponseEntity.ok(order.getDeliveryMessages());
     }
+
+
+
 
 
 }

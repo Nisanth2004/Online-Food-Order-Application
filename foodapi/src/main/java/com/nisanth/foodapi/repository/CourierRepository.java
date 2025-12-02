@@ -7,4 +7,7 @@ import java.util.Optional;
 
 public interface CourierRepository extends MongoRepository<Courier,String> {
     Optional<Courier> findByName(String courierName);
+
+    Optional<Courier> findByIsDefaultTrue();
+
 }

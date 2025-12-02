@@ -132,20 +132,28 @@ const Cart = () => {
                      
                      <h4 className="fw-bold mb-4">Order Summary</h4>
 
-                     <div className="summary-line">
-                        <span>Subtotal</span>
-                        <span>₹{subtotal.toFixed(2)}</span>
-                     </div>
+                <div className="summary-line">
+   <span>Subtotal</span>
+   <span>₹{subtotal.toFixed(2)}</span>
+</div>
 
-                     <div className="summary-line">
-                        <span>Shipping</span>
-                        <span>₹{shipping === 0 ? 0.0 : shipping.toFixed(2)}</span>
-                     </div>
+<div className="summary-line">
+   <span>Shipping</span>
+   <span>₹{shipping.toFixed(2)}</span>
+</div>
 
-                     <div className="summary-line">
-                        <span>Tax</span>
-                        <span>₹{tax.toFixed(2)}</span>
-                     </div>
+<div className="summary-line">
+   <span>Tax (5%)</span>
+   <span>₹{tax.toFixed(2)}</span>
+</div>
+
+<hr />
+
+<div className="summary-line total">
+   <strong>Total</strong>
+   <strong>₹{total.toFixed(2)}</strong>
+</div>
+
 
                      <hr />
 

@@ -1,6 +1,7 @@
 package com.nisanth.foodapi.entity;
 
 import com.nisanth.foodapi.enumeration.OrderStatus;
+import com.nisanth.foodapi.io.DeliveryMessage;
 import com.nisanth.foodapi.io.OrderItem;
 import lombok.Builder;
 import lombok.Data;
@@ -9,8 +10,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Document(collection = "orders")
 @Data
@@ -48,7 +52,12 @@ public class OrderEntity {
     private String courierTrackingId;
     private String courierTrackUrl;
 
-    private List<String> deliveryMessages = new ArrayList<>();
+    private List<DeliveryMessage> deliveryMessages = new ArrayList<>();
+
+    private Map<String, LocalDateTime> statusTimestamps = new HashMap<>();
+
+
+
 
 
 }

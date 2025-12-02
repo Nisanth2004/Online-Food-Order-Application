@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { toast } from "react-toastify";
+import api from "../../services/CustomAxiosInstance";
 
-const API = "http://localhost:8080/api/admin/couriers";
+
+const API = "/api/admin/couriers"; 
 
 export default function CourierManagement() {
   const [couriers, setCouriers] = useState([]);
@@ -9,6 +11,7 @@ export default function CourierManagement() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [highlightId, setHighlightId] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -17,7 +20,7 @@ export default function CourierManagement() {
 
   const loadCouriers = async () => {
     try {
-      const res = await axios.get(API);
+      const res = await api.get(API);
       setCouriers(res.data);
     } catch (e) {
       console.log("Failed to load couriers:", e);
@@ -47,18 +50,22 @@ export default function CourierManagement() {
   };
 
   const saveCourier = async () => {
-    if (!form.name.trim()) {
-      return;
-    }
+    if (!form.name.trim()) return;
 
-    if (editId) {
-      await axios.put(`${API}/${editId}`, form);
-    } else {
-      await axios.post(API, form);
-    }
+    try {
+      if (editId) {
+        await api.put(`${API}/${editId}`, form);
+        toast.success("Courier updated");
+      } else {
+        await api.post(API, form);
+        toast.success("Courier added");
+      }
 
-    setModalOpen(false);
-    loadCouriers();
+      setModalOpen(false);
+      loadCouriers();
+    } catch (e) {
+      toast.error("Failed to save courier");
+    }
   };
 
   const openDeleteConfirm = (id) => {
@@ -66,22 +73,48 @@ export default function CourierManagement() {
     setDeleteModalOpen(true);
   };
 
+  const setDefaultCourier = async (id) => {
+    try {
+      await api.put(`${API}/default/${id}`);
+      loadCouriers();
+
+      setHighlightId(id);
+      toast.success("Successfully set as default courier partner");
+
+      setTimeout(() => setHighlightId(null), 1200);
+    } catch (e) {
+      console.log("Failed to set default courier:", e);
+    }
+  };
+
+  const unsetDefaultCourier = async () => {
+    try {
+      await api.put(`${API}/default/remove`);
+      toast.info("Default courier removed");
+      loadCouriers();
+    } catch (e) {
+      console.log("Failed to remove default courier:", e);
+    }
+  };
+
   const confirmDelete = async () => {
-    await axios.delete(`${API}/${deleteId}`);
-    setDeleteModalOpen(false);
-    loadCouriers();
+    try {
+      await api.delete(`${API}/${deleteId}`);
+      toast.success("Courier deleted");
+
+      setDeleteModalOpen(false);
+      loadCouriers();
+    } catch (e) {
+      toast.error("Failed to delete courier");
+    }
   };
 
   return (
     <div className="container mt-4">
-
       <div className="card shadow-sm border-0">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
-
-            {/* Title improved */}
             <h3 className="fw-bold text-dark">Courier Management</h3>
-
             <button className="btn btn-primary" onClick={openAdd}>
               + Add Courier
             </button>
@@ -92,41 +125,75 @@ export default function CourierManagement() {
               <tr>
                 <th>Courier Name</th>
                 <th>Tracking URL</th>
+                <th>Default</th>
                 <th className="text-center">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {couriers.map((c) => (
-                <tr key={c.id}>
+                <tr
+                  key={c.id}
+                  className={highlightId === c.id ? "table-success" : ""}
+                  style={{
+                    transition: "0.3s",
+                  }}
+                >
                   <td>{c.name}</td>
+
                   <td>
                     <a href={c.trackUrl} target="_blank" rel="noreferrer">
                       {c.trackUrl}
                     </a>
                   </td>
 
-                  <td className="text-center">
-                    <button
-                      onClick={() => openEdit(c)}
-                      className="btn btn-warning btn-sm me-2"
-                    >
-                      Edit
-                    </button>
+                  <td style={{ width: "200px" }}>
+                    <div className="d-flex align-items-center gap-2">
+                      {c.isDefault ? (
+                        <>
+                          <span className="badge bg-success">Default</span>
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={unsetDefaultCourier}
+                          >
+                            Remove
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          onClick={() => setDefaultCourier(c.id)}
+                          disabled={couriers.some((x) => x.isDefault)}
+                        >
+                          Set Default
+                        </button>
+                      )}
+                    </div>
+                  </td>
 
-                    <button
-                      onClick={() => openDeleteConfirm(c.id)}
-                      className="btn btn-danger btn-sm"
-                    >
-                      Delete
-                    </button>
+                  <td className="text-center" style={{ width: "160px" }}>
+                    <div className="d-flex justify-content-center gap-2">
+                      <button
+                        onClick={() => openEdit(c)}
+                        className="btn btn-warning btn-sm"
+                      >
+                        <i className="bi bi-pencil-square"></i>
+                      </button>
+
+                      <button
+                        onClick={() => openDeleteConfirm(c.id)}
+                        className="btn btn-danger btn-sm"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
 
               {couriers.length === 0 && (
                 <tr>
-                  <td colSpan="3" className="text-center text-muted py-3">
+                  <td colSpan="4" className="text-center text-muted py-3">
                     No couriers added yet.
                   </td>
                 </tr>
@@ -227,7 +294,6 @@ export default function CourierManagement() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

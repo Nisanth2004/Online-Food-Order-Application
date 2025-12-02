@@ -1,23 +1,18 @@
 // src/pages/Customers/Customers.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { useNavigate } from "react-router-dom";
 import "./Customers.css";
 import { assets } from "../../assets/assets";
 
-/*
-  NOTE: uploaded file path (you provided an image earlier).
-  Use this as a logo or header image if you want. The environment will
-  transform this local path to a URL for display/download if needed.
-*/
+// ✅ use your global axios instance
+import api from "../../services/CustomAxiosInstance";
+
 const fileUrl = "/mnt/data/1296c9f8-bfee-4238-83fb-decf9a43d322.png";
 
 const parseAddressParts = (address = "") => {
-  // Accept multiline or comma-separated and return parts array
   if (!address) return [];
-  // Normalize: if contains newline, split by newline else by comma
   const parts = address.includes("\n")
     ? address.split("\n").map((p) => p.trim()).filter(Boolean)
     : address.split(",").map((p) => p.trim()).filter(Boolean);
@@ -30,19 +25,18 @@ const Customers = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters / UI state
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCity, setFilterCity] = useState("");
   const [filterPincode, setFilterPincode] = useState("");
-  const [sortBy, setSortBy] = useState("name_asc"); // name_asc | name_desc | orders_desc | orders_asc
+  const [sortBy, setSortBy] = useState("name_asc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Fetch all orders (admin)
+  // 🚀 Fetch all orders using axios instance
   useEffect(() => {
-    const fetch = async () => {
+    const fetchOrders = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/orders/all");
+        const res = await api.get("/api/orders/all");
         setOrders(res.data || []);
       } catch (err) {
         console.error("Failed to fetch orders:", err);
@@ -50,21 +44,26 @@ const Customers = () => {
         setLoading(false);
       }
     };
-    fetch();
+
+    fetchOrders();
   }, []);
 
-  // Build unique customers map from orders
+  // Build unique customers from orders
   const customers = useMemo(() => {
     const map = new Map();
 
     orders.forEach((order) => {
-      // Unique key: prefer userId, fallback to email or phone
-      const key = order.userId || order.email || order.phoneNumber || `${order.phoneNumber}_${order.email}`;
+      const key =
+        order.userId ||
+        order.email ||
+        order.phoneNumber ||
+        `${order.phoneNumber}_${order.email}`;
+
       if (!map.has(key)) {
-        // parse address to extract city/pincode heuristically
         const parts = parseAddressParts(order.userAddress || "");
-        const city = parts[parts.length - 2] || ""; // guess
+        const city = parts[parts.length - 2] || "";
         const pincode = parts[parts.length - 1] || "";
+
         map.set(key, {
           key,
           userId: order.userId || "",
@@ -80,35 +79,38 @@ const Customers = () => {
         });
       } else {
         const entry = map.get(key);
-        entry.orderCount = (entry.orderCount || 0) + 1;
+        entry.orderCount++;
         entry.orders.push(order);
-        // if address missing earlier, try fill
-        if ((!entry.city || entry.city === "") && (order.city || "").trim()) {
+
+        if ((!entry.city || entry.city === "") && order.city) {
           entry.city = order.city.trim();
         }
-        if ((!entry.pincode || entry.pincode === "") && (order.pincode || "").trim()) {
+        if ((!entry.pincode || entry.pincode === "") && order.pincode) {
           entry.pincode = order.pincode.trim();
         }
-        map.set(key, entry);
       }
     });
 
     return Array.from(map.values());
   }, [orders]);
 
-  // Derived lists: filtered -> sorted -> paginated
+  // Filters
   const filtered = useMemo(() => {
-    const term = (searchTerm || "").toLowerCase();
+    const term = searchTerm.toLowerCase();
+
     return customers.filter((c) => {
-      if (filterCity && c.city && c.city.toLowerCase() !== filterCity.toLowerCase()) return false;
-      if (filterPincode && c.pincode && c.pincode !== filterPincode) return false;
+      if (filterCity && c.city.toLowerCase() !== filterCity.toLowerCase())
+        return false;
+      if (filterPincode && c.pincode !== filterPincode) return false;
 
       if (!term) return true;
+
       const hay = `${c.name} ${c.phone} ${c.email} ${c.address} ${c.city} ${c.pincode}`.toLowerCase();
       return hay.includes(term);
     });
   }, [customers, searchTerm, filterCity, filterPincode]);
 
+  // Sorting
   const sorted = useMemo(() => {
     const arr = [...filtered];
     switch (sortBy) {
@@ -119,10 +121,10 @@ const Customers = () => {
         arr.sort((a, b) => b.name.localeCompare(a.name));
         break;
       case "orders_desc":
-        arr.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
+        arr.sort((a, b) => b.orderCount - a.orderCount);
         break;
       case "orders_asc":
-        arr.sort((a, b) => (a.orderCount || 0) - (b.orderCount || 0));
+        arr.sort((a, b) => a.orderCount - b.orderCount);
         break;
       default:
         break;
@@ -131,12 +133,13 @@ const Customers = () => {
   }, [filtered, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+
   const paginated = useMemo(() => {
     const start = (page - 1) * pageSize;
     return sorted.slice(start, start + pageSize);
   }, [sorted, page, pageSize]);
 
-  // Export customers to Excel
+  // Excel export
   const exportToExcel = () => {
     const rows = sorted.map((c) => ({
       Name: c.name,
@@ -151,20 +154,19 @@ const Customers = () => {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
-    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([buf]), `customers_${new Date().toISOString()}.xlsx`);
+
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([buffer]), `customers_${new Date().toISOString()}.xlsx`);
   };
 
-const gotoCustomerOrders = (customer) => {
-  if (customer.userId) {
-    navigate(`/orders?userId=${customer.userId}`);
-  } else {
-    navigate(`/orders?phone=${customer.phoneNumber}`);
-  }
-};
+  const gotoCustomerOrders = (customer) => {
+    if (customer.userId) {
+      navigate(`/orders?userId=${customer.userId}`);
+    } else {
+      navigate(`/orders?phone=${customer.phone}`);
+    }
+  };
 
-
-  // Pagination controls
   const changePage = (p) => {
     const next = Math.max(1, Math.min(totalPages, p));
     setPage(next);
@@ -172,27 +174,46 @@ const gotoCustomerOrders = (customer) => {
   };
 
   if (loading) {
-    return <div className="container mt-4"><h4>Loading customers...</h4></div>;
+    return (
+      <div className="container mt-4">
+        <h4>Loading customers...</h4>
+      </div>
+    );
   }
 
   return (
     <div className="container mt-4">
       <div className="d-flex align-items-center mb-3 gap-3">
-        <img src={assets.main_logo} alt="logo" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6 }} />
+        <img
+          src={assets.main_logo}
+          alt="logo"
+          style={{
+            width: 48,
+            height: 48,
+            objectFit: "cover",
+            borderRadius: 6,
+          }}
+        />
         <h3 className="m-0">Customer Directory</h3>
+
         <div className="ms-auto d-flex gap-2">
-          <button className="btn btn-outline-secondary" onClick={exportToExcel}>Download Excel</button>
+          <button className="btn btn-outline-secondary" onClick={exportToExcel}>
+            Download Excel
+          </button>
         </div>
       </div>
 
-      {/* Filters + controls */}
+      {/* Filters */}
       <div className="d-flex flex-wrap gap-2 mb-3">
         <input
           placeholder="Search name / phone / email / address"
           className="form-control"
           style={{ minWidth: 240 }}
           value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1);
+          }}
         />
 
         <input
@@ -200,7 +221,10 @@ const gotoCustomerOrders = (customer) => {
           className="form-control"
           style={{ width: 160 }}
           value={filterCity}
-          onChange={(e) => { setFilterCity(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setFilterCity(e.target.value);
+            setPage(1);
+          }}
         />
 
         <input
@@ -208,10 +232,18 @@ const gotoCustomerOrders = (customer) => {
           className="form-control"
           style={{ width: 120 }}
           value={filterPincode}
-          onChange={(e) => { setFilterPincode(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setFilterPincode(e.target.value);
+            setPage(1);
+          }}
         />
 
-        <select className="form-control" style={{ width: 200 }} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+        <select
+          className="form-control"
+          style={{ width: 200 }}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
           <option value="name_asc">Sort: Name A → Z</option>
           <option value="name_desc">Sort: Name Z → A</option>
           <option value="orders_desc">Sort: Most Orders → Least</option>
@@ -222,7 +254,10 @@ const gotoCustomerOrders = (customer) => {
           className="form-control"
           style={{ width: 120 }}
           value={pageSize}
-          onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
+          onChange={(e) => {
+            setPageSize(parseInt(e.target.value));
+            setPage(1);
+          }}
         >
           <option value={5}>5 / page</option>
           <option value={10}>10 / page</option>
@@ -260,38 +295,59 @@ const gotoCustomerOrders = (customer) => {
                 <th></th>
               </tr>
             </thead>
+
             <tbody>
               {paginated.length ? (
                 paginated.map((c) => (
                   <tr key={c.key}>
-                    <td style={{ verticalAlign: "middle" }}>{c.name}</td>
-                    <td style={{ verticalAlign: "middle" }}>{c.phone}</td>
-                    <td style={{ verticalAlign: "middle" }}>{c.email}</td>
-                    <td style={{ verticalAlign: "middle" }}>{c.city || "-"}</td>
-                    <td style={{ verticalAlign: "middle" }}>{c.pincode || "-"}</td>
-                    <td style={{ verticalAlign: "middle" }}>
+                    <td>{c.name}</td>
+                    <td>{c.phone}</td>
+                    <td>{c.email}</td>
+                    <td>{c.city || "-"}</td>
+                    <td>{c.pincode || "-"}</td>
+                    <td>
                       <span className="badge bg-primary">{c.orderCount}</span>
                     </td>
-                    <td style={{ whiteSpace: "pre-line", maxWidth: 380 }}>{c.address}</td>
-                    <td style={{ verticalAlign: "middle" }}>
+                    <td style={{ whiteSpace: "pre-line", maxWidth: 380 }}>
+                      {c.address}
+                    </td>
+                    <td>
                       <div className="d-flex gap-2">
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => gotoCustomerOrders(c)}>View Orders</button>
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => gotoCustomerOrders(c)}
+                        >
+                          View Orders
+                        </button>
+
                         <button
                           className="btn btn-sm btn-outline-secondary"
                           onClick={() => {
-                            // Quick CSV/Excel for single customer
-                            const rows = c.orders.map(o => ({
+                            const rows = c.orders.map((o) => ({
                               OrderID: o.id,
                               Date: o.createdDate,
                               Amount: o.amount,
                               Status: o.orderStatus,
-                              Items: (o.orderedItems || []).map(it => `${it.name} x${it.quantity}`).join(", ")
+                              Items: (o.orderedItems || [])
+                                .map((it) => `${it.name} x${it.quantity}`)
+                                .join(", "),
                             }));
+
                             const ws = XLSX.utils.json_to_sheet(rows);
                             const wb = XLSX.utils.book_new();
                             XLSX.utils.book_append_sheet(wb, ws, "Orders");
-                            const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-                            saveAs(new Blob([buf]), `customer_${c.name || c.phone}_${new Date().toISOString()}.xlsx`);
+
+                            const buf = XLSX.write(wb, {
+                              bookType: "xlsx",
+                              type: "array",
+                            });
+
+                            saveAs(
+                              new Blob([buf]),
+                              `customer_${c.name || c.phone}_${
+                                new Date().toISOString()
+                              }.xlsx`
+                            );
                           }}
                         >
                           Export Orders
@@ -301,7 +357,11 @@ const gotoCustomerOrders = (customer) => {
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan={8} className="text-center">No customers found</td></tr>
+                <tr>
+                  <td colSpan={8} className="text-center">
+                    No customers found
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -311,21 +371,38 @@ const gotoCustomerOrders = (customer) => {
       {/* Pagination */}
       <div className="d-flex justify-content-between align-items-center mt-3">
         <div>
-          Showing {Math.min((page - 1) * pageSize + 1, sorted.length || 0)} - {Math.min(page * pageSize, sorted.length || 0)} of {sorted.length} customers
+          Showing{" "}
+          {Math.min((page - 1) * pageSize + 1, sorted.length || 0)} -{" "}
+          {Math.min(page * pageSize, sorted.length || 0)} of{" "}
+          {sorted.length} customers
         </div>
 
-        <div className="btn-group" role="group">
-          <button className="btn btn-outline-primary" onClick={() => changePage(1)} disabled={page === 1}>First</button>
-          <button className="btn btn-outline-primary" onClick={() => changePage(page - 1)} disabled={page === 1}>Prev</button>
+        <div className="btn-group">
+          <button
+            className="btn btn-outline-primary"
+            disabled={page === 1}
+            onClick={() => changePage(1)}
+          >
+            First
+          </button>
+          <button
+            className="btn btn-outline-primary"
+            disabled={page === 1}
+            onClick={() => changePage(page - 1)}
+          >
+            Prev
+          </button>
 
-          {/* show up to 5 pages around current */}
           {Array.from({ length: totalPages }).map((_, i) => {
             const p = i + 1;
             if (p < page - 3 || p > page + 3) return null;
+
             return (
               <button
                 key={p}
-                className={`btn ${p === page ? "btn-primary" : "btn-outline-primary"}`}
+                className={`btn ${
+                  p === page ? "btn-primary" : "btn-outline-primary"
+                }`}
                 onClick={() => changePage(p)}
               >
                 {p}
@@ -333,8 +410,20 @@ const gotoCustomerOrders = (customer) => {
             );
           })}
 
-          <button className="btn btn-outline-primary" onClick={() => changePage(page + 1)} disabled={page === totalPages}>Next</button>
-          <button className="btn btn-outline-primary" onClick={() => changePage(totalPages)} disabled={page === totalPages}>Last</button>
+          <button
+            className="btn btn-outline-primary"
+            disabled={page === totalPages}
+            onClick={() => changePage(page + 1)}
+          >
+            Next
+          </button>
+          <button
+            className="btn btn-outline-primary"
+            disabled={page === totalPages}
+            onClick={() => changePage(totalPages)}
+          >
+            Last
+          </button>
         </div>
       </div>
     </div>

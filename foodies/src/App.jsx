@@ -14,6 +14,8 @@ import { ToastContainer } from "react-toastify";
 import MyOrders from "./Pages/MyOrders/MyOrders";
 import { StoreContext } from "./Context/StoreContext";
 import Footer from "./components/Footer/Footer";
+import OrderTracking from "./Pages/OrderTracking/OrderTracking";
+
 
 const App = () => {
   const { token } = useContext(StoreContext);
@@ -38,6 +40,7 @@ const App = () => {
         <Route path="/login" element={token ? <Home /> : <Login />} />
         <Route path="/register" element={token ? <Home /> : <Register />} />
         <Route path="/myorders" element={token ? <MyOrders /> : <Login />} />
+         <Route path="/orders/track/:id" element={token ? <OrderTracking /> : <Login />} />
       </Routes>
 
       {!hideLayout && <Footer />}

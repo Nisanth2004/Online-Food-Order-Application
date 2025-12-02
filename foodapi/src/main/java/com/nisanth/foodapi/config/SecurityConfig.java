@@ -52,7 +52,8 @@ public class SecurityConfig {
                                 "/api/orders/cancel/**",
                                 "/api/orders/request-cancel/**",
                                 "/api/orders/user/**",
-                                "/api/orders/user"
+                                "/api/orders/user",
+                                "/api/orders/track/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
@@ -77,6 +78,7 @@ public class SecurityConfig {
                 "https://cocogrand-admin.netlify.app",
                 "http://localhost:5173",
                 "https://cocograndorganics.netlify.app",
+                "https://supplier-cocograndorganics.netlify.app",
                 "http://localhost:5174",
                 "http://localhost:5175"
         ));

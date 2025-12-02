@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useMemo } from "react";
-import axios from "axios";
 import { assets } from "../../assets/assets";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "./Orders.css";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+
+// ⬅️ Import your custom axios instance
+import customAxios from "../../services/CustomAxiosInstance";
+
 const formatDate = (dateStr) => {
   if (!dateStr) return "Not Available";
   const d = new Date(dateStr);
@@ -16,7 +19,6 @@ const formatDate = (dateStr) => {
   )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
-
 const Orders = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
@@ -27,24 +29,26 @@ const Orders = () => {
   const [dateFilter, setDateFilter] = useState("All");
   const [customDate, setCustomDate] = useState("");
 
+  // 🔵 FETCH ORDERS USING CUSTOM AXIOS
   const fetchOrders = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/api/orders/all");
+      const response = await customAxios.get("/api/orders/all");
       setData((response.data || []).reverse());
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
   };
 
+  // 🔵 UPDATE STATUS USING CUSTOM AXIOS
   const updateStatus = async (event, orderId) => {
     const newStatus = event.target.value;
+
     try {
-      await axios.patch(
-        `http://localhost:8080/api/orders/status/${orderId}`,
+      await customAxios.patch(
+        `/api/orders/status/${orderId}`,
         {},
         {
           params: { status: newStatus },
-          headers: { "Content-Type": "application/json" },
         }
       );
 
@@ -121,19 +125,6 @@ const Orders = () => {
     }
   };
 
-  const mapDisplayToEnum = (displayName) => {
-    switch (displayName) {
-      case "In Kitchen":
-        return "PREPARING";
-      case "Out For Delivery":
-        return "OUT_FOR_DELIVERY";
-      case "Delivered":
-        return "DELIVERED";
-      default:
-        return displayName;
-    }
-  };
-
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       filteredOrders.map((o) => ({
@@ -161,8 +152,7 @@ const Orders = () => {
     <div className="container">
 
       {/* FILTER PANEL */}
-<div className="d-flex flex-wrap align-items-center gap-2 mt-4 mb-4">
-
+      <div className="d-flex flex-wrap align-items-center gap-2 mt-4 mb-4">
 
         <div className="col-md-2">
           <select
@@ -232,7 +222,8 @@ const Orders = () => {
         </div>
 
         <div className="col-md-2">
-          <button className="btn btn-secondary w-100"
+          <button
+            className="btn btn-secondary w-100"
             onClick={() => {
               setStatusFilter("All");
               setSearchTerm("");
@@ -259,13 +250,14 @@ const Orders = () => {
           <tbody>
             {filteredOrders.length ? (
               filteredOrders.map((order, index) => (
-                <tr 
-  key={index}
-  onClick={() => navigate(`/orders/${order.id}`)}
-  style={{ cursor: "pointer" }}
->
-
-                  <td><img src={assets.parcel} height={48} width={48} alt="" /></td>
+                <tr
+                  key={index}
+                  onClick={() => navigate(`/orders/${order.id}`)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td>
+                    <img src={assets.parcel} height={48} width={48} alt="" />
+                  </td>
 
                   <td>
                     <div>
@@ -286,25 +278,20 @@ const Orders = () => {
                   <td>Items: {order.orderedItems?.length}</td>
 
                   <td>
-                    <select
-                      className="form-control"
-                      value={getDisplayName(order.orderStatus)}
-                      onChange={(e) =>
-                        updateStatus(
-                          { target: { value: mapDisplayToEnum(e.target.value) } },
-                          order.id
-                        )
-                      }
+                    <span
+                      className={`status-badge status-${order.orderStatus?.toLowerCase()}`}
                     >
-                      <option>In Kitchen</option>
-                      <option>Out For Delivery</option>
-                      <option>Delivered</option>
-                    </select>
+                      {getDisplayName(order.orderStatus)}
+                    </span>
                   </td>
                 </tr>
               ))
             ) : (
-              <tr><td colSpan={5} className="text-center">No orders found</td></tr>
+              <tr>
+                <td colSpan={5} className="text-center">
+                  No orders found
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

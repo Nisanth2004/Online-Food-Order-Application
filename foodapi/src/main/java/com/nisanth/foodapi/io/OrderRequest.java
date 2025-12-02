@@ -19,6 +19,8 @@ public class OrderRequest {
     private String orderStatus;
     private String courierName;
     private String courierTrackingId;
+    private String courierTrackUrl;
+
 
 
 
