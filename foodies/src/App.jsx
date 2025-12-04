@@ -15,6 +15,7 @@ import MyOrders from "./Pages/MyOrders/MyOrders";
 import { StoreContext } from "./Context/StoreContext";
 import Footer from "./components/Footer/Footer";
 import OrderTracking from "./Pages/OrderTracking/OrderTracking";
+import ScrollToTop from "./ScrollToTop/ScrollToTop";
 
 
 const App = () => {
@@ -27,6 +28,7 @@ const App = () => {
   return (
     <div>
       {!hideLayout && <Menubar />}
+      <ScrollToTop/>
       <ToastContainer />
 
       {/* No PageTransition here */}
