@@ -1,14 +1,18 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.StockLogEntity;
+import com.nisanth.foodapi.io.LowStockDTO;
+import com.nisanth.foodapi.io.MonthlySalesDTO;
+import com.nisanth.foodapi.io.StockHistoryDTO;
+import com.nisanth.foodapi.io.TopSellingDTO;
 import com.nisanth.foodapi.repository.AnalyticsRepository;
+import com.nisanth.foodapi.repository.OrderRepository;
 import com.nisanth.foodapi.repository.StockLogRepository;
 import com.nisanth.foodapi.repository.FoodRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +21,7 @@ public class AnalyticsService {
     private final StockLogRepository stockLogRepository;
     private final AnalyticsRepository analyticsRepository;
     private final FoodRepository foodRepository;
+    private final OrderRepository orderRepository;
 
     public List<StockLogEntity> getAllStockLogs() {
         return stockLogRepository.findAllByOrderByTimestampDesc();
@@ -25,36 +30,28 @@ public class AnalyticsService {
     // ------------------------------
     // MONTHLY SALES
     // ------------------------------
-    public List<Map<String, Object>> getMonthlySales() {
-        List<Map<String, Object>> list = analyticsRepository.getMonthlySales();
-
-        list.forEach(item -> {
-            if (item.get("total") == null) item.put("total", 0);
-            if (item.get("month") == null) item.put("month", 0);
-        });
-
-        return list;
+    public List<MonthlySalesDTO> getMonthlySales() {
+        return analyticsRepository.getMonthlySales();
     }
 
     // ------------------------------
     // MONTHLY STOCK HISTORY
     // ------------------------------
-    public List<Map<String, Object>> getMonthlyStockHistory() {
-        List<Map<String, Object>> list = analyticsRepository.getMonthlyStockHistory();
-
-        list.forEach(item -> {
-            if (item.get("units") == null) item.put("units", 0);
-            if (item.get("month") == null) item.put("month", 0);
-        });
-
-        return list;
+    public List<StockHistoryDTO> getMonthlyStockHistory() {
+        return stockLogRepository.getMonthlyStockHistory();
     }
 
-    public List<Map<String, Object>> getTopSellingFoods() {
-        return foodRepository.getTopSellingFoods();
+    // ------------------------------
+    // TOP SELLING ITEMS
+    // ------------------------------
+    public List<TopSellingDTO> getTopSellingFoods() {
+        return orderRepository.getTopSellingFoods();
     }
 
-    public List<Map<String, Object>> getLowStockItems() {
+    // ------------------------------
+    // LOW STOCK ITEMS
+    // ------------------------------
+    public List<LowStockDTO> getLowStockItems() {
         return foodRepository.getLowStockItems();
     }
 }

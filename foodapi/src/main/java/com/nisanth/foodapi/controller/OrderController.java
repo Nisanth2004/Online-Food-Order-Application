@@ -1,6 +1,7 @@
 package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.entity.OrderEntity;
+import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.DeliveryMessage;
 import com.nisanth.foodapi.io.OrderRequest;
 import com.nisanth.foodapi.io.OrderResponse;
@@ -16,10 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -221,6 +219,43 @@ public class OrderController {
         return ResponseEntity.ok(order.getDeliveryMessages());
     }
 
+
+    @PutMapping("/update-address/{orderId}")
+    public ResponseEntity<String> updateAddress(
+            @PathVariable String orderId,
+            @RequestBody Map<String, String> body) {
+
+        orderService.updateOrderAddress(orderId, body.get("address"));
+        return ResponseEntity.ok("Address updated");
+    }
+
+    @PutMapping("/update-phone/{id}")
+    public ResponseEntity<?> updatePhone(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body
+    ) {
+        String newPhone = body.get("phone");
+        if (newPhone == null || newPhone.isBlank()) {
+            return ResponseEntity.badRequest().body("Phone number cannot be empty");
+        }
+
+        Optional<OrderEntity> optional = orderRepository.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
+        }
+
+        OrderEntity order = optional.get();
+
+        // Block editing after SHIPPED
+        if (order.getOrderStatus().ordinal() >= OrderStatus.SHIPPED.ordinal()) {
+            return ResponseEntity.badRequest().body("Phone cannot be updated after shipping");
+        }
+
+        order.setPhoneNumber(newPhone);
+        orderRepository.save(order);
+
+        return ResponseEntity.ok("Phone updated");
+    }
 
 
 

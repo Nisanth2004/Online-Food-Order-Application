@@ -8,7 +8,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import api from "../../service/CustomAxiosInstance";
-
 import { useNavigate } from "react-router-dom";
 
 const MyOrders = () => {
@@ -16,18 +15,24 @@ const MyOrders = () => {
   const navigate = useNavigate();
 
   const [data, setData] = useState([]);
+
+  // Filters
   const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // UTILITY HELPERS
-  const normalizeStatus = (raw) => (raw ? String(raw).trim().toUpperCase() : "");
+  // Helpers
+  const normalizeStatus = (raw) =>
+    raw ? String(raw).trim().toUpperCase() : "";
   const stripOrderPrefix = (raw) =>
     normalizeStatus(raw).replace(/^ORDER_/, "");
   const cssStatusClass = (raw) =>
@@ -50,7 +55,7 @@ const MyOrders = () => {
     }
   };
 
-  // LOAD ORDERS
+  // Load Orders
   const fetchOrders = async () => {
     try {
       const response = await api.get("/api/orders/user", {
@@ -62,7 +67,7 @@ const MyOrders = () => {
     }
   };
 
-  // CANCEL REQUEST
+  // Cancel Request
   const cancelOrder = async (orderId) => {
     confirmAlert({
       title: "Cancel Order?",
@@ -81,12 +86,13 @@ const MyOrders = () => {
               fetchOrders();
             } catch (err) {
               toast.error(
-                err.response?.data?.message || "Failed to request cancellation"
+                err.response?.data?.message ||
+                  "Failed to request cancellation"
               );
             }
           },
         },
-        { label: "No", onClick: () => {} },
+        { label: "No" },
       ],
     });
   };
@@ -98,55 +104,69 @@ const MyOrders = () => {
     return () => clearInterval(id);
   }, [token]);
 
-  // FILTERS & SEARCH
+  // Filtering
   const filteredOrders = useMemo(() => {
     let filtered = [...data];
 
     filtered.sort(
       (a, b) =>
-        new Date(getOrderDate(b) || 0) - new Date(getOrderDate(a) || 0)
+        new Date(getOrderDate(b) || 0) -
+        new Date(getOrderDate(a) || 0)
     );
 
+    // Status Filter
     if (statusFilter !== "All") {
-      const normFilter = normalizeStatus(statusFilter);
+      const norm = normalizeStatus(statusFilter);
       filtered = filtered.filter(
-        (o) => normalizeStatus(o.orderStatus) === normFilter
+        (o) => normalizeStatus(o.orderStatus) === norm
       );
     }
 
+    // Search Filter
     if (search.trim()) {
       const q = search.toLowerCase();
       filtered = filtered.filter((order) => {
         const matchName =
           Array.isArray(order.orderedItems) &&
           order.orderedItems.some((item) =>
-            String(item.name || "").toLowerCase().includes(q)
+            String(item.name || "")
+              .toLowerCase()
+              .includes(q)
           );
+
         const matchAddress = String(order.userAddress || "")
           .toLowerCase()
           .includes(q);
-        const matchPincode = String(order.pincode || "")
-          .toLowerCase()
-          .includes(q);
-        return matchName || matchAddress || matchPincode;
+
+        return matchName || matchAddress;
       });
     }
 
-    const min = minPrice !== "" ? parseFloat(minPrice) : null;
-    const max = maxPrice !== "" ? parseFloat(maxPrice) : null;
+    // Date Range Filter
+    if (fromDate || toDate) {
+      filtered = filtered.filter((o) => {
+        const od = new Date(getOrderDate(o));
+        if (fromDate && od < new Date(fromDate)) return false;
+        if (toDate && od > new Date(toDate)) return false;
+        return true;
+      });
+    }
+
+    // Price Filter
+    const min = minPrice !== "" ? Number(minPrice) : null;
+    const max = maxPrice !== "" ? Number(maxPrice) : null;
 
     if (min !== null || max !== null) {
       filtered = filtered.filter((o) => {
         const amt = Number(o.amount) || 0;
-        if (min !== null && max !== null) return amt >= min && amt <= max;
-        if (min !== null) return amt >= min;
-        if (max !== null) return amt <= max;
+        if (min !== null && amt < min) return false;
+        if (max !== null && amt > max) return false;
         return true;
       });
     }
 
     return filtered;
-  }, [data, statusFilter, search, minPrice, maxPrice]);
+  }, [data, statusFilter, search, fromDate, toDate, minPrice, maxPrice]);
 
   const totalPages = Math.max(
     1,
@@ -157,7 +177,6 @@ const MyOrders = () => {
     currentPage * itemsPerPage
   );
 
-  // MODAL OPEN
   const openModal = (order) => {
     setSelectedOrder(order);
     setShowModal(true);
@@ -167,144 +186,228 @@ const MyOrders = () => {
     setSelectedOrder(null);
   };
 
-  const navigateToOrderPage = (id) => {
-    closeModal();
-    navigate(`/orders/${id}`);
-  };
-
   return (
     <div className="container py-5 my-orders-container">
+
+      {/* ---------------- Filter Panel ---------------- */}
+      <div className="filter-panel mb-4 p-3 shadow-sm">
+
+        <div className="row g-3">
+          {/* Status */}
+          <div className="col-md-3">
+            <label>Status</label>
+            <select
+  className="form-select"
+  value={statusFilter}
+  onChange={(e) => setStatusFilter(e.target.value)}
+>
+  <option value="All">All</option>
+  <option value="ORDER_PLACED">Order Placed</option>
+  <option value="ORDER_CONFIRMED">Order Confirmed</option>
+  <option value="ORDER_PACKED">Packed</option>
+  <option value="SHIPPED">Shipped</option>
+  <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
+  <option value="DELIVERED">Delivered</option>
+  <option value="CANCELLED">Cancelled</option>
+  <option value="CANCEL_REQUESTED">Cancel Requested</option>
+</select>
+
+          </div>
+
+          {/* Search */}
+          <div className="col-md-3">
+            <label>Search by Name / Address</label>
+            <input
+              className="form-control"
+              placeholder="e.g. Biriyani, street name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* From Date */}
+          <div className="col-md-3">
+            <label>From Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </div>
+
+          {/* To Date */}
+          <div className="col-md-3">
+            <label>To Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </div>
+
+          {/* Price Min */}
+          <div className="col-md-3">
+            <label>Min Price</label>
+            <input
+              type="number"
+              className="form-control"
+              value={minPrice}
+              onChange={(e) =>
+                setMinPrice(e.target.value)
+              }
+            />
+          </div>
+
+          {/* Price Max */}
+          <div className="col-md-3">
+            <label>Max Price</label>
+            <input
+              type="number"
+              className="form-control"
+              value={maxPrice}
+              onChange={(e) =>
+                setMaxPrice(e.target.value)
+              }
+            />
+          </div>
+        </div>
+      </div>
+
       {/* ---------------- Desktop Table ---------------- */}
       <div className="d-none d-md-block">
-        <div className="card p-3 shadow-sm">
-          <table className="table table-hover">
-            <thead className="table-light">
-              <tr>
-                <th>Image</th>
-                <th>Items</th>
-                <th>Amount</th>
-                <th>Total Items</th>
-                <th>Track</th>
-                <th>Order Time</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+        <table className="table table-hover shadow-sm">
+          <thead className="table-light">
+            <tr>
+              <th>Image</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th>Total Items</th>
+              <th>Status</th>
+              <th>Order Time</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-            <tbody>
-              {paginatedOrders.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center text-muted p-3">
-                    No matching orders found
-                  </td>
-                </tr>
-              ) : (
-                paginatedOrders.map((order, index) => (
+          <tbody>
+            {paginatedOrders.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="text-center p-3 text-muted">
+                  No orders found
+                </td>
+              </tr>
+            ) : (
+              paginatedOrders.map((order) => {
+                const isDelivered =
+                  normalizeStatus(order.orderStatus) ===
+                  "DELIVERED";
+
+                return (
                   <tr
-                    key={order.id || index}
+                    key={order.id}
+                    className={isDelivered ? "delivered-row" : ""}
                     onClick={() => openModal(order)}
-                    className={
-                      normalizeStatus(order.orderStatus) === "CANCELLED"
-                        ? "cancelled-row"
-                        : ""
-                    }
                     style={{ cursor: "pointer" }}
                   >
                     <td>
                       <img
                         src={assets.delivery}
-                        height={48}
                         width={48}
-                        alt="order"
+                        height={48}
                       />
                     </td>
 
                     <td>
                       {(order.orderedItems || [])
-                        .map((i) => `${i.name} x${i.quantity}`)
+                        .map(
+                          (i) => `${i.name} x${i.quantity}`
+                        )
                         .join(", ")}
                     </td>
 
-                    <td>₹{Number(order.amount).toFixed(2)}</td>
-                    <td>{(order.orderedItems || []).length}</td>
-
-                <td>
-  <i
-    className="bi bi-geo-alt-fill track-icon"
-    title="Track Order"
-    onClick={(e) => {
-      e.stopPropagation();
-      navigate(`/orders/track/${order.id}`);
-    }}
-  ></i>
-</td>
-
-
+                    <td>₹{order.amount}</td>
                     <td>
-                      {new Date(getOrderDate(order) || 0).toLocaleString()}
+                      {(order.orderedItems || []).length}
                     </td>
 
                     <td>
-                      <div
-                        className="d-flex gap-2"
-                        onClick={(e) => e.stopPropagation()}
+                      <span
+                        className={`status-badge status-${cssStatusClass(
+                          order.orderStatus
+                        )}`}
                       >
-                        <button
-                          className="btn btn-sm btn-warning"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            fetchOrders();
-                          }}
-                        >
-                          <i className="bi bi-arrow-clockwise"></i>
-                        </button>
+                        {getDisplayStatus(order.orderStatus)}
+                      </span>
+                    </td>
 
-                        {normalizeStatus(order.orderStatus) !== "DELIVERED" &&
-                          normalizeStatus(order.orderStatus) !== "CANCELLED" && (
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                cancelOrder(order.id);
-                              }}
-                            >
-                              <i className="bi bi-x-circle"></i>
-                            </button>
-                          )}
-                      </div>
+                    <td>
+                      {new Date(
+                        getOrderDate(order)
+                      ).toLocaleString()}
+                    </td>
+
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="btn btn-sm btn-outline-primary me-2"
+                        onClick={() =>
+                          navigate(
+                            `/orders/track/${order.id}`
+                          )
+                        }
+                      >
+                        Track
+                      </button>
+
+                      {normalizeStatus(
+                        order.orderStatus
+                      ) !== "DELIVERED" &&
+                        normalizeStatus(
+                          order.orderStatus
+                        ) !== "CANCELLED" && (
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() =>
+                              cancelOrder(order.id)
+                            }
+                          >
+                            Cancel
+                          </button>
+                        )}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* ---------------- Mobile Cards ---------------- */}
       <div className="d-md-none">
         {paginatedOrders.length === 0 ? (
-          <p className="text-muted text-center mt-4">
-            No matching orders found
+          <p className="text-center mt-3 text-muted">
+            No orders found
           </p>
         ) : (
-          paginatedOrders.map((order, index) => (
-            <div
-              key={order.id || index}
-              className={`card mb-3 shadow-sm ${
-                normalizeStatus(order.orderStatus) === "CANCELLED"
-                  ? "cancelled-row"
-                  : ""
-              }`}
-              onClick={() => openModal(order)}
-              style={{ cursor: "pointer" }}
-            >
-              <div className="card-body">
-                <div className="d-flex justify-content-between mb-2">
+          paginatedOrders.map((order) => {
+            const isDelivered =
+              normalizeStatus(order.orderStatus) ===
+              "DELIVERED";
+
+            return (
+              <div
+                key={order.id}
+                className={`order-card shadow-sm mb-3 ${
+                  isDelivered ? "delivered-row" : ""
+                }`}
+                onClick={() => openModal(order)}
+              >
+                <div className="d-flex justify-content-between">
                   <img
                     src={assets.delivery}
-                    height={45}
                     width={45}
-                    alt="order"
+                    height={45}
                   />
 
                   <span
@@ -316,53 +419,60 @@ const MyOrders = () => {
                   </span>
                 </div>
 
-                <p className="mb-1">
+                <p className="mt-2">
                   <strong>Items:</strong>{" "}
                   {(order.orderedItems || [])
-                    .map((i) => `${i.name} x${i.quantity}`)
+                    .map(
+                      (i) => `${i.name} x${i.quantity}`
+                    )
                     .join(", ")}
                 </p>
 
-                <p className="mb-1">
-                  <strong>Amount:</strong> ₹{Number(order.amount).toFixed(2)}
+                <p>
+                  <strong>Amount:</strong> ₹{order.amount}
                 </p>
 
-                <p className="mb-1">
+                <p>
                   <strong>Ordered On:</strong>{" "}
-                  {new Date(getOrderDate(order) || 0).toLocaleString()}
+                  {new Date(
+                    getOrderDate(order)
+                  ).toLocaleString()}
                 </p>
 
                 <div
-                  className="d-flex justify-content-end gap-2 mt-2"
+                  className="d-flex gap-2 mt-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                <button
-  className="track-btn w-100 mb-2"
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/orders/track/${order.id}`);
-  }}
->
-  <i className="bi bi-geo-alt-fill"></i> Track Order
-</button>
+                  <button
+                    className="btn btn-sm btn-outline-primary w-100"
+                    onClick={() =>
+                      navigate(
+                        `/orders/track/${order.id}`
+                      )
+                    }
+                  >
+                    Track
+                  </button>
 
-{normalizeStatus(order.orderStatus) !== "DELIVERED" &&
- normalizeStatus(order.orderStatus) !== "CANCELLED" && (
-  <button
-    className="btn btn-sm btn-danger w-100"
-    onClick={(e) => {
-      e.stopPropagation();
-      cancelOrder(order.id);
-    }}
-  >
-    <i className="bi bi-x-circle"></i> Cancel Order
-  </button>
-)}
-
+                  {normalizeStatus(
+                    order.orderStatus
+                  ) !== "DELIVERED" &&
+                    normalizeStatus(
+                      order.orderStatus
+                    ) !== "CANCELLED" && (
+                      <button
+                        className="btn btn-sm btn-danger w-100"
+                        onClick={() =>
+                          cancelOrder(order.id)
+                        }
+                      >
+                        Cancel
+                      </button>
+                    )}
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -372,13 +482,15 @@ const MyOrders = () => {
           <button
             className="pagination-btn"
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() =>
+              setCurrentPage((p) => Math.max(1, p - 1))
+            }
           >
             ← Prev
           </button>
 
           <span className="mx-3">
-            <strong>{currentPage}</strong> / {totalPages}
+            {currentPage} / {totalPages}
           </span>
 
           <button
@@ -392,9 +504,6 @@ const MyOrders = () => {
           </button>
         </div>
       )}
-
-      {/* ---------------- MODAL ---------------- */}
-     
     </div>
   );
 };

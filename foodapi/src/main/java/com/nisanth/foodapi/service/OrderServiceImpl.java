@@ -377,4 +377,22 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
         orderRepository.delete(order);
     }
+
+    @Override
+    public void updateOrderAddress(String orderId, String newAddress) {
+        String userId = userService.findByUserId();
+
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getUserId().equals(userId))
+            throw new RuntimeException("Unauthorized");
+
+        if (order.getOrderStatus().ordinal() >= OrderStatus.SHIPPED.ordinal())
+            throw new RuntimeException("Cannot change address after shipping");
+
+        order.setUserAddress(newAddress);
+        orderRepository.save(order);
+    }
+
 }

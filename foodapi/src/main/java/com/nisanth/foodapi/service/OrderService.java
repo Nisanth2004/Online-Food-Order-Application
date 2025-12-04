@@ -42,6 +42,9 @@ public interface OrderService {
 
     void updateCourierDetails(String orderId, String courierName, String trackingId);
 
+    void updateOrderAddress(String orderId, String newAddress);
+
+
 
 
 }

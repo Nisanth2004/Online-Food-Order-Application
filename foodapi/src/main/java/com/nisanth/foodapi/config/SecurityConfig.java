@@ -53,6 +53,8 @@ public class SecurityConfig {
                                 "/api/orders/request-cancel/**",
                                 "/api/orders/user/**",
                                 "/api/orders/user",
+                                "/api/orders/update-address/**",
+                                "/api/orders/update-phone/**",
                                 "/api/orders/track/**"
                         ).authenticated()
                         .anyRequest().authenticated()

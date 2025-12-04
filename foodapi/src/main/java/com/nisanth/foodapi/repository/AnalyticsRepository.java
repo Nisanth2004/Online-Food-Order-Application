@@ -1,28 +1,29 @@
 package com.nisanth.foodapi.repository;
 
 import com.nisanth.foodapi.entity.OrderEntity;
+import com.nisanth.foodapi.io.MonthlySalesDTO;
+import com.nisanth.foodapi.io.StockHistoryDTO;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
-import java.util.Map;
 
 public interface AnalyticsRepository extends MongoRepository<OrderEntity, String> {
 
     // ------------------------------
-    // MONTHLY SALES
+    // MONTHLY STOCK HISTORY
     // ------------------------------
     @Aggregation(pipeline = {
-            "{ $group: { _id: { month: { $month: '$timestamp' }, year: { $year: '$timestamp' } }, units: { $sum: '$change' } } }",
-            "{ $project: { _id: 0, month: '$_id.month', year: '$_id.year', units: 1 } }",
+            "{ $unwind: '$items' }",
+            "{ $group: { _id: { month: { $month: '$createdDate' }, year: { $year: '$createdDate' }, food: '$items.name' }, units: { $sum: '$items.quantity' } } }",
+            "{ $project: { _id: 0, month: '$_id.month', year: '$_id.year', food: '$_id.food', units: 1 } }",
             "{ $sort: { year: 1, month: 1 } }"
     })
-    List<Map<String, Object>> getMonthlyStockHistory();
-
+    List<StockHistoryDTO> getMonthlyStockHistory();
 
 
     // ------------------------------
-    // MONTHLY STOCK HISTORY
+    // MONTHLY SALES
     // ------------------------------
     @Aggregation(pipeline = {
             "{ $match: { paymentStatus: 'paid' } }",
@@ -30,6 +31,5 @@ public interface AnalyticsRepository extends MongoRepository<OrderEntity, String
             "{ $project: { _id: 0, month: '$_id.month', year: '$_id.year', total: 1 } }",
             "{ $sort: { year: 1, month: 1 } }"
     })
-    List<Map<String, Object>> getMonthlySales();
-
+    List<MonthlySalesDTO> getMonthlySales();
 }

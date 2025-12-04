@@ -1,7 +1,4 @@
-// ---------------- ANALYTICS APIs (FIXED) ----------------
 import api from "./CustomAxiosInstance";
-
-
 
 export const getMonthlySales = async () => {
   const resp = await api.get("/api/analytics/sales/monthly");
@@ -15,10 +12,12 @@ export const getMonthlyStockHistory = async () => {
 
 export const getTopSellingFoods = async () => {
   const resp = await api.get("/api/analytics/top-selling");
+   console.log("top STOCK RESPONSE:", resp.data);
   return resp.data;
 };
 
 export const getLowStockFoods = async () => {
   const resp = await api.get("/api/analytics/low-stock");
+  console.log("LOW STOCK RESPONSE:", resp.data);
   return resp.data;
 };
