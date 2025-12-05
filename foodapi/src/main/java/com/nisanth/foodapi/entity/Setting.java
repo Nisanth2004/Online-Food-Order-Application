@@ -32,4 +32,8 @@ public class Setting {
     private boolean smtpSsl;
 
     private long updatedAt;
+
+    private Double taxPercentage;   // example: 5.0
+    private Double shippingCharge;  // example: 10.0
+
 }

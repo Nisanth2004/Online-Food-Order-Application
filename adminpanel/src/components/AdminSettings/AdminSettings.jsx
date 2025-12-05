@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import api from "../../services/CustomAxiosInstance";
 import { toast } from "react-toastify";
 
+import SecretInput from './SecretInput';
+
 const AdminSettings = () => {
   const [settings, setSettings] = useState({
     awsAccess: "",
@@ -12,7 +14,9 @@ const AdminSettings = () => {
     razorpaySecret: "",
     twilioSid: "",
     twilioAuth: "",
-    twilioPhone: ""
+    twilioPhone: "",
+      taxPercentage: 5,
+  shippingCharge: 10
   });
 
   const [editable, setEditable] = useState(false);
@@ -28,15 +32,20 @@ const AdminSettings = () => {
   };
 
   // Save settings to DB
-  const saveSettings = async () => {
-    try {
-      await api.put("/api/admin/settings", settings);
-      toast.success("Settings updated successfully");
-      setEditable(false); // Disable editing after save
-    } catch (err) {
+const saveSettings = async () => {
+  try {
+    const res = await api.put("/api/admin/settings", settings);
+    toast.success("Settings updated successfully");
+    setEditable(false);
+
+  } catch (err) {
+    if (err.response && err.response.data && err.response.data.error) {
+      toast.error(err.response.data.error);  // Show backend validation msg
+    } else {
       toast.error("Failed to save settings");
     }
-  };
+  }
+};
 
   useEffect(() => {
     loadSettings();
@@ -79,13 +88,13 @@ const AdminSettings = () => {
               />
 
               <label className="form-label">Secret Key</label>
-              <input
-                className="form-control mb-2"
-                name="awsSecret"
-                value={settings.awsSecret}
-                onChange={handleChange}
-                disabled={!editable}
-              />
+           <SecretInput
+  name="awsSecret"
+  value={settings.awsSecret}
+  onChange={handleChange}
+  disabled={!editable}
+/>
+
 
               <label className="form-label">Region</label>
               <input
@@ -124,16 +133,17 @@ const AdminSettings = () => {
               />
 
               <label className="form-label">Secret</label>
-              <input
-                className="form-control mb-2"
-                name="razorpaySecret"
-                value={settings.razorpaySecret}
-                onChange={handleChange}
-                disabled={!editable}
-              />
+            <SecretInput
+  name="razorpaySecret"
+  value={settings.razorpaySecret}
+  onChange={handleChange}
+  disabled={!editable}
+/>
+
             </div>
           </div>
         </div>
+        
 
         {/* TWILIO SETTINGS */}
         <div className="col-lg-6">
@@ -168,11 +178,36 @@ const AdminSettings = () => {
                 disabled={!editable}
               />
             </div>
+            <h5 className="fw-bold mb-3">💰 Billing Settings</h5>
+
+<label className="form-label">Tax Percentage (%)</label>
+<input
+  className="form-control mb-2"
+  name="taxPercentage"
+  type="number"
+  value={settings.taxPercentage}
+  onChange={handleChange}
+  disabled={!editable}
+/>
+
+<label className="form-label">Shipping Charge (₹)</label>
+<input
+  className="form-control mb-2"
+  name="shippingCharge"
+  type="number"
+  value={settings.shippingCharge}
+  onChange={handleChange}
+  disabled={!editable}
+/>
+
           </div>
         </div>
 
       </div>
+      
     </div>
+
+    
   );
 };
 

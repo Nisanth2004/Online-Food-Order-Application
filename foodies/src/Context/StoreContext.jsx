@@ -4,6 +4,7 @@ import { fetchFoodList } from "../service/FoodService";
 import {jwtDecode} from "jwt-decode";
 
 import { addToCart, getCartData, removeQtyFromCart } from "../service/cartService";
+import { getSettings } from "../service/settingService";
 
 export const StoreContext = createContext(null);
 
@@ -12,6 +13,10 @@ export const StoreContextProvider = (props) => {
   const [quantities, setQuantities] = useState({});
   const [token, setToken] = useState("");
   const [user, setUser] = useState(null);
+
+  const [taxRate, setTaxRate] = useState(0);
+const [shippingCharge, setShippingCharge] = useState(0);
+
 
  const increaseQty = async (foodId) => {
   const food = foodList.find((f) => f.id === foodId);
@@ -60,6 +65,9 @@ export const StoreContextProvider = (props) => {
       try {
         const data = await fetchFoodList();
         setFoodList(data.foods || []);
+        const setting = await getSettings();
+      setTaxRate(setting.taxPercentage || 0);
+      setShippingCharge(setting.shippingCharge || 0);
 
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
@@ -108,6 +116,8 @@ export const StoreContextProvider = (props) => {
     setToken,
     setQuantities,
     loadCartData,
+     taxRate,
+  shippingCharge
   };
 
   return (

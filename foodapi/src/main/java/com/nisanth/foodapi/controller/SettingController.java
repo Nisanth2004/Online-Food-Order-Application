@@ -24,10 +24,24 @@ public class SettingController {
 
     @PutMapping
     public ResponseEntity<?> updateSettings(@RequestBody Setting setting) {
-        // refresh email config instantly
+        try {
+            Setting saved = service.updateSettings(setting);
+            return ResponseEntity.ok(saved);
 
-        return ResponseEntity.ok(service.updateSettings(setting));
+        } catch (IllegalArgumentException e) {
+            // Validation errors
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", e.getMessage()
+            ));
+
+        } catch (Exception e) {
+            // Unknown server issues
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "error", "Server error: " + e.getMessage()
+            ));
+        }
     }
+
 
     @GetMapping("/single")
     public ResponseEntity<?> getSingleSetting() {
@@ -37,6 +51,19 @@ public class SettingController {
         response.put("razorpayKey", settings.getRazorpayKey());
         return ResponseEntity.ok(response);
     }
+
+
+
+        @GetMapping("/tax")
+        public ResponseEntity<?> getcarUtils() {
+            Setting setting = service.getSettings();
+
+            return ResponseEntity.ok(Map.of(
+                    "taxPercentage", setting.getTaxPercentage(),
+                    "shippingCharge", setting.getShippingCharge()
+            ));
+        }
+
 
 
 }

@@ -8,12 +8,14 @@ import toast from "react-hot-toast";
 const Cart = () => {
    const navigate = useNavigate();
 
-   const { increaseQty, decreaseQty, quantities, foodList, removeFromCart, setQuantities } =
-      useContext(StoreContext);
+ const { increaseQty, decreaseQty, quantities, foodList, removeFromCart, setQuantities, taxRate, shippingCharge } =
+  useContext(StoreContext);
 
    const cartItems = foodList.filter((food) => quantities[food.id] > 0);
 
-   const { subtotal, shipping, tax, total } = calculateCartTotals(cartItems, quantities);
+
+const { subtotal, shipping, tax, total } =
+  calculateCartTotals(cartItems, quantities, taxRate, shippingCharge);
 
    // CLEAR CART FUNCTION
    const clearCart = () => {
@@ -143,7 +145,7 @@ const Cart = () => {
 </div>
 
 <div className="summary-line">
-   <span>Tax (5%)</span>
+   <span>Tax ({taxRate})% </span>
    <span>₹{tax.toFixed(2)}</span>
 </div>
 

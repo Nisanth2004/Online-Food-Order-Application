@@ -291,6 +291,10 @@ public class OrderServiceImpl implements OrderService {
 
     // ------------------- ENTITY / RESPONSE CONVERSION -------------------
     private OrderEntity convertToEntity(OrderRequest request) {
+
+        Setting setting = settingService.getSettings();
+        double taxRate = setting.getTaxPercentage() != null ? setting.getTaxPercentage() : 0.0;
+        double shipping = setting.getShippingCharge() != null ? setting.getShippingCharge() : 0.0;
         OrderStatus status = OrderStatus.ORDER_PLACED;
         if (request.getOrderStatus() != null) {
             try {
@@ -318,8 +322,7 @@ public class OrderServiceImpl implements OrderService {
         double subtotal = finalItems.stream()
                 .mapToDouble(it -> it.getQuantity() * it.getPrice())
                 .sum();
-        double tax = subtotal * 0.05;
-        double shipping = subtotal == 0 ? 0.0 : 10.0;
+        double tax = subtotal * (taxRate / 100.0);
         double grandTotal = subtotal + tax + shipping;
 
         Courier defaultCourier = courierRepository.findByIsDefaultTrue().orElse(null);
@@ -347,9 +350,11 @@ public class OrderServiceImpl implements OrderService {
         double subtotal = newOrder.getOrderedItems() != null ?
                 newOrder.getOrderedItems().stream().mapToDouble(i -> i.getQuantity() * i.getPrice()).sum() : 0;
 
-        double taxRate = 0.05;
-        double shipping = subtotal == 0 ? 0.0 : 10.0;
-        double tax = subtotal * taxRate;
+        Setting setting = settingService.getSettings();
+        double taxRate = setting.getTaxPercentage() != null ? setting.getTaxPercentage() : 0.0;
+        double shipping = setting.getShippingCharge() != null ? setting.getShippingCharge() : 0.0;
+
+        double tax = subtotal * (taxRate / 100.0);
         double grandTotal = subtotal + tax + shipping;
 
         return OrderResponse.builder()
