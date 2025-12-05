@@ -126,6 +126,14 @@ const Sidebar = ({ sidebarVisible, setCategory }) => {
 
         </Link>
 
+        <Link
+  className="list-group-item list-group-item-action list-group-item-light p-3"
+  to="/admin/settings"
+>
+  <i className="bi bi-gear me-2"></i> Settings
+</Link>
+
+
         <hr />
 
         {/* CATEGORY LIST */}

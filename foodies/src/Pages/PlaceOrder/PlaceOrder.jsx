@@ -2,10 +2,11 @@ import React, { useContext, useState } from "react";
 import { assets } from "../../assets/assets";
 import { StoreContext } from "../../Context/StoreContext";
 import { calculateCartTotals } from "../../util/cartUtils";
-import { RAZORPAY_KEY } from "../../util/constant";
+
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import api from "../../service/CustomAxiosInstance";
+import { useEffect } from "react";
 
 const PlaceOrder = () => {
   const { foodList, quantities, setQuantities, token } = useContext(StoreContext);
@@ -13,6 +14,20 @@ const PlaceOrder = () => {
 
   const cartItems = foodList.filter((food) => quantities[food.id] > 0);
   const { subtotal, shipping, tax, total } = calculateCartTotals(cartItems, quantities);
+  const [razorpayKey, setRazorpayKey] = useState("");
+
+useEffect(() => {
+  const fetchSettings = async () => {
+    try {
+      const res = await api.get("/api/admin/settings/single"); // endpoint we created
+      if (res.data?.razorpayKey) setRazorpayKey(res.data.razorpayKey);
+    } catch (error) {
+      console.error("Failed to load Razorpay key", error);
+    }
+  };
+  fetchSettings();
+}, []);
+
 
   const [data, setData] = useState({
     firstName: "",
@@ -116,10 +131,10 @@ const PlaceOrder = () => {
 
     // If backend already created a Razorpay order id, pass that. amount not required but keep for safety.
     const options = {
-      key: RAZORPAY_KEY,
+      key: razorpayKey,
       amount: Math.round(Number(order.amount) * 100) || undefined, // paise (optional when order_id provided)
       currency: "INR",
-      name: "Food Land",
+      name: "Cocogrand Organics",
       description: "Order Payment",
       order_id: order.razorpayOrderId,
       handler: async function (razorpayResponse) {

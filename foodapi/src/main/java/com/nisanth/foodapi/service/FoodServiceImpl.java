@@ -1,9 +1,6 @@
 package com.nisanth.foodapi.service;
 
-import com.nisanth.foodapi.entity.Category;
-import com.nisanth.foodapi.entity.FoodEntity;
-import com.nisanth.foodapi.entity.ReviewEntity;
-import com.nisanth.foodapi.entity.StockLogEntity;
+import com.nisanth.foodapi.entity.*;
 import com.nisanth.foodapi.io.FoodRequest;
 import com.nisanth.foodapi.io.FoodResponse;
 import com.nisanth.foodapi.repository.*;
@@ -56,8 +53,8 @@ public class FoodServiceImpl implements FoodService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Value("${aws.s3.bucketname}")
-    private String bucketName;
+    @Autowired
+    private SettingService settingService;
 
     @Override
     public String uploadFile(MultipartFile file) {
@@ -65,6 +62,9 @@ public class FoodServiceImpl implements FoodService {
                 .substring(file.getOriginalFilename().lastIndexOf(".") + 1);
 
         String key = UUID.randomUUID().toString() + "." + fileNameExtension;
+        Setting s = settingService.getSettings();
+        String bucketName = s.getAwsBucket();
+
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
@@ -231,6 +231,8 @@ public class FoodServiceImpl implements FoodService {
 
     @Override
     public boolean deleteFile(String filename) {
+        Setting s = settingService.getSettings();
+        String bucketName = s.getAwsBucket();
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(filename)

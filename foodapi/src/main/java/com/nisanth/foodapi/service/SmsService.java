@@ -1,45 +1,35 @@
 package com.nisanth.foodapi.service;
 
-import org.springframework.http.*;
+import com.nisanth.foodapi.entity.Setting;
+import com.nisanth.foodapi.service.SettingService;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class SmsService {
 
-    private final String API_URL = "https://api.webexinteract.com/v1/sms/";
-    private final String ACCESS_TOKEN = "aky_35rSw7GHVaqkP6o2xKwmpU6wpmU";  // your key
+    @Autowired
+    private SettingService settingService;
 
-    public String sendSms(String phone, String message) {
-
+    public void sendSms(String to, String text) {
         try {
-            RestTemplate restTemplate = new RestTemplate();
+            Setting s = settingService.getSettings();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-AUTH-KEY", ACCESS_TOKEN);
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            Message.creator(
+                    new PhoneNumber(to.trim()),        // recipient
+                    new PhoneNumber(s.getTwilioPhone().trim()), // Twilio number
+                    text
+            ).create();
 
-            Map<String, Object> msg = new HashMap<>();
-            msg.put("to", "+" + phone);     // +919876543210
-            msg.put("from", "SENDERID");    // MUST be registered
-            msg.put("body", message);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("messages", List.of(msg));
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-
-            ResponseEntity<String> response =
-                    restTemplate.postForEntity(API_URL, entity, String.class);
-
-            return response.getBody();
+            System.out.println("✅ SMS sent to " + to);
 
         } catch (Exception e) {
-            return "SMS Error: " + e.getMessage();
+            e.printStackTrace();
+            System.err.println("❌ Failed to send SMS: " + e.getMessage());
         }
     }
 }

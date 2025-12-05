@@ -16,6 +16,7 @@ import StockLogs from './components/StockLogs/StockLogs'
 import OrderDetails from './pages/OrderDetails'
 import Customers from './pages/Customers/Customers'
 import CourierManagement from './pages/CourierManagement/CourierManagement'
+import AdminSettings from './components/AdminSettings/AdminSettings'
 const App = () => {
 
 
@@ -58,6 +59,7 @@ const App = () => {
                                 <Route path="/courier" element={<CourierManagement />} />
 
                       <Route path="/admin/stock-dashboard" element={<StockDashboard />} />
+                          <Route path="/admin/settings" element={<AdminSettings />} />
 
                        <Route path="/admin-cancel-requests" element={<AdminCancelRequests />} /> 
                     </Routes>

@@ -1,4 +1,6 @@
-// ⭐ BEAUTIFULLY UPDATED OrderTracking.jsx ⭐
+// =============================================================
+// ⭐ BEAUTIFULLY UPDATED — MINIMAL TOOLTIP (Option A)
+// =============================================================
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../service/CustomAxiosInstance";
@@ -42,17 +44,15 @@ export default function OrderTracking() {
 
   const [order, setOrder] = useState(null);
 
-  // expandable triggers
   const [showAddressEdit, setShowAddressEdit] = useState(false);
   const [showPhoneEdit, setShowPhoneEdit] = useState(false);
 
-  // address
   const [editingAddress, setEditingAddress] = useState("");
-  const [addressSaving, setAddressSaving] = useState(false);
-
-  // phone
   const [editingPhone, setEditingPhone] = useState("");
+
+  const [addressSaving, setAddressSaving] = useState(false);
   const [phoneSaving, setPhoneSaving] = useState(false);
+
   const [phoneError, setPhoneError] = useState("");
   const [phoneSavedHighlight, setPhoneSavedHighlight] = useState(false);
 
@@ -61,13 +61,12 @@ export default function OrderTracking() {
       const res = await api.get(`/api/orders/track/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       setOrder(res.data);
       setEditingAddress(res.data.userAddress || "");
       setEditingPhone(res.data.phoneNumber || "");
-      setPhoneError("");
     } catch (e) {
       toast.error("Failed to load order");
-      console.error(e);
     }
   }, [id, token]);
 
@@ -79,26 +78,31 @@ export default function OrderTracking() {
 
   const currentIndex = STATUS_FLOW.indexOf(order?.orderStatus || "");
   const canEdit = currentIndex < STATUS_FLOW.indexOf("SHIPPED");
-  const canCancel = currentIndex < STATUS_FLOW.indexOf("SHIPPED");
 
-  // cancel order
-  const handleCancelOrder = async () => {
-    if (!window.confirm("Are you sure?")) return;
+  const validatePhone = (phone) => {
+    const n = phone.replace(/\D/g, "");
+    if (n.length !== 10) return "Phone must be 10 digits";
+    if (!/^[6-9]\d{9}$/.test(n)) return "Invalid Indian mobile number";
+    return "";
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+
     try {
       await api.patch(`/api/orders/${order.id}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Order cancelled successfully");
+      toast.success("Order cancelled");
       load();
-    } catch (err) {
-      toast.error(err?.response?.data || "Failed to cancel");
+    } catch (e) {
+      toast.error("Cancel failed");
     }
   };
 
-  // address update
   const handleUpdateAddress = async () => {
     if (editingAddress.trim().length < 5) {
-      toast.error("Enter a valid delivery address");
+      toast.error("Enter a valid address");
       return;
     }
     setAddressSaving(true);
@@ -108,47 +112,32 @@ export default function OrderTracking() {
         { address: editingAddress },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Address updated!");
-      load();
+      toast.success("Address updated");
       setShowAddressEdit(false);
-    } catch (e) {
-      toast.error("Failed to update address");
+      load();
     } finally {
       setAddressSaving(false);
     }
   };
 
-  // phone validators
-  const validatePhone = (phone) => {
-    const d = phone.replace(/\D/g, "");
-    if (!d) return "Phone required";
-    if (d.length !== 10) return "Phone must be 10 digits";
-    if (!/^[6-9]\d{9}$/.test(d)) return "Enter valid Indian number";
-    return "";
-  };
-
-  // update phone
   const handleUpdatePhone = async () => {
-    const trim = editingPhone.trim();
-    const err = validatePhone(trim);
-    if (err) return setPhoneError(err);
+    const error = validatePhone(editingPhone);
+    if (error) return setPhoneError(error);
 
     setPhoneSaving(true);
     try {
       await api.put(
         `/api/orders/update-phone/${order.id}`,
-        { phone: trim },
+        { phone: editingPhone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      toast.success("Phone updated");
       setPhoneSavedHighlight(true);
-      toast.success("Phone number updated!");
       setTimeout(() => setPhoneSavedHighlight(false), 1400);
 
-      load();
       setShowPhoneEdit(false);
-    } catch (e) {
-      toast.error("Failed to update phone");
+      load();
     } finally {
       setPhoneSaving(false);
     }
@@ -158,14 +147,14 @@ export default function OrderTracking() {
 
   return (
     <div className="tracking-page">
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+      <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
       <h1 className="tracking-title">Order Tracking</h1>
-      <p className="tracking-subtitle">Order ID: <strong>{order.id}</strong></p>
+      <p className="tracking-subtitle">
+        Order ID: <strong>{order.id}</strong>
+      </p>
 
-      {/* progress bar */}
+      {/* Progress */}
       <div className="progress-wrapper">
         <div
           className="progress-bar-filled"
@@ -176,22 +165,20 @@ export default function OrderTracking() {
       </div>
 
       <div className="tracking-layout">
-        {/* LEFT SIDE */}
+        {/* LEFT */}
         <div className="left-column">
           <h2 className="section-header">Tracking Timeline</h2>
 
           <div className="vertical-timeline">
-            {STATUS_FLOW.map((s, i) => {
-              const done = i <= currentIndex;
+            {STATUS_FLOW.map((s, idx) => {
+              const done = idx <= currentIndex;
               const ts = order.statusTimestamps?.[s];
 
               return (
                 <div className="timeline-item" key={s}>
                   <div className={`timeline-dot ${done ? "active" : ""}`} />
-                  {i < STATUS_FLOW.length - 1 && (
-                    <div
-                      className={`timeline-line ${i < currentIndex ? "active" : ""}`}
-                    />
+                  {idx < STATUS_FLOW.length - 1 && (
+                    <div className={`timeline-line ${idx < currentIndex ? "active" : ""}`} />
                   )}
                   <div className="timeline-info">
                     <p className={`timeline-title ${done ? "active" : ""}`}>
@@ -208,16 +195,23 @@ export default function OrderTracking() {
           <div className="info-block">
             <h2 className="section-title">Order Details</h2>
 
-            <p><strong>Status:</strong> {STATUS_LABELS[order.orderStatus]}</p>
+            <p>
+              <strong>Status:</strong> {STATUS_LABELS[order.orderStatus]}
+            </p>
+
             <p>
               <strong>Order Date:</strong>{" "}
               {new Date(order.createdDate).toLocaleString()}
             </p>
 
-            {/* Address Section */}
+            {/* Delivery Address (Tooltip added here) */}
             <div className="edit-section">
               <div className="edit-header">
-                <strong>Delivery Address</strong>
+                <strong>
+                  Delivery Address{" "}
+                  <span className="tooltip-icon" data-tip="You can update address before order is shipped">ⓘ</span>
+                </strong>
+
                 {canEdit && (
                   <button
                     className="edit-toggle"
@@ -232,7 +226,6 @@ export default function OrderTracking() {
 
               {showAddressEdit && (
                 <div className="edit-panel">
-                  <p className="edit-hint">You can update your address before the order is shipped.</p>
                   <textarea
                     className="edit-textarea"
                     value={editingAddress}
@@ -245,7 +238,6 @@ export default function OrderTracking() {
               )}
             </div>
 
-            {/* Courier */}
             {order.courierName && (
               <>
                 <p><strong>Courier:</strong> {order.courierName}</p>
@@ -262,13 +254,7 @@ export default function OrderTracking() {
             )}
           </div>
 
-          {canCancel && (
-            <button className="cancel-btn" onClick={handleCancelOrder}>
-              Cancel Order
-            </button>
-          )}
-
-          {/* Delivery messages */}
+          {/* Delivery Messages */}
           <div className="delivery-section">
             <h2 className="section-header">Delivery Updates</h2>
 
@@ -289,9 +275,8 @@ export default function OrderTracking() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN */}
+        {/* RIGHT */}
         <div className="right-column">
-          {/* Payment */}
           <div className="info-block">
             <h2 className="section-header">Payment Summary</h2>
             <p><strong>Subtotal:</strong> ₹{order.subtotal}</p>
@@ -300,7 +285,6 @@ export default function OrderTracking() {
             <p className="total-amount">Total: ₹{order.grandTotal}</p>
           </div>
 
-          {/* Items */}
           <div className="info-block">
             <h2 className="section-header">Items</h2>
             {order.orderedItems.map((item, i) => (
@@ -314,14 +298,17 @@ export default function OrderTracking() {
             ))}
           </div>
 
-          {/* Contact Information */}
           <div className="info-block">
             <h2 className="section-header">Contact Information</h2>
 
             {/* Phone */}
             <div className="edit-section">
               <div className="edit-header">
-                <strong>Phone Number</strong>
+                <strong>
+                  Phone Number{" "}
+                  <span className="tooltip-icon" data-tip="Update allowed before shipping">ⓘ</span>
+                </strong>
+
                 {canEdit && (
                   <button
                     className="edit-toggle"
@@ -338,8 +325,6 @@ export default function OrderTracking() {
 
               {showPhoneEdit && (
                 <div className="edit-panel">
-                  <p className="edit-hint">Update your phone number before the order ships.</p>
-
                   <input
                     className={`phone-input ${phoneSavedHighlight ? "phone-saved" : ""}`}
                     value={editingPhone}
@@ -347,16 +332,12 @@ export default function OrderTracking() {
                       setEditingPhone(e.target.value);
                       setPhoneError("");
                     }}
-                    placeholder="Enter 10-digit mobile number"
+                    placeholder="Enter 10-digit number"
                   />
 
                   {phoneError && <p className="form-error">{phoneError}</p>}
 
-                  <button
-                    className="update-btn"
-                    onClick={handleUpdatePhone}
-                    disabled={phoneSaving}
-                  >
+                  <button className="update-btn" onClick={handleUpdatePhone}>
                     {phoneSaving ? "Saving…" : "Save Phone"}
                   </button>
                 </div>
@@ -373,6 +354,8 @@ export default function OrderTracking() {
               <a href="tel:+91XXXXXXXXXX" className="support-btn">Call Support</a>
             </div>
           </div>
+
+       
         </div>
       </div>
     </div>

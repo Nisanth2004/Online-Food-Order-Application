@@ -2,6 +2,7 @@ package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.Courier;
 import com.nisanth.foodapi.entity.OrderEntity;
+import com.nisanth.foodapi.entity.Setting;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.OrderItem;
 import com.nisanth.foodapi.io.OrderRequest;
@@ -52,14 +53,12 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private FoodService foodService;
 
-    @Value("${razorpay_key}")
-    private String RAZORPAY_KEY;
-
-    @Value("${razorpay_secret}")
-    private String RAZORPAY_SECRET;
 
     @Autowired
+    private SettingService settingService;
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
 
     // ------------------- CREATE ORDER -------------------
     @Override
@@ -67,6 +66,12 @@ public class OrderServiceImpl implements OrderService {
         if (request.getOrderedItems() == null || request.getOrderedItems().isEmpty()) {
             throw new RuntimeException("No ordered items provided");
         }
+
+        Setting s = settingService.getSettings();
+        String RAZORPAY_KEY = s.getRazorpayKey();
+
+        Setting s1 = settingService.getSettings();
+        String RAZORPAY_SECRET = s1.getRazorpaySecret();
 
         List<OrderItem> reservedList = new ArrayList<>();
         try {
@@ -263,6 +268,7 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(order);
     }
+
 
     // ------------------- STOCK HELPERS -------------------
     private void restoreReservedStock(OrderEntity order) {

@@ -9,7 +9,6 @@ import com.nisanth.foodapi.repository.OrderRepository;
 import com.nisanth.foodapi.service.CourierService;
 import com.nisanth.foodapi.service.OrderService;
 import com.nisanth.foodapi.service.SmsService;
-import com.nisanth.foodapi.util.MessageUtil;
 import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ public class OrderController {
     private final OrderService orderService;
     private final SmsService smsService;
 
-    private final MessageUtil messageUtil;
+
 
     private final CourierService courierService;
 
@@ -112,45 +111,61 @@ public class OrderController {
                 return ResponseEntity.badRequest().body("Tracking ID cannot be empty");
             }
 
-            // Fetch order
-            OrderResponse order = orderService.getOrderById(orderId);
-            if (order == null) {
-                return ResponseEntity.status(404).body("Order not found");
+            // Fetch order before update
+            OrderResponse beforeUpdate = orderService.getOrderById(orderId);
+            if (beforeUpdate == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Order not found");
             }
 
-            // Fetch courier base tracking URL
-
-
-            // Build tracking link
-            String fullTrackingUrl =order.getCourierTrackUrl() + trackingId;
-
-            // Update DB
+            // Update courier info in DB (service sets ORDER_PACKED + timestamp)
             orderService.updateCourierDetails(orderId, courierName, trackingId);
 
-            // SMS message
+            // Fetch updated order (now contains courierTrackUrl)
+            OrderResponse updatedOrder = orderService.getOrderById(orderId);
+
+            // Construct final tracking URL (guard against nulls)
+            String baseUrl = updatedOrder.getCourierTrackUrl() != null ? updatedOrder.getCourierTrackUrl() : "";
+            String finalTrackingUrl = baseUrl.endsWith("/") ? baseUrl + trackingId : baseUrl + trackingId;
+
             String smsMessage =
-                    "Your order has been shipped!\n" +
+                    "Hi " + updatedOrder.getUserId() + ", your " + "Cocogrand Organics" +
+                            " order has been shipped.\n" +
                             "Courier: " + courierName + "\n" +
-                            "Tracking ID: " + trackingId + "\n\n" +
-                            "Track here: " + fullTrackingUrl;
+                            "Tracking ID: " + trackingId + "\n" +
+                            "Track here: " + finalTrackingUrl + "\n" +
+                            "Thank you for choosing us!";
 
-            // Format phone number
-            String phone = "+91" + order.getPhoneNumber();
 
-            // Send SMS via AWS SNS
-            messageUtil.sendMessage(phone, smsMessage);
+            // Normalize phone: if number already starts with '+' assume good, else prepend +91
+            String rawPhone = updatedOrder.getPhoneNumber() == null ? "" : updatedOrder.getPhoneNumber().trim();
+            String phone = rawPhone.startsWith("+") ? rawPhone : ("+91" + rawPhone);
 
+            // Try sending SMS via Twilio-backed SmsService
+            try {
+                smsService.sendSms(phone, smsMessage);
+            } catch (Exception smsEx) {
+                // Log and return a response indicating SMS failed but DB update succeeded
+                smsEx.printStackTrace();
+                return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(Map.of(
+                        "message", "Courier updated but SMS sending failed",
+                        "trackingUrl", finalTrackingUrl,
+                        "status", "ORDER_PACKED",
+                        "smsError", smsEx.getMessage()
+                ));
+            }
+
+            // Success - DB updated and SMS sent
             return ResponseEntity.ok(Map.of(
                     "message", "Courier updated & SMS sent",
-                    "status", "OUT_FOR_DELIVERY"
+                    "trackingUrl", finalTrackingUrl,
+                    "status", "ORDER_PACKED"
             ));
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Failed to update courier details");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update courier details");
         }
     }
-
 
 
     // ✅ User: Directly cancel their own order
