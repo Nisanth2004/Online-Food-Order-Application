@@ -49,5 +49,11 @@ public class CourierController {
         courierService.removeDefaultCourier();
         return ResponseEntity.ok("Default courier removed");
     }
+
+    @GetMapping("/public")
+    public List<Courier> getPublicCouriers() {
+        return courierRepository.findAll();
+    }
+
 }
 

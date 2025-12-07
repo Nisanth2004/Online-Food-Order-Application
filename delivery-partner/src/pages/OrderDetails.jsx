@@ -1,10 +1,10 @@
+// Professional Delivery Partner UI – FINAL VERSION (Animated + New Theme)
 import React, { useEffect, useState, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { PartnerContext } from "../context/PartnerContext";
 import toast from "react-hot-toast";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import "./OrderDetails.css";
 
 const STATUS_FLOW = [
   "ORDER_PLACED",
@@ -12,7 +12,7 @@ const STATUS_FLOW = [
   "ORDER_PACKED",
   "SHIPPED",
   "OUT_FOR_DELIVERY",
-  "DELIVERED"
+  "DELIVERED",
 ];
 
 const STATUS_LABELS = {
@@ -23,19 +23,14 @@ const STATUS_LABELS = {
   OUT_FOR_DELIVERY: "Out For Delivery",
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",
-
 };
 
-// <<-- IMPORTANT: include all statuses here (front-end actions) -->
-const ACTIONS = [
-  ...STATUS_FLOW,
-  
-  "CANCELLED"
-];
+const ACTIONS = [...STATUS_FLOW, "CANCELLED"];
 
 export default function OrderDetails() {
   const { id } = useParams();
   const { partnerName } = useContext(PartnerContext);
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -52,8 +47,7 @@ export default function OrderDetails() {
     try {
       const res = await api.get(`/api/orders/admin/${id}`);
       setOrder(res.data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Failed to load order");
     } finally {
       setLoading(false);
@@ -65,18 +59,14 @@ export default function OrderDetails() {
   }, [id]);
 
   const updateStatus = async (status) => {
-    if (!order) return;
-    if (order.orderStatus === status) return; // already
+    if (!order || order.orderStatus === status) return;
     setIsUpdating(true);
+
     try {
       await api.patch(`/api/orders/status/${id}`, null, { params: { status } });
-      toast.success("Status updated to " + (STATUS_LABELS[status] || status));
-      // optimistic update
+      toast.success(`Status updated to ${STATUS_LABELS[status]}`);
       setOrder((p) => ({ ...p, orderStatus: status }));
-      // optionally reload canonical state:
-      // await load();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Failed to update status");
     } finally {
       setIsUpdating(false);
@@ -86,16 +76,19 @@ export default function OrderDetails() {
   const sendMessage = async () => {
     if (!messageText.trim()) return toast.error("Enter a message");
     setSendingMessage(true);
-    const msgObj = { text: messageText.trim(), createdAt: new Date().toISOString() };
+
     try {
       await api.post(`/api/orders/partner/${id}/message`, { message: messageText });
       toast.success("Message sent");
-      await load();
-    } catch (err) {
+      load();
+    } catch {
       toast("Saved locally", { icon: "⚠️" });
-      setOrder((prev) => ({
-        ...prev,
-        deliveryMessages: [...(prev.deliveryMessages || []), msgObj]
+      setOrder((p) => ({
+        ...p,
+        deliveryMessages: [
+          ...(p.deliveryMessages || []),
+          { text: messageText, createdAt: new Date().toISOString() },
+        ],
       }));
     } finally {
       setMessageText("");
@@ -106,216 +99,338 @@ export default function OrderDetails() {
   const startScanner = async () => {
     setShowScanner(true);
     codeReader.current = new BrowserMultiFormatReader();
+
     try {
       const devices = await BrowserMultiFormatReader.listVideoInputDevices();
-      const preferred = devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0];
+      const preferred =
+        devices.find((d) => /back|rear|environment/i.test(d.label)) || devices[0];
+
       const deviceId = preferred?.deviceId;
-      codeReader.current.decodeFromVideoDevice(deviceId || null, videoRef.current, (result) => {
-        if (result) {
-          const text = result?.text || String(result);
-          setOrder((p) => ({ ...p, courierTrackingId: text }));
-          toast.success("Scanned: " + text);
-          stopScanner();
+
+      codeReader.current.decodeFromVideoDevice(
+        deviceId || null,
+        videoRef.current,
+        (result) => {
+          if (result) {
+            toast.success("Scanned: " + result.text);
+            setOrder((p) => ({ ...p, courierTrackingId: result.text }));
+            stopScanner();
+          }
         }
-      });
+      );
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: deviceId ? { exact: deviceId } : undefined, facingMode: "environment" }
+        video: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          facingMode: "environment",
+        },
       });
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.play();
       }
-    } catch (e) {
-      console.error(e);
-      toast.error("Camera not available");
+    } catch {
+      toast.error("Camera not accessible");
       stopScanner();
     }
   };
 
   const stopScanner = () => {
     setShowScanner(false);
-    try { codeReader.current?.reset(); } catch {}
+    try {
+      codeReader.current?.reset();
+    } catch {}
     if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
       videoRef.current.srcObject = null;
     }
-    codeReader.current = null;
   };
 
   const saveTrackingToServer = async () => {
-    if (!order?.courierName || !order?.courierTrackingId) return toast.error("Set courier & tracking ID");
+    if (!order?.courierName || !order?.courierTrackingId)
+      return toast.error("Set courier name & tracking ID");
+
     try {
       await api.put(`/api/orders/admin/courier/${id}`, {
         courierName: order.courierName,
-        courierTrackingId: order.courierTrackingId
+        courierTrackingId: order.courierTrackingId,
       });
-      toast.success("Tracking saved");
+
+      toast.success("Tracking ID saved");
       load();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Server refused. Saved locally");
-      setOrder((p) => ({ ...p, courierName: order.courierName, courierTrackingId: order.courierTrackingId }));
     }
   };
 
-  if (loading) return <div className="container page">Loading...</div>;
-  if (!order) return <div className="container page">Order not found</div>;
+  if (loading)
+    return (
+      <div className="text-center p-10 text-xl font-semibold animate-pulse">
+        Loading…
+      </div>
+    );
 
-  // defensive current index (if backend returns unknown status indexOf -> -1)
-  const currentStepIndex = STATUS_FLOW.indexOf(order.orderStatus);
-  const currentIndex = currentStepIndex >= 0 ? currentStepIndex : -1;
+  if (!order) return <div className="text-center p-10">Order not found</div>;
 
-  // normalize messages (ensure text + createdAt)
-  const messages = (order.deliveryMessages || []).map(m => {
-    if (!m) return null;
-    if (typeof m === "string") return { text: m, createdAt: new Date().toISOString() };
-    if (m.text) return { text: m.text, createdAt: m.createdAt || new Date().toISOString() };
-    // server might use { message: '...' }
-    return { text: m.message || JSON.stringify(m), createdAt: m.createdAt || new Date().toISOString() };
-  }).filter(Boolean).reverse();
+  const currentIndex = STATUS_FLOW.indexOf(order.orderStatus);
 
-  const formatDate = (iso) => {
-    try { return new Date(iso).toLocaleString(); } catch { return iso; }
-  };
+  const messages = (order.deliveryMessages || [])
+    .map((m) =>
+      typeof m === "string"
+        ? { text: m, createdAt: new Date().toISOString() }
+        : { text: m.text || m.message, createdAt: m.createdAt }
+    )
+    .reverse();
 
   return (
-    <div className="container page">
-      <button className="btn ghost mb-3" onClick={() => navigate(-1)}>⬅ Back</button>
+    <div className="max-w-6xl mx-auto p-6">
 
-      <div className="card order-card grid">
-        <div className="order-header">
-          <h2>Order #{order.id}</h2>
-          <div className="status-area">
-            <span className={`badge big ${order.orderStatus === 'CANCELLED' ? 'danger' : ''}`}>
-              {STATUS_LABELS[order.orderStatus] || order.orderStatus}
-            </span>
-            <div className="small-meta">Placed: {order.createdAt ? new Date(order.createdAt).toLocaleString() : '—'}</div>
+      {/* Back */}
+      <button
+        onClick={() => navigate(-1)}
+        className="text-indigo-600 hover:underline mb-4"
+      >
+        ← Back
+      </button>
+
+      {/* Card */}
+      <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-200">
+
+        {/* Header */}
+        <div className="flex justify-between mb-6 pb-4 border-b">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-800">
+              Order #{order.id}
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">
+              Placed: {new Date(order.createdAt).toLocaleString()}
+            </p>
           </div>
+
+          <span
+            className={`px-4 py-2 rounded-xl text-sm font-semibold shadow
+              ${
+                order.orderStatus === "CANCELLED"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-emerald-100 text-emerald-700"
+              }
+            `}
+          >
+            {STATUS_LABELS[order.orderStatus]}
+          </span>
         </div>
 
-        <div className="order-grid">
-          <div className="left">
-            <div className="order-info">
-              <div><strong>Customer:</strong> {order.userAddress}</div>
-              <div><strong>Phone:</strong> {order.phoneNumber}</div>
-              <div><strong>Amount:</strong> ₹{(order.amount || 0).toFixed(2)}</div>
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* LEFT */}
+          <div className="col-span-2 space-y-6">
+
+            {/* Customer Info */}
+            <div className="bg-slate-50 p-5 rounded-xl border shadow-sm">
+              <h3 className="font-semibold text-lg mb-2 text-gray-700">
+                Customer Info
+              </h3>
+              <p><strong>Address:</strong> {order.userAddress}</p>
+              <p><strong>Phone:</strong> {order.phoneNumber}</p>
+              <p><strong>Amount:</strong> ₹{order.amount.toFixed(2)}</p>
             </div>
 
-            <hr />
-
-            <h4>Items</h4>
-            <ul className="items-list">
-              {(order.orderedItems || []).map((it, idx) => (
-                <li key={idx} className="item-row">{it.name} <span className="muted">x{it.quantity}</span></li>
-              ))}
-            </ul>
-
-            <hr />
-
-            <h4>Delivery / Tracking</h4>
-            <div className="form-row tracking-row">
-              <input
-                placeholder="Courier name"
-                value={order.courierName || partnerName || ""}
-                onChange={(e) => setOrder({...order, courierName: e.target.value})}
-              />
-              <input
-                placeholder="Tracking ID"
-                value={order.courierTrackingId || ""}
-                onChange={(e) => setOrder({...order, courierTrackingId: e.target.value})}
-              />
-            </div>
-            <div className="tracking-actions">
-              <button className="btn" onClick={startScanner}>Scan</button>
-              <button className="btn primary" onClick={saveTrackingToServer}>Save</button>
-            </div>
-
-            <hr />
-
-            {/* ---------- Actions (use all statuses, prevent reverting) ---------- */}
-            <h4>Actions</h4>
-            <div className="actions flow-actions" style={{ gap: 10, flexWrap: "wrap" }}>
-              {ACTIONS.map((s) => {
-                const isCurrent = order.orderStatus === s;
-                const inFlowIndex = STATUS_FLOW.indexOf(s); // -1 for CANCEL_*
-                // canSet true only if s is a later step in main flow
-                const canSetMainFlow = inFlowIndex >= 0 && inFlowIndex > currentIndex;
-                const isCancelable = (s === "CANCELLED" || s === "CANCEL_REQUESTED") &&
-                  order.orderStatus !== "DELIVERED" && order.orderStatus !== "CANCELLED";
-
-                const canSet = canSetMainFlow || isCancelable;
-
-                const cls = (() => {
-                  if (s === "CANCELLED") return "btn danger";
-                 
-                  if (isCurrent) return "btn ghost";
-                  return canSet ? "btn primary" : "btn ghost";
-                })();
-
-                return (
-                  <button
-                    key={s}
-                    className={cls}
-                    onClick={() => canSet && updateStatus(s)}
-                    disabled={!canSet || isUpdating || isCurrent}
-                    title={isCurrent ? "Current status" : (!canSet ? "Cannot set this status" : `Set status: ${STATUS_LABELS[s] || s}`)}
-                    style={{ minWidth: 140 }}
-                  >
-                    {STATUS_LABELS[s] || s}
-                  </button>
-                );
-              })}
-            </div>
-
-            <hr />
-
-            <h4>Send Message</h4>
-            <textarea
-              rows="3"
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder="Type a message to customer..."
-            />
-            <div className="message-actions">
-              <button className="btn" onClick={sendMessage} disabled={sendingMessage}>Send</button>
-              <button className="btn ghost" onClick={() => setMessageText("Your order has been shipped")}>Quick: shipped</button>
-              <button className="btn ghost" onClick={() => setMessageText("Your item has arrived at our office")}>Quick: arrived</button>
-            </div>
-
-          </div>
-
-          <aside className="right">
-            <div className="messages-card">
-              <div className="messages-header">
-                <h4>Delivery Messages</h4>
-                <div className="muted small">{messages.length} message{messages.length !== 1 ? 's' : ''}</div>
-              </div>
-
-              <ul className="messages-list">
-                {messages.length === 0 && <li className="empty">No messages yet</li>}
-                {messages.map((m, i) => (
-                  <li className="msg" key={i}>
-                    <div className="avatar">DP</div>
-                    <div className="msg-body">
-                      <div className="msg-text">{m.text}</div>
-                      <div className="msg-meta muted">{formatDate(m.createdAt)}</div>
-                    </div>
+            {/* Items */}
+            <div className="bg-slate-50 p-5 rounded-xl border shadow-sm">
+              <h3 className="font-semibold text-lg mb-3 text-gray-700">Items</h3>
+              <ul className="space-y-2">
+                {order.orderedItems?.map((it, idx) => (
+                  <li key={idx} className="flex justify-between py-1">
+                    <span>{it.name}</span>
+                    <span className="text-gray-500">×{it.quantity}</span>
                   </li>
                 ))}
               </ul>
+            </div>
 
+            {/* Tracking */}
+            <div className="bg-slate-50 p-5 rounded-xl border shadow-sm">
+              <h3 className="font-semibold text-lg mb-3 text-gray-700">
+                Delivery / Tracking
+              </h3>
+
+              <div className="flex gap-3 mb-3">
+                <input
+                  className="border p-2 rounded w-full shadow-sm"
+                  placeholder="Courier Name"
+                  value={order.courierName || partnerName || ""}
+                  onChange={(e) =>
+                    setOrder({ ...order, courierName: e.target.value })
+                  }
+                />
+                <input
+                  className="border p-2 rounded w-full shadow-sm"
+                  placeholder="Tracking ID"
+                  value={order.courierTrackingId || ""}
+                  onChange={(e) =>
+                    setOrder({ ...order, courierTrackingId: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={startScanner}
+                  className="px-4 py-2 bg-gray-200 rounded-xl hover:bg-gray-300"
+                >
+                  📷 Scan
+                </button>
+                <button
+                  onClick={saveTrackingToServer}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+                >
+                  Save Tracking
+                </button>
+              </div>
+            </div>
+
+            {/* Status Timeline */}
+            <div className="bg-slate-50 p-5 rounded-xl border shadow-sm">
+              <h3 className="font-semibold text-lg mb-4 text-gray-700">
+                Status Progress
+              </h3>
+
+              <div className="relative w-full h-3 bg-gray-300 rounded-full overflow-hidden">
+                <div
+                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-700 ease-out"
+                  style={{
+                    width: `${((currentIndex + 1) / STATUS_FLOW.length) * 100}%`,
+                  }}
+                />
+              </div>
+
+              <div className="flex justify-between mt-3 text-xs text-gray-600">
+                {STATUS_FLOW.map((s, i) => (
+                  <div key={i} className="text-center w-full">
+                    {STATUS_LABELS[s]}
+                  </div>
+                ))}
+              </div>
+
+              {/* Buttons */}
+              <div className="flex flex-wrap gap-3 mt-5">
+                {ACTIONS.map((s) => {
+                  const isCurrent = order.orderStatus === s;
+                  const can =
+                    STATUS_FLOW.indexOf(s) > currentIndex || s === "CANCELLED";
+
+                  return (
+                    <button
+                      key={s}
+                      disabled={!can || isUpdating || isCurrent}
+                      onClick={() => can && updateStatus(s)}
+                      className={`px-4 py-2 rounded-xl text-sm font-semibold
+                        ${
+                          isCurrent
+                            ? "bg-gray-200 text-gray-700"
+                            : can
+                            ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                            : "bg-gray-100 text-gray-400"
+                        }
+                      `}
+                    >
+                      {STATUS_LABELS[s]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Messaging */}
+            <div className="bg-slate-50 p-5 rounded-xl border shadow-sm">
+              <h3 className="font-semibold text-lg mb-3 text-gray-700">
+                Send Message
+              </h3>
+              <textarea
+                rows="3"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                className="w-full border p-2 rounded-lg shadow-sm mb-3"
+                placeholder="Type a message..."
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={sendMessage}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+                >
+                  Send
+                </button>
+                <button
+                  onClick={() => setMessageText("Your order has been shipped")}
+                  className="px-4 py-2 bg-gray-200 rounded-xl"
+                >
+                  Quick: shipped
+                </button>
+                <button
+                  onClick={() =>
+                    setMessageText("Your item has arrived at our office")
+                  }
+                  className="px-4 py-2 bg-gray-200 rounded-xl"
+                >
+                  Quick: arrived
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT — Messages */}
+          <aside className="bg-slate-50 p-5 rounded-xl border shadow-sm h-fit">
+            <h3 className="font-semibold text-lg mb-3 text-gray-700">
+              Delivery Messages
+            </h3>
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {messages.length === 0 ? (
+                <p className="text-gray-500">No messages yet</p>
+              ) : (
+                messages.map((m, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-3 p-3 bg-white rounded-xl border shadow-sm"
+                  >
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
+                      DP
+                    </div>
+                    <div>
+                      <p>{m.text}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(m.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </aside>
         </div>
-
       </div>
 
+      {/* Scanner Modal */}
       {showScanner && (
-        <div className="scanner-modal">
-          <div className="scanner-content">
-            <h4>Scan barcode</h4>
-            <video ref={videoRef} style={{ width: "100%" }} playsInline muted></video>
-            <button className="btn mt-2" onClick={stopScanner}>Close</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6">
+          <div className="bg-white p-6 rounded-xl shadow-xl">
+            <h3 className="text-xl font-semibold mb-3">Scan Barcode</h3>
+            <video
+              ref={videoRef}
+              className="w-full rounded shadow"
+              playsInline
+              muted
+            ></video>
+
+            <button
+              onClick={stopScanner}
+              className="mt-4 w-full bg-red-600 text-white p-2 rounded-xl hover:bg-red-700"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
