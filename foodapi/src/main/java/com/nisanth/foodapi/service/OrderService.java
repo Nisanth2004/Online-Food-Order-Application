@@ -7,6 +7,7 @@ import com.nisanth.foodapi.io.OrderResponse;
 import com.razorpay.RazorpayException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,13 @@ public interface OrderService {
     void updateCourierDetails(String orderId, String courierName, String trackingId);
 
     void updateOrderAddress(String orderId, String newAddress);
+
+    // in OrderService interface
+    void setOrderStatusWithTimestamp(String orderId, String status, String actor, String message,String reason);
+    List<OrderResponse> getOrdersForHub(String hubName);
+    List<OrderResponse> getOrdersForDeliveryBoy(String deliveryBoyId);
+    String savePodImage(String orderId, MultipartFile file) throws Exception;
+    void assignDeliveryBoy(String orderId, String deliveryBoyId);
 
 
 

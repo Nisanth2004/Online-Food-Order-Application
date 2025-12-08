@@ -3,6 +3,7 @@ package com.nisanth.foodapi.entity;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.DeliveryMessage;
 import com.nisanth.foodapi.io.OrderItem;
+import com.nisanth.foodapi.io.HubUpdate;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -51,11 +52,7 @@ public class OrderEntity {
     private Instant createdDate;
 
     @Builder.Default
-    private Boolean stockRestored = false;
-
-    public boolean isStockRestored() {
-        return stockRestored;
-    }
+    private boolean stockRestored = false;
 
     // courier info
     private String courierName;
@@ -66,7 +63,22 @@ public class OrderEntity {
     @Builder.Default
     private List<DeliveryMessage> deliveryMessages = new ArrayList<>();
 
+    // hub history
+    @Builder.Default
+    private List<HubUpdate> hubHistory = new ArrayList<>();
+
     // orderStatus → timestamp (Placed, Packed, Shipped, OutForDelivery, Delivered)
     @Builder.Default
     private Map<String, LocalDateTime> statusTimestamps = new HashMap<>();
+
+    // POD images (URLs)
+    @Builder.Default
+    private List<String> podImageUrls = new ArrayList<>();
+
+    // delivery boy assigned id
+    private String assignedDeliveryBoyId;
+
+    @Builder.Default
+    private boolean podVerified = false;
+
 }

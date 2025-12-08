@@ -95,6 +95,10 @@ public class OrderController {
         return ResponseEntity.ok("Order status updated to " + status);
     }
 
+
+
+
+
     @PutMapping("/admin/courier/{orderId}")
     public ResponseEntity<?> updateCourierDetails(
             @PathVariable String orderId,
@@ -201,9 +205,7 @@ public class OrderController {
             return ResponseEntity.badRequest().body("Message required");
         }
 
-        OrderEntity order = orderRepository.findById(id)
-                .orElse(null);
-
+        OrderEntity order = orderRepository.findById(id).orElse(null);
         if (order == null) {
             return ResponseEntity.status(404).body("Order not found");
         }
@@ -212,12 +214,15 @@ public class OrderController {
             order.setDeliveryMessages(new ArrayList<>());
         }
 
-        DeliveryMessage deliveryMessage = new DeliveryMessage();
-        deliveryMessage.setMessage(message);
-        deliveryMessage.setTimestamp(String.valueOf(LocalDateTime.now()));
+        // Use builder to create DeliveryMessage
+        DeliveryMessage deliveryMessage = DeliveryMessage.builder()
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .actor(body.getOrDefault("actor", "partner")) // optional
+                .reason(body.getOrDefault("reason", null))    // optional
+                .build();
 
         order.getDeliveryMessages().add(deliveryMessage);
-
         orderRepository.save(order);
 
         return ResponseEntity.ok("Message saved");

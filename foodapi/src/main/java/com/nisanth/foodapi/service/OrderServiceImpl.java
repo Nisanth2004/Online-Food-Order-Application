@@ -4,21 +4,16 @@ import com.nisanth.foodapi.entity.Courier;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.entity.Setting;
 import com.nisanth.foodapi.enumeration.OrderStatus;
-import com.nisanth.foodapi.io.OrderItem;
-import com.nisanth.foodapi.io.OrderRequest;
-import com.nisanth.foodapi.io.OrderResponse;
-import com.nisanth.foodapi.repository.CartRepository;
-import com.nisanth.foodapi.repository.CourierRepository;
-import com.nisanth.foodapi.repository.FoodRepository;
-import com.nisanth.foodapi.repository.OrderRepository;
+import com.nisanth.foodapi.io.*;
+import com.nisanth.foodapi.repository.*;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -34,6 +29,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private CourierRepository courierRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private DeliveryBoyRepository deliveryBoyRepository;
 
     @Autowired
     private EmailService emailService;
@@ -405,5 +406,95 @@ public class OrderServiceImpl implements OrderService {
         order.setUserAddress(newAddress);
         orderRepository.save(order);
     }
+
+    // Helper: centralised status change that adds timestamp + optional delivery message + websocket publish
+    @Override
+    public void setOrderStatusWithTimestamp(String orderId, String status, String actor, String message,String reason) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        OrderStatus newStatus = OrderStatus.fromString(status);
+        order.setOrderStatus(newStatus);
+        order.getStatusTimestamps().put(String.valueOf(newStatus), LocalDateTime.now());
+
+        if (message != null && !message.isBlank()) {
+            if (order.getDeliveryMessages() == null) order.setDeliveryMessages(new ArrayList<>());
+            order.getDeliveryMessages().add(
+                    DeliveryMessage.builder()
+                            .message(message)
+                            .timestamp(LocalDateTime.now())
+                            .actor(actor)
+                            .reason(reason)
+                            .build()
+            );
+
+        }
+
+        orderRepository.save(order);
+
+        // push websocket update if you want to keep realtime UI
+        try {
+            messagingTemplate.convertAndSend("/topic/orders", convertToResponse(order));
+        } catch (Exception ignore) {}
+    }
+
+    // List orders for a hub — orders that have last hubHistory entry equal to hubName OR orderStatus == ORDER_AT_HUB
+    @Override
+    public List<OrderResponse> getOrdersForHub(String hubName) {
+        List<OrderEntity> all = orderRepository.findAll();
+        // filter: orders where last hubHistory hubName equals this or status == ORDER_AT_HUB and hubName in hubHistory OR assigned hub
+        List<OrderEntity> filtered = all.stream().filter(o -> {
+            // if hubHistory last equals hubName
+            if (o.getHubHistory() != null && !o.getHubHistory().isEmpty()) {
+                HubUpdate last = o.getHubHistory().get(o.getHubHistory().size() - 1);
+                if (hubName.equalsIgnoreCase(last.getHubName())) return true;
+            }
+            // fallback: status = ORDER_AT_HUB and delivery boy not assigned
+            if (o.getOrderStatus() != null && o.getOrderStatus() == OrderStatus.ORDER_AT_HUB) return true;
+            return false;
+        }).collect(Collectors.toList());
+
+        return filtered.stream().map(this::convertToResponse).collect(Collectors.toList());
+    }
+
+    // List orders for a delivery boy (by assignedDeliveryBoyId) and statuses OUT_FOR_DELIVERY or ORDER_AT_HUB
+    @Override
+    public List<OrderResponse> getOrdersForDeliveryBoy(String deliveryBoyId) {
+        List<OrderEntity> list = orderRepository.findAll().stream()
+                .filter(o -> deliveryBoyId.equals(o.getAssignedDeliveryBoyId()))
+                .filter(o -> o.getOrderStatus() == OrderStatus.ORDER_AT_HUB || o.getOrderStatus() == OrderStatus.OUT_FOR_DELIVERY)
+                .collect(Collectors.toList());
+        return list.stream().map(this::convertToResponse).collect(Collectors.toList());
+    }
+    @Override
+    public String savePodImage(String orderId, MultipartFile file) throws Exception {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        String url = fileStorageService.store(file);
+
+        if (order.getPodImageUrls() == null) order.setPodImageUrls(new ArrayList<>());
+        order.getPodImageUrls().add(url);
+
+        // add delivery message
+        if (order.getDeliveryMessages() == null) order.setDeliveryMessages(new ArrayList<>());
+        order.getDeliveryMessages().add(DeliveryMessage.builder()
+                .message("POD uploaded")
+                .timestamp(LocalDateTime.now())
+                .build());
+
+        orderRepository.save(order);
+        return url;
+    }
+
+    @Override
+    public void assignDeliveryBoy(String orderId, String deliveryBoyId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        order.setAssignedDeliveryBoyId(deliveryBoyId);
+        orderRepository.save(order);
+    }
+
 
 }

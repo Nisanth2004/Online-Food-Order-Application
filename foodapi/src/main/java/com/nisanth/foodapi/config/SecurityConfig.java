@@ -84,7 +84,8 @@ public class SecurityConfig {
                 "https://cocograndorganics.netlify.app",
                 "https://supplier-cocograndorganics.netlify.app",
                 "http://localhost:5174",
-                "http://localhost:5175"
+                "http://localhost:5175",
+                "http://localhost:5176"
         ));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
