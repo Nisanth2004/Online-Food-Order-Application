@@ -7,6 +7,8 @@ import api from "../../service/CustomAxiosInstance";
 import { StoreContext } from "../../Context/StoreContext";
 import { toast } from "react-toastify";
 import "./OrderTracking.css";
+import LiveMap from "../../components/LiveMap/LiveMap";
+
 
 const STATUS_FLOW = [
   "ORDER_PLACED",
@@ -354,6 +356,7 @@ export default function OrderTracking() {
               <a href="tel:+91XXXXXXXXXX" className="support-btn">Call Support</a>
             </div>
           </div>
+<LiveMap orderId={order.id} />
 
        
         </div>

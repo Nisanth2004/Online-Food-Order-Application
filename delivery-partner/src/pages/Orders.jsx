@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PartnerContext } from "../context/PartnerContext";
+import { GpsContext } from "../context/GpsContext";
 import api from "../utils/api";
 import toast from "react-hot-toast";
 import {
@@ -14,10 +15,13 @@ import {
   Clock,
 } from "lucide-react";
 
+
 /**
  * Orders page with Option 3 (presets + custom date range in dropdown)
  */
 export default function Orders() {
+
+const { setActiveOrderId } = useContext(GpsContext);
   const { partnerName } = useContext(PartnerContext);
   const navigate = useNavigate();
 
@@ -391,7 +395,10 @@ export default function Orders() {
                     <td className="px-6 py-4 text-slate-600 text-sm">{formatDateTime(o.createdDate)}</td>
                     <td className="px-6 py-4 text-center">
                       <button
-                        onClick={() => navigate(`/order/${o.id}`)}
+                       onClick={() => {
+    setActiveOrderId(o.id);      // 🎯 SET ACTIVE ORDER ID
+    navigate(`/order/${o.id}`);
+  }}
                         title="View full details"
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-shadow shadow-sm"
                       >

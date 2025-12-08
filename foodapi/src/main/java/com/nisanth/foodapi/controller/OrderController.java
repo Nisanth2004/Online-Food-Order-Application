@@ -272,6 +272,32 @@ public class OrderController {
         return ResponseEntity.ok("Phone updated");
     }
 
+    // ✅ Delivery Partner: Get single hub order (ORDER_AT_HUB or OUT_FOR_DELIVERY)
+    @GetMapping("/hub/{orderId}")
+    public ResponseEntity<?> getHubOrderById(@PathVariable String orderId) {
+
+        OrderResponse order = orderService.getOrderById(orderId);
+
+        if (order == null) {
+            return ResponseEntity.status(404).body("Order not found");
+        }
+
+        // Delivery partner should only see hub-level and delivery-level orders
+        if (!order.getOrderStatus().equals(OrderStatus.ORDER_AT_HUB.toString()) &&
+                !order.getOrderStatus().equals(OrderStatus.OUT_FOR_DELIVERY.toString())) {
+            System.out.println("STATUS FROM DB = " + order.getOrderStatus());
+            System.out.println("COMPARE 1 = " + OrderStatus.ORDER_AT_HUB.toString());
+            System.out.println("COMPARE 2 = " + OrderStatus.OUT_FOR_DELIVERY.toString());
+
+            return ResponseEntity.status(403).body("Not allowed. Order not yet at hub.");
+
+
+
+        }
+
+        return ResponseEntity.ok(order);
+    }
+
 
 
 
