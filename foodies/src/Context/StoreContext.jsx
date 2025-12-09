@@ -8,20 +8,21 @@ import {
 import { addToCart, getCartData, removeQtyFromCart } from "../service/cartService";
 import { getSettings } from "../service/settingService";
 import { toast } from "react-hot-toast";
-import jwt_decode from "jwt-decode"; // ✅ static import
+import jwt_decode from "jwt-decode";
 
 export const StoreContext = createContext(null);
 
 export const StoreContextProvider = (props) => {
   const [foodList, setFoodList] = useState([]);
   const [quantities, setQuantities] = useState({});
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [taxRate, setTaxRate] = useState(0);
   const [shippingCharge, setShippingCharge] = useState(0);
   const [loadingUser, setLoadingUser] = useState(true);
 
+  // ------------------ CART FUNCTIONS ------------------ //
   const increaseQty = async (foodId) => {
     const food = foodList.find(f => f.id === foodId);
     if (!food) return;
@@ -48,6 +49,7 @@ export const StoreContextProvider = (props) => {
     setQuantities(items);
   };
 
+  // ------------------ WISHLIST FUNCTIONS ------------------ //
   const addToWishlist = async (foodId) => {
     if (!user?.id) {
       toast.error("Login required");
@@ -70,33 +72,46 @@ export const StoreContextProvider = (props) => {
     try {
       await removeFromWishlistAPI(foodId, user.id, token);
       setWishlist(prev => prev.filter(id => id !== foodId));
+      toast.success("Your item had been removed from wishlist")
     } catch (err) {
       console.error("Remove from wishlist failed", err);
       toast.error("Failed to remove from wishlist");
     }
   };
 
-  // Update user state immediately after token is set
+  // ------------------ USER TOKEN & STATE ------------------ //
   useEffect(() => {
     if (!token) {
       setUser(null);
       setLoadingUser(false);
       return;
     }
+
     try {
       const decoded = jwt_decode(token);
-      const userId = decoded.id || decoded.sub || decoded.userId || decoded.user_id || decoded.username || decoded.email;
-      const username = decoded.username || decoded.email || decoded.sub || decoded.userId || "User";
-      setUser({ id: userId, username });
+      const now = Date.now() / 1000;
+
+      // Check token expiration
+      if (decoded.exp && decoded.exp < now) {
+        setToken("");
+        setUser(null);
+        localStorage.removeItem("token");
+      } else {
+        const userId = decoded.id || decoded.sub || decoded.userId || decoded.user_id || decoded.username || decoded.email;
+        const username = decoded.username || decoded.email || decoded.sub || decoded.userId || "User";
+        setUser({ id: userId, username });
+      }
     } catch (err) {
       console.error("Invalid token decoding", err);
       setUser(null);
+      localStorage.removeItem("token");
+      setToken("");
     } finally {
       setLoadingUser(false);
     }
   }, [token]);
 
-  // Initial load of food, settings, cart, and wishlist
+  // ------------------ INITIAL LOAD ------------------ //
   useEffect(() => {
     async function loadData() {
       try {
@@ -107,15 +122,13 @@ export const StoreContextProvider = (props) => {
         setTaxRate(setting.taxPercentage || 0);
         setShippingCharge(setting.shippingCharge || 0);
 
-        const storedToken = localStorage.getItem("token");
-        if (!storedToken) return;
+        if (!token) return;
 
-        setToken(storedToken); // triggers the other useEffect to set user
-        await loadCartData(storedToken);
+        await loadCartData(token);
 
-        const decoded = jwt_decode(storedToken);
+        const decoded = jwt_decode(token);
         const userId = decoded.id || decoded.sub || decoded.userId || decoded.user_id || decoded.username || decoded.email;
-        const wishlistData = await fetchWishlistAPI(userId, storedToken);
+        const wishlistData = await fetchWishlistAPI(userId, token);
         setWishlist(wishlistData || []);
       } catch (err) {
         console.error("Failed to load initial data", err);
@@ -132,6 +145,7 @@ export const StoreContextProvider = (props) => {
     loadData();
   }, []);
 
+  // ------------------ CONTEXT VALUE ------------------ //
   const contextValue = {
     foodList,
     setFoodList,

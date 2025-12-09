@@ -8,9 +8,10 @@ const Menubar = () => {
   const [active, setActive] = useState('home');
   const navigate = useNavigate();
 
-  const { quantities, token, setToken, setQuantities, wishlist } = useContext(StoreContext);
-  const uniqueItemsInCart = Object.values(quantities).filter((qty) => qty > 0).length;
 
+  const { quantities,foodList, token, setToken, setQuantities, wishlist } = useContext(StoreContext);
+  const uniqueItemsInCart = Object.values(quantities).filter((qty) => qty > 0).length;
+  const validWishlistCount = wishlist.filter(id => foodList.some(food => food.id === id)).length;
   const logout = () => {
     localStorage.removeItem('token');
     setToken('');
@@ -89,13 +90,13 @@ const Menubar = () => {
               )}
             </Link>
 
-            {/* Wishlist icon */}
-            <Link to="/wishlist" className="position-relative">
-              <i className="bi bi-heart fs-4"></i>
-              {wishlist.length > 0 && (
-                <span className="cart-badge">{wishlist.length}</span>
-              )}
-            </Link>
+           {/* Wishlist icon */}
+<Link to="/wishlist" className="position-relative">
+  <i className="bi bi-heart fs-4"></i>
+  {validWishlistCount > 0 && (
+    <span className="cart-badge">{validWishlistCount}</span>
+  )}
+</Link>
 
             {/* Login/Logout */}
             {!token ? (
