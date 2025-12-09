@@ -29,7 +29,13 @@ const FoodItem = ({
     loadingUser
   } = useContext(StoreContext);
 
-  // Show loading while user info is being fetched
+  // SAFE category handling
+  const safeCategories = Array.isArray(categories)
+    ? categories
+    : categories
+    ? [categories] // convert string → array
+    : [];
+
   if (loadingUser) return <div>Loading...</div>;
 
   return (
@@ -48,8 +54,9 @@ const FoodItem = ({
             </div>
           </h5>
 
+          {/* FIXED CATEGORY DISPLAY */}
           <div style={{ fontSize: "12px", color: "#777", marginBottom: "6px" }}>
-            {categories.length > 0 ? categories.join(", ") : "No Category"}
+            {safeCategories.length > 0 ? safeCategories.join(", ") : "No Category"}
           </div>
 
           <p className="card-text">{description}</p>
@@ -73,10 +80,18 @@ const FoodItem = ({
                 toast.error("Login required");
                 return;
               }
-              wishlist.includes(id) ? removeFromWishlist(id) : addToWishlist(id);
+              wishlist.includes(id)
+                ? removeFromWishlist(id)
+                : addToWishlist(id);
             }}
           >
-            <i className={`bi ${wishlist.includes(id) ? "bi-heart-fill text-danger" : "bi-heart"}`}></i>
+            <i
+              className={`bi ${
+                wishlist.includes(id)
+                  ? "bi-heart-fill text-danger"
+                  : "bi-heart"
+              }`}
+            ></i>
           </div>
         </div>
 

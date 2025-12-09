@@ -61,6 +61,7 @@ const FoodDisplay = ({ category, searchText, sortOption }) => {
               averageRating={food.averageRating}
               reviewCount={food.reviewCount}
               stock={food.stock}
+              categories={food.categories} 
             />
           ))
         ) : (
