@@ -5,6 +5,10 @@ import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.entity.Setting;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.*;
+import com.nisanth.foodapi.io.order.OrderItem;
+import com.nisanth.foodapi.io.order.OrderRequest;
+import com.nisanth.foodapi.io.user.OrderResponse;
+import com.nisanth.foodapi.io.util.DeliveryMessage;
 import com.nisanth.foodapi.repository.*;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
@@ -59,6 +63,9 @@ public class OrderServiceImpl implements OrderService {
     private SettingService settingService;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private ShipTrackingService shipTrackingService;
 
 
     // ------------------- CREATE ORDER -------------------
@@ -252,6 +259,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // ------------------- COURIER -------------------
+    /*
     @Override
     public void updateCourierDetails(String orderId, String courierName, String trackingId) {
         OrderEntity order = orderRepository.findById(orderId)
@@ -268,6 +276,26 @@ public class OrderServiceImpl implements OrderService {
         order.getStatusTimestamps().put(String.valueOf(OrderStatus.ORDER_PACKED), LocalDateTime.now());
 
         orderRepository.save(order);
+    }
+*/
+    @Override
+    public void updateCourierDetails(String orderId, String courierName, String trackingId) {
+        OrderEntity order = orderRepository.findById(orderId).orElseThrow();
+
+        order.setCourierName(courierName);
+        order.setCourierTrackingId(trackingId);
+        order.setOrderStatus(OrderStatus.SHIPPED);
+
+        order.addMessage("Order shipped via " + courierName, LocalDateTime.now(), "system", null);
+
+        orderRepository.save(order);
+
+        // Register with ShipTracker
+        try {
+            shipTrackingService.registerTracking(courierName, trackingId);
+        } catch (Exception e) {
+            System.out.println("ShipTracker register failed: " + e.getMessage());
+        }
     }
 
 

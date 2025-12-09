@@ -1,4 +1,4 @@
-package com.nisanth.foodapi.io;
+package com.nisanth.foodapi.io.food;
 
 
 import lombok.AllArgsConstructor;

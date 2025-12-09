@@ -5,6 +5,7 @@ import com.nisanth.foodapi.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,10 +21,19 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewsByFoodId(foodId));
     }
 
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ReviewEntity> addReview(
             @PathVariable String foodId,
-            @RequestBody ReviewEntity review) {
-        return ResponseEntity.ok(reviewService.addReview(foodId, review));
+            @RequestPart("review") ReviewEntity review,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) {
+        return ResponseEntity.ok(reviewService.addReview(foodId, review, image));
     }
+
+    @PutMapping("/{reviewId}/helpful")
+    public ResponseEntity<?> markHelpful(@PathVariable String reviewId) {
+        return ResponseEntity.ok(reviewService.incrementHelpful(reviewId));
+    }
+
+
 }

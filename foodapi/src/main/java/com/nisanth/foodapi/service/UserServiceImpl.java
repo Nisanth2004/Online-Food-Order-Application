@@ -1,11 +1,10 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.UserEntity;
-import com.nisanth.foodapi.io.UserRequest;
-import com.nisanth.foodapi.io.UserResponse;
+import com.nisanth.foodapi.io.user.UserRequest;
+import com.nisanth.foodapi.io.user.UserResponse;
 import com.nisanth.foodapi.repository.UserRepsitory;
 import lombok.AllArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

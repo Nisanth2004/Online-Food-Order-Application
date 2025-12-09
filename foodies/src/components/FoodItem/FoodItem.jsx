@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { StoreContext } from "../../Context/StoreContext";
 import { renderStars } from "../../util/renderStars.jsx";
 import "./FoodItem.css";
+import { toast } from "react-toastify";
 
 const FoodItem = ({
   name,
@@ -17,7 +18,19 @@ const FoodItem = ({
   stock,
   categories = []
 }) => {
-  const { increaseQty, decreaseQty, quantities } = useContext(StoreContext);
+  const {
+    increaseQty,
+    decreaseQty,
+    quantities,
+    wishlist,
+    addToWishlist,
+    removeFromWishlist,
+    user,
+    loadingUser
+  } = useContext(StoreContext);
+
+  // Show loading while user info is being fetched
+  if (loadingUser) return <div>Loading...</div>;
 
   return (
     <div className="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center">
@@ -29,14 +42,12 @@ const FoodItem = ({
         <div className="card-body">
           <h5 className="card-title d-flex justify-content-between align-items-center">
             {name}
-
             <div>
               {sponsored && <span className="badge bg-danger ms-2">Sponsored</span>}
               {featured && <span className="badge bg-warning text-dark ms-2">Best Seller</span>}
             </div>
           </h5>
 
-          {/* Categories */}
           <div style={{ fontSize: "12px", color: "#777", marginBottom: "6px" }}>
             {categories.length > 0 ? categories.join(", ") : "No Category"}
           </div>
@@ -45,13 +56,27 @@ const FoodItem = ({
 
           <div className="d-flex justify-content-between align-items-center">
             <span className="h5 mb-0">₹{price}</span>
-
             <div className="d-flex align-items-center gap-1">
               {renderStars(averageRating, 20)}
               <small className="text-muted ms-1">
                 ({averageRating.toFixed(1)} / {reviewCount})
               </small>
             </div>
+          </div>
+
+          {/* Wishlist Heart */}
+          <div
+            className={`wishlist-heart ${wishlist.includes(id) ? "active-heart" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!user?.id) {
+                toast.error("Login required");
+                return;
+              }
+              wishlist.includes(id) ? removeFromWishlist(id) : addToWishlist(id);
+            }}
+          >
+            <i className={`bi ${wishlist.includes(id) ? "bi-heart-fill text-danger" : "bi-heart"}`}></i>
           </div>
         </div>
 
@@ -69,9 +94,7 @@ const FoodItem = ({
               <button className="qty-btn" onClick={() => decreaseQty(id)}>
                 <i className="bi bi-dash-circle"></i>
               </button>
-
               <span className="qty-num">{quantities[id]}</span>
-
               <button className="qty-btn" onClick={() => increaseQty(id)}>
                 <i className="bi bi-plus-circle"></i>
               </button>

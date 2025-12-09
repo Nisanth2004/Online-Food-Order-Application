@@ -1,4 +1,4 @@
-/* Food image */
+/* MAIN FOOD IMAGE */
 .food-img {
   width: 100%;
   border-radius: 14px;
@@ -6,78 +6,184 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-/* Category badges */
-.category-badge {
-  font-size: 0.8rem;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-/* Review section */
-.review-section {
-  margin-top: 40px;
-}
-
-.review-card {
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0px 3px 10px rgba(0,0,0,0.08);
-  padding: 16px;
-}
-
-.review-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.review-user {
-  font-weight: 600;
-}
-
-.review-date {
-  color: #777;
-  font-size: 0.85rem;
-}
-
-/* Form box */
-.review-box {
-  border-radius: 14px;
-  padding: 18px;
+/* REVIEW SUMMARY */
+.review-summary-card {
   background: #fff;
-  box-shadow: 0px 3px 10px rgba(0,0,0,0.07);
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.07);
 }
 
-/* Star rating touch-friendly */
-.star-input svg {
+/* REVIEW CARD + ANIMATION */
+.review-card {
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0px 3px 12px rgba(0,0,0,0.08);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* AVATAR */
+.review-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+/* VERIFIED */
+.verified-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #e6f8e6;
+  color: #2e8b2e;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+}
+
+/* REVIEW IMAGE WITH GRADIENT BORDER */
+.review-img {
+  width: 100%;
+  max-width: 260px;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-top: 10px;
+
+  border: 3px solid transparent;
+  background: linear-gradient(#fff, #fff),
+              linear-gradient(135deg, #ffaf40, #ff6b6b);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  transition: transform 0.2s ease;
+}
+
+/* HOVER ZOOM */
+.zoomable:hover {
+  transform: scale(1.05);
+  cursor: zoom-in;
+}
+
+/* MODAL */
+.img-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9000;
+  padding: 12px;
+}
+
+.img-modal-content {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 14px;
+}
+
+/* FILE DROP ZONE */
+.file-drop-zone {
+  border: 2px dashed #dcdcdc;
+  padding: 14px;
+  text-align: center;
+  border-radius: 12px;
   cursor: pointer;
-  margin-right: 8px;
-  transition: transform 0.15s ease;
+  color: #555;
+  transition: 0.2s;
 }
 
-.star-input svg:hover {
-  transform: scale(1.2);
+.file-drop-zone:hover {
+  background: #f8f9fa;
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .food-info {
-    margin-top: 20px;
+.file-drop-zone input {
+  display: none;
+}
+
+/* HELPFUL BUTTON */
+.helpful-btn {
+  background: transparent;
+  border: none;
+  color: #0d6efd;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+}
+
+.helpful-btn:hover {
+  text-decoration: underline;
+}
+
+/* LOAD MORE */
+.load-more-btn {
+  padding: 10px 30px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+/* REVIEW BOX */
+.review-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+}
+.helpful-btn {
+  background: #f1f1f1;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.helpful-btn:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.helpful-btn:active {
+  transform: scale(0.95);
+}
+
+.helpful-btn .helpful-icon {
+  transition: transform 0.25s ease;
+}
+
+.helpful-btn.marked {
+  background: #d1ffe0 !important;
+  color: #0e6f2f !important;
+  border: 1px solid #8affb6;
+}
+
+.helpful-btn.marked .helpful-icon {
+  transform: scale(1.3);
+}
+
+/* RESPONSIVE */
+@media (max-width: 480px) {
+  .review-img {
+    max-width: 48%;
   }
 
   .review-card {
     padding: 14px;
   }
-
-  .review-box {
-    margin-top: 25px;
-  }
-}
-.review-box form .form-control,
-.review-box form .btn {
-  width: 100%;
-  box-sizing: border-box;
-}
-.review-box textarea.form-control {
-  border-radius: 4px !important;
 }

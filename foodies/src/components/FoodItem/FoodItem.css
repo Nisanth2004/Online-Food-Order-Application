@@ -130,3 +130,17 @@
     height: 220px !important;
   }
 }
+.wishlist-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 22px;
+  cursor: pointer;
+  color: #777;
+  transition: all 0.2s ease;
+}
+
+.wishlist-heart.active-heart {
+  color: #e63946;
+  transform: scale(1.15);
+}

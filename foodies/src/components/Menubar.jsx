@@ -8,7 +8,7 @@ const Menubar = () => {
   const [active, setActive] = useState('home');
   const navigate = useNavigate();
 
-  const { quantities, token, setToken, setQuantities } = useContext(StoreContext);
+  const { quantities, token, setToken, setQuantities, wishlist } = useContext(StoreContext);
   const uniqueItemsInCart = Object.values(quantities).filter((qty) => qty > 0).length;
 
   const logout = () => {
@@ -24,9 +24,7 @@ const Menubar = () => {
 
         {/* Logo */}
         <Link to="/">
-          <div
-            className="menu-logo-wrapper"
-          >
+          <div className="menu-logo-wrapper">
             <img
               src={assets.second_logo}
               alt="Logo"
@@ -51,7 +49,6 @@ const Menubar = () => {
         {/* Menu Items */}
         <div className="collapse navbar-collapse" id="menuNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0 mt-2 mt-lg-0">
-
             <li className="nav-item">
               <Link
                 className={`nav-link ${active === 'home' ? 'active-link' : ''}`}
@@ -61,7 +58,6 @@ const Menubar = () => {
                 Home
               </Link>
             </li>
-
             <li className="nav-item">
               <Link
                 className={`nav-link ${active === 'explore' ? 'active-link' : ''}`}
@@ -71,7 +67,6 @@ const Menubar = () => {
                 Explore
               </Link>
             </li>
-
             <li className="nav-item">
               <Link
                 className={`nav-link ${active === 'contact-us' ? 'active-link' : ''}`}
@@ -81,7 +76,6 @@ const Menubar = () => {
                 Contact Us
               </Link>
             </li>
-
           </ul>
 
           {/* Right section */}
@@ -91,9 +85,15 @@ const Menubar = () => {
             <Link to="/cart" className="cart-wrapper position-relative">
               <img src={assets.cart} alt="cart" height={30} width={30} />
               {uniqueItemsInCart > 0 && (
-                <span className="cart-badge">
-                  {uniqueItemsInCart}
-                </span>
+                <span className="cart-badge">{uniqueItemsInCart}</span>
+              )}
+            </Link>
+
+            {/* Wishlist icon */}
+            <Link to="/wishlist" className="position-relative">
+              <i className="bi bi-heart fs-4"></i>
+              {wishlist.length > 0 && (
+                <span className="cart-badge">{wishlist.length}</span>
               )}
             </Link>
 
@@ -131,10 +131,7 @@ const Menubar = () => {
                 </a>
 
                 <ul className="dropdown-menu text-small">
-                  <li
-                    className="dropdown-item"
-                    onClick={() => navigate('/myorders')}
-                  >
+                  <li className="dropdown-item" onClick={() => navigate('/myorders')}>
                     Orders
                   </li>
                   <li className="dropdown-item" onClick={logout}>

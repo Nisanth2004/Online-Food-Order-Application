@@ -2,9 +2,9 @@ package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.enumeration.OrderStatus;
-import com.nisanth.foodapi.io.DeliveryMessage;
-import com.nisanth.foodapi.io.OrderRequest;
-import com.nisanth.foodapi.io.OrderResponse;
+import com.nisanth.foodapi.io.util.DeliveryMessage;
+import com.nisanth.foodapi.io.order.OrderRequest;
+import com.nisanth.foodapi.io.user.OrderResponse;
 import com.nisanth.foodapi.repository.OrderRepository;
 import com.nisanth.foodapi.service.CourierService;
 import com.nisanth.foodapi.service.OrderService;
@@ -28,7 +28,7 @@ public class OrderController {
 
 
 
-    private final CourierService courierService;
+    private final CourierService courierServiceAdmin;
 
     private final OrderRepository orderRepository;
     // ✅ Create order and initiate Razorpay payment

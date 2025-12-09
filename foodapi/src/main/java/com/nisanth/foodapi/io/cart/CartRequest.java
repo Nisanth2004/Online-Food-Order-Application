@@ -1,4 +1,4 @@
-package com.nisanth.foodapi.io;
+package com.nisanth.foodapi.io.cart;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

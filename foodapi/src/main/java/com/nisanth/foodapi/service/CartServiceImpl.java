@@ -1,8 +1,8 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.CartEntity;
-import com.nisanth.foodapi.io.CartRequest;
-import com.nisanth.foodapi.io.CartResponse;
+import com.nisanth.foodapi.io.cart.CartRequest;
+import com.nisanth.foodapi.io.cart.CartResponse;
 import com.nisanth.foodapi.repository.CartRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

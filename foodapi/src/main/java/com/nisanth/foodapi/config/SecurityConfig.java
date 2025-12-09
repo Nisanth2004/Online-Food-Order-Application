@@ -57,7 +57,8 @@ public class SecurityConfig {
                                 "/api/orders/user",
                                 "/api/orders/update-address/**",
                                 "/api/orders/update-phone/**",
-                                "/api/orders/track/**"
+                                "/api/orders/track/**",
+                                "/api/wishlist/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

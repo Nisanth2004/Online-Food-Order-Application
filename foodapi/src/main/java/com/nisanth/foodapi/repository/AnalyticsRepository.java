@@ -1,8 +1,8 @@
 package com.nisanth.foodapi.repository;
 
 import com.nisanth.foodapi.entity.OrderEntity;
-import com.nisanth.foodapi.io.MonthlySalesDTO;
-import com.nisanth.foodapi.io.StockHistoryDTO;
+import com.nisanth.foodapi.io.analytics.MonthlySalesDTO;
+import com.nisanth.foodapi.io.analytics.StockHistoryDTO;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 

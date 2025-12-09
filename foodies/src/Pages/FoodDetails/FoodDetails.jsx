@@ -3,19 +3,34 @@ import { useNavigate, useParams } from "react-router-dom";
 import { fetchFoodDetails } from "../../service/FoodService";
 import { toast } from "react-toastify";
 import { StoreContext } from "../../Context/StoreContext";
-import axios from "axios";
-import { Star } from "lucide-react";
+import { Star, Upload, CheckCircle } from "lucide-react";
+import api from "../../service/CustomAxiosInstance";
 import "./FoodDetails.css";
-import api from '../../service/CustomAxiosInstance';
+
+const REVIEWS_PER_PAGE = 5;
 
 const FoodDetails = () => {
   const { id } = useParams();
   const [data, setData] = useState({});
   const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
-  const [sortOption, setSortOption] = useState("newest");
+  const [sortedReviews, setSortedReviews] = useState([]);
+  const [sortType, setSortType] = useState("latest");
 
+  const [page, setPage] = useState(1);
+  const [activeImage, setActiveImage] = useState(null);
+
+  const totalPages = Math.ceil(sortedReviews.length / REVIEWS_PER_PAGE) || 1;
+
+  const paginatedReviews = sortedReviews.slice(
+    0,
+    page * REVIEWS_PER_PAGE
+  );
+
+  const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
+  const [reviewImage, setReviewImage] = useState(null);
   const { increaseQty, user } = useContext(StoreContext);
+  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,8 +40,10 @@ const FoodDetails = () => {
         setData(foodData);
 
         const res = await api.get(`/api/foods/${id}/reviews`);
-        setReviews(Array.isArray(res.data) ? res.data : []);
-      } catch (error) {
+        const list = Array.isArray(res.data) ? res.data : [];
+        setReviews(list);
+        setSortedReviews(sortReviews(list, "latest"));
+      } catch {
         toast.error("Error displaying the food details");
       }
     };
@@ -41,29 +58,98 @@ const FoodDetails = () => {
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    if (newReview.rating === 0 || !newReview.comment.trim()) {
-      toast.warning("Please add a rating and comment");
+
+    if (
+      newReview.rating === 0 &&
+      !newReview.comment.trim() &&
+      !reviewImage
+    ) {
+      toast.warning("Add a rating, message or photo");
       return;
     }
 
     try {
-      const res = await api.post(`/api/foods/${id}/reviews`, {
-        rating: newReview.rating,
-        comment: newReview.comment,
-        user: user || "Anonymous User",
-      });
+      const formData = new FormData();
+      formData.append(
+        "review",
+        new Blob(
+          [
+            JSON.stringify({
+              rating: newReview.rating,
+              comment: newReview.comment,
+              user: user || "Anonymous User",
+            }),
+          ],
+          { type: "application/json" }
+        )
+      );
 
-      setReviews([res.data, ...reviews]);
+      if (reviewImage) formData.append("image", reviewImage);
+
+      const res = await api.post(`/api/foods/${id}/reviews`, formData);
+      const newList = [res.data, ...reviews];
+
+      setReviews(newList);
+      setSortedReviews(sortReviews(newList, sortType));
+
       setNewReview({ rating: 0, comment: "" });
+      setReviewImage(null);
 
-      toast.success("Review submitted successfully!");
-    } catch (error) {
+      toast.success("Review submitted!");
+    } catch {
       toast.error("Error saving review");
     }
   };
 
-  const renderStars = (rating) => {
-    return [...Array(5)].map((_, i) => (
+  const sortReviews = (list, type) => {
+    switch (type) {
+      case "high":
+        return [...list].sort((a, b) => b.rating - a.rating);
+      case "low":
+        return [...list].sort((a, b) => a.rating - b.rating);
+      default:
+        return [...list].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+    }
+  };
+
+  const handleSort = (type) => {
+    setSortType(type);
+    setSortedReviews(sortReviews(reviews, type));
+    setPage(1);
+  };
+
+ const markHelpful = async (id) => {
+  const key = `helpful_${id}`;
+
+  if (localStorage.getItem(key)) {
+    toast.info("You already marked this review helpful");
+    return;
+  }
+
+  try {
+    const res = await api.put(`/api/foods/${data.id}/reviews/${id}/helpful`);
+    const updated = res.data;
+
+    localStorage.setItem(key, "true");
+
+    // Update in UI
+    setSortedReviews((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, helpful: updated.helpful, marked: true } : r
+      )
+    );
+
+  } catch {
+    toast.error("Failed to mark helpful");
+  }
+};
+
+
+
+  const renderStars = (rating) =>
+    [...Array(5)].map((_, i) => (
       <i
         key={i}
         className={`fa-star me-1 fs-5 ${
@@ -71,73 +157,39 @@ const FoodDetails = () => {
         }`}
       ></i>
     ));
-  };
 
   const averageRating =
     reviews.length > 0
-      ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
+      ? reviews.reduce((a, r) => a + r.rating, 0) / reviews.length
       : 0;
-
-  const sortedReviews = [...reviews].sort((a, b) => {
-    if (sortOption === "newest") {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    }
-    if (sortOption === "highest") {
-      return b.rating - a.rating;
-    }
-    if (sortOption === "lowest") {
-      return a.rating - b.rating;
-    }
-    return 0;
-  });
 
   return (
     <section className="py-4">
       <div className="container px-3 px-lg-4 my-4">
-
-        {/* MAIN FOOD INFO */}
+        
+        {/* ---------- FOOD IMAGE + DETAILS ---------- */}
         <div className="row gx-4 align-items-start">
           <div className="col-md-6">
-            <img
-              className="food-img mb-4"
-              src={data.imageUrl}
-              alt={data.name}
-            />
+            <img className="food-img mb-4" src={data.imageUrl} alt={data.name} />
           </div>
 
           <div className="col-md-6 food-info">
-            <div className="mb-3">
-              <span className="fw-bold">Category: </span>
-              {data.categories && data.categories.length > 0 ? (
-                data.categories.map((cat, index) => (
-                  <span key={index} className="badge bg-warning text-dark me-2 category-badge">
-                    {cat}
-                  </span>
-                ))
-              ) : (
-                <span className="text-muted">No category</span>
-              )}
-            </div>
-
             <h1 className="fw-bold mb-2">{data.name}</h1>
 
             <div className="d-flex align-items-center mb-3">
               {renderStars(Math.round(averageRating))}
-              <span className="ms-2">
+              <span className="ms-2 fw-bold">
                 {averageRating.toFixed(1)} / 5
                 <span className="text-muted"> ({reviews.length} reviews)</span>
               </span>
             </div>
 
-            <h3 className="text-success mb-3">₹{data.price}.00</h3>
+            <h3 className="text-success mb-3">₹{data.price}</h3>
 
             <p className="lead">{data.description}</p>
-                    <p className={`fw-bold ${data.stock === 0 ? "text-danger" : "text-success"}`}>
-  {data.stock === 0 ? "Out of Stock" : `In Stock: ${data.stock}`}
-</p>
 
             <button
-            disabled={data.stock === 0}
+              disabled={data.stock === 0}
               className="btn btn-dark btn-lg mt-2"
               onClick={addToCart}
             >
@@ -146,53 +198,107 @@ const FoodDetails = () => {
           </div>
         </div>
 
-        {/* REVIEWS SECTION */}
-        <div className="review-section row mt-5">
+        {/* ---------- REVIEW SUMMARY ---------- */}
+        {reviews.length > 0 && (
+          <div className="review-summary-card mt-5">
+            <h5 className="fw-bold mb-2">Summary</h5>
+            <p className="text-muted small">
+              Most users mentioned good taste, quality ingredients, and fast delivery.
+            </p>
+          </div>
+        )}
+
+        {/* ---------- REVIEWS ---------- */}
+        <div className="row review-section mt-4">
+
           <div className="col-md-8">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h4 className="fw-bold">Customer Reviews</h4>
+            <div className="d-flex justify-content-between">
+              <h4 className="fw-bold mb-3">Customer Reviews</h4>
 
               <select
                 className="form-select w-auto"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
+                onChange={(e) => handleSort(e.target.value)}
               >
-                <option value="newest">Newest</option>
-                <option value="highest">Highest Rating</option>
-                <option value="lowest">Lowest Rating</option>
+                <option value="latest">Latest</option>
+                <option value="high">Highest Rated</option>
+                <option value="low">Lowest Rated</option>
               </select>
             </div>
 
-            {sortedReviews.length === 0 && (
-              <p className="text-muted">No reviews yet. Be the first!</p>
-            )}
-
-            {sortedReviews.map((rev) => (
+            {paginatedReviews.map((rev) => (
               <div key={rev.id} className="review-card mb-3">
-                <div className="review-header">
-                  <span className="review-user">{rev.user}</span>
-                  <span className="review-date">
-                    {new Date(rev.createdAt).toLocaleDateString()}
-                  </span>
+
+                {/* HEADER */}
+                <div className="review-header d-flex align-items-center">
+                  <img
+                    src={`https://api.dicebear.com/9.x/initials/svg?seed=${rev.user}`}
+                    className="review-avatar"
+                    alt="avatar"
+                  />
+                  <div className="ms-2">
+                    <span className="review-user">{rev.user}</span>
+                    <span className="review-date ms-2">
+                      {new Date(rev.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
 
+                {/* RATING */}
                 <div className="mt-1">{renderStars(rev.rating)}</div>
 
+                {/* COMMENT */}
                 <p className="mt-2 mb-1">{rev.comment}</p>
 
+                {/* VERIFIED */}
                 {rev.verifiedPurchase && (
-                  <span className="badge bg-success">Verified Purchase</span>
+                  <span className="verified-chip">
+                    <CheckCircle size={14} className="me-1" /> Verified Purchase
+                  </span>
                 )}
+
+                {/* IMAGE */}
+                {rev.imageUrl && (
+                  <img
+                    src={rev.imageUrl}
+                    className="review-img zoomable"
+                    alt="review"
+                    onClick={() => setActiveImage(rev.imageUrl)}
+                  />
+                )}
+
+                <button
+  className={`helpful-btn mt-2 ${rev.marked ? "marked" : ""}`}
+  onClick={() => markHelpful(rev.id)}
+>
+  <span className="helpful-icon">👍</span>
+  Helpful ({rev.helpful || 0})
+</button>
+
+
               </div>
             ))}
+
+            {/* LOAD MORE */}
+            {page < totalPages && (
+              <div className="text-center mt-3">
+                <button
+                  className="btn btn-outline-dark load-more-btn"
+                  onClick={() => setPage(page + 1)}
+                >
+                  Load More Reviews
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* ADD REVIEW FORM */}
+          {/* ---------- ADD REVIEW BOX ---------- */}
           <div className="col-md-4">
             <div className="review-box">
+
               <h5 className="fw-bold mb-3">Leave a Review</h5>
 
               <form onSubmit={handleReviewSubmit}>
+                
                 <div className="mb-3 d-flex star-input">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
@@ -206,6 +312,25 @@ const FoodDetails = () => {
                   ))}
                 </div>
 
+                <label className="file-drop-zone mb-3">
+                  <Upload size={18} className="me-2" />
+                  <span>Click or Drop image here</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setReviewImage(e.target.files[0])}
+                  />
+                </label>
+
+                {reviewImage && (
+                  <img
+                    src={URL.createObjectURL(reviewImage)}
+                    className="img-fluid rounded mb-2"
+                    style={{ maxHeight: 150, objectFit: "cover" }}
+                    alt="preview"
+                  />
+                )}
+
                 <textarea
                   className="form-control mb-3"
                   rows="3"
@@ -216,15 +341,20 @@ const FoodDetails = () => {
                   }
                 ></textarea>
 
-                <button type="submit" className="btn btn-success w-100">
-                  Submit Review
-                </button>
+                <button className="btn btn-success w-100">Submit Review</button>
               </form>
+
             </div>
           </div>
         </div>
-
       </div>
+
+      {/* ---------- IMAGE MODAL ---------- */}
+      {activeImage && (
+        <div className="img-modal" onClick={() => setActiveImage(null)}>
+          <img src={activeImage} className="img-modal-content" alt="zoom" />
+        </div>
+      )}
     </section>
   );
 };

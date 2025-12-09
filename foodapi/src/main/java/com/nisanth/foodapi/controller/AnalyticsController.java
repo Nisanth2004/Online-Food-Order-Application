@@ -1,10 +1,10 @@
 package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.entity.StockLogEntity;
-import com.nisanth.foodapi.io.LowStockDTO;
-import com.nisanth.foodapi.io.MonthlySalesDTO;
-import com.nisanth.foodapi.io.StockHistoryDTO;
-import com.nisanth.foodapi.io.TopSellingDTO;
+import com.nisanth.foodapi.io.analytics.LowStockDTO;
+import com.nisanth.foodapi.io.analytics.MonthlySalesDTO;
+import com.nisanth.foodapi.io.analytics.StockHistoryDTO;
+import com.nisanth.foodapi.io.analytics.TopSellingDTO;
 import com.nisanth.foodapi.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -1,10 +1,11 @@
-package com.nisanth.foodapi.io;
+package com.nisanth.foodapi.io.user;
 
+import com.nisanth.foodapi.io.util.DeliveryMessage;
+import com.nisanth.foodapi.io.order.OrderItem;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

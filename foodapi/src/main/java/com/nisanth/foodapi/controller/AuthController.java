@@ -1,11 +1,10 @@
 package com.nisanth.foodapi.controller;
 
-import com.nisanth.foodapi.io.AuthenticationRequest;
-import com.nisanth.foodapi.io.AuthenticationResponse;
+import com.nisanth.foodapi.io.auth.AuthenticationRequest;
+import com.nisanth.foodapi.io.auth.AuthenticationResponse;
 import com.nisanth.foodapi.service.AppUserDetailsService;
 import com.nisanth.foodapi.util.JwtUtil;
 import lombok.AllArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;

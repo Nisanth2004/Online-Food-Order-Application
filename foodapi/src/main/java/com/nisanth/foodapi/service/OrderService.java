@@ -1,12 +1,8 @@
 package com.nisanth.foodapi.service;
 
-import com.nisanth.foodapi.entity.OrderEntity;
-import com.nisanth.foodapi.io.CourierUpdateRequest;
-import com.nisanth.foodapi.io.OrderRequest;
-import com.nisanth.foodapi.io.OrderResponse;
+import com.nisanth.foodapi.io.order.OrderRequest;
+import com.nisanth.foodapi.io.user.OrderResponse;
 import com.razorpay.RazorpayException;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

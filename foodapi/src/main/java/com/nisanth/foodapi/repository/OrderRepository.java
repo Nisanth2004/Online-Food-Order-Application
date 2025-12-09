@@ -1,11 +1,9 @@
 package com.nisanth.foodapi.repository;
 
 import com.nisanth.foodapi.entity.OrderEntity;
-import com.nisanth.foodapi.io.TopSellingDTO;
+import com.nisanth.foodapi.io.analytics.TopSellingDTO;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -41,6 +39,12 @@ public interface OrderRepository extends MongoRepository<OrderEntity,String> {
            "{ $limit: 10 }"
    })
    List<TopSellingDTO> getTopSellingFoods();
+
+   // For scheduler to fetch orders with tracking IDs
+   List<OrderEntity> findByCourierTrackingIdNotNull();
+
+   // For webhook to locate order via tracking id
+   OrderEntity findByCourierTrackingId(String trackingId);
 
 
 

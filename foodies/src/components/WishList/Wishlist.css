@@ -1,0 +1,41 @@
+.wishlist-container {
+  max-width: 1200px;
+}
+
+.wishlist-title {
+  font-size: 2rem;
+  text-align: center;
+  color: #333;
+  position: relative;
+}
+
+.food-card {
+  border-radius: 15px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.food-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.food-img {
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+
+.wishlist-heart {
+  cursor: pointer;
+  background: rgba(0,0,0,0.4);
+  transition: background 0.3s;
+}
+
+.wishlist-heart:hover {
+  background: rgba(255,255,255,0.9);
+}
+
+.active-heart {
+  background: white !important;
+}

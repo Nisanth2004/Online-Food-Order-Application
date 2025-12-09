@@ -1,7 +1,7 @@
 package com.nisanth.foodapi.service;
 
-import com.nisanth.foodapi.io.CartRequest;
-import com.nisanth.foodapi.io.CartResponse;
+import com.nisanth.foodapi.io.cart.CartRequest;
+import com.nisanth.foodapi.io.cart.CartResponse;
 
 public interface CartService {
 

@@ -1,8 +1,8 @@
 package com.nisanth.foodapi.entity;
 
 import com.nisanth.foodapi.enumeration.OrderStatus;
-import com.nisanth.foodapi.io.DeliveryMessage;
-import com.nisanth.foodapi.io.OrderItem;
+import com.nisanth.foodapi.io.util.DeliveryMessage;
+import com.nisanth.foodapi.io.order.OrderItem;
 import com.nisanth.foodapi.io.HubUpdate;
 import lombok.Builder;
 import lombok.Data;
@@ -80,5 +80,17 @@ public class OrderEntity {
 
     @Builder.Default
     private boolean podVerified = false;
+    public void addMessage(String message, LocalDateTime time, String actor, String reason) {
+        if (this.deliveryMessages == null) this.deliveryMessages = new ArrayList<>();
+
+        this.deliveryMessages.add(
+                DeliveryMessage.builder()
+                        .message(message)
+                        .timestamp(time)
+                        .actor(actor)
+                        .reason(reason)
+                        .build()
+        );
+    }
 
 }

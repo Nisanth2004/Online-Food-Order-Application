@@ -1,8 +1,8 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.Category;
-import com.nisanth.foodapi.io.FoodRequest;
-import com.nisanth.foodapi.io.FoodResponse;
+import com.nisanth.foodapi.io.food.FoodRequest;
+import com.nisanth.foodapi.io.food.FoodResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 

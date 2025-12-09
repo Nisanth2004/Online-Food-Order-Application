@@ -1,20 +1,15 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.*;
-import com.nisanth.foodapi.io.FoodRequest;
-import com.nisanth.foodapi.io.FoodResponse;
+import com.nisanth.foodapi.io.food.FoodRequest;
+import com.nisanth.foodapi.io.food.FoodResponse;
 import com.nisanth.foodapi.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;

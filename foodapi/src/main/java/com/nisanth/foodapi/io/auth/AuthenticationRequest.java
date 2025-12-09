@@ -1,19 +1,13 @@
-package com.nisanth.foodapi.io;
+package com.nisanth.foodapi.io.auth;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class UserResponse {
-
-    private String id;
-    private String name;
+public class AuthenticationRequest {
     private String email;
-
-
+    private String password;
 }

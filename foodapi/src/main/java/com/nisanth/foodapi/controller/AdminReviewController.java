@@ -1,7 +1,7 @@
 package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.entity.ReviewEntity;
-import com.nisanth.foodapi.io.ReviewResponse;
+import com.nisanth.foodapi.io.review.ReviewResponse;
 import com.nisanth.foodapi.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,5 +1,6 @@
-package com.nisanth.foodapi.io;
+package com.nisanth.foodapi.io.order;
 
+import com.nisanth.foodapi.io.order.OrderItem;
 import lombok.Builder;
 import lombok.Data;
 

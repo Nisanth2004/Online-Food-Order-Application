@@ -1,7 +1,7 @@
 package com.nisanth.foodapi.service;
 
-import com.nisanth.foodapi.io.UserRequest;
-import com.nisanth.foodapi.io.UserResponse;
+import com.nisanth.foodapi.io.user.UserRequest;
+import com.nisanth.foodapi.io.user.UserResponse;
 
 public interface UserService {
 
