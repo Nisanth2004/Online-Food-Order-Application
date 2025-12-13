@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
-@Document(collection = "foods") // collection name
+@Document(collection = "foods")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,17 +18,23 @@ public class FoodEntity {
 
     @Id
     private String id;
+
     private String name;
     private String description;
-    private double price;
+
+    // 🔥 PRICING (PHASE 1)
+    private double mrp;            // original price
+    private double sellingPrice;   // discounted price
+    private boolean offerActive;
+    private String offerLabel;     // "23% OFF", "Deal of the Day"
+
     private List<String> categoryIds;
     private String imageUrl;
+
     private boolean sponsored;
     private boolean featured;
 
-    private int stock;                  // current available stock
-    private int lowStockThreshold = 5;  // optional default low-stock threshold
-    private boolean outOfStock;         // derived flag (true if stock <= 0)
-
-
+    private int stock;
+    private int lowStockThreshold = 5;
+    private boolean outOfStock;
 }

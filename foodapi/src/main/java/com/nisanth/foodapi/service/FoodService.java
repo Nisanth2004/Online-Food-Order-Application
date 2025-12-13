@@ -1,6 +1,7 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.Category;
+import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.io.food.FoodRequest;
 import com.nisanth.foodapi.io.food.FoodResponse;
 import org.springframework.data.domain.Page;
@@ -56,5 +57,10 @@ public interface FoodService {
      * Use when order is cancelled or payment fails.
      */
     void releaseReservedStock(String foodId, int qty);
+
+
+        FoodResponse convertToResponse(FoodEntity food);
+
+
 
 }

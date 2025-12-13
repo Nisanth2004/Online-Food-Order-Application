@@ -1,4 +1,4 @@
-package com.nisanth.foodapi.io.user;
+package com.nisanth.foodapi.io.order;
 
 import com.nisanth.foodapi.io.util.DeliveryMessage;
 import com.nisanth.foodapi.io.order.OrderItem;

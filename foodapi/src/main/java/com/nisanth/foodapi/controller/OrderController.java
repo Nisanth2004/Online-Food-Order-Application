@@ -4,7 +4,7 @@ import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.util.DeliveryMessage;
 import com.nisanth.foodapi.io.order.OrderRequest;
-import com.nisanth.foodapi.io.user.OrderResponse;
+import com.nisanth.foodapi.io.order.OrderResponse;
 import com.nisanth.foodapi.repository.OrderRepository;
 import com.nisanth.foodapi.service.CourierService;
 import com.nisanth.foodapi.service.OrderService;

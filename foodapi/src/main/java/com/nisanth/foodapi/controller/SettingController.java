@@ -46,11 +46,15 @@ public class SettingController {
     @GetMapping("/single")
     public ResponseEntity<?> getSingleSetting() {
         Setting settings = service.getSettings();
-        // Return only the keys you want the frontend to see
-        Map<String, String> response = new HashMap<>();
+
+        Map<String, Object> response = new HashMap<>();
         response.put("razorpayKey", settings.getRazorpayKey());
+        response.put("shippingCharge", settings.getShippingCharge());
+        response.put("taxPercentage", settings.getTaxPercentage());
+
         return ResponseEntity.ok(response);
     }
+
 
 
 

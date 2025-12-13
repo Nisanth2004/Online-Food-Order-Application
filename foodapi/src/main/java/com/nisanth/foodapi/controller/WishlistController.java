@@ -4,6 +4,7 @@ import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.entity.UserEntity;
 import com.nisanth.foodapi.io.food.FoodResponse;
 import com.nisanth.foodapi.repository.FoodRepository;
+import com.nisanth.foodapi.service.FoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,9 @@ public class WishlistController {
 
     @Autowired
     private FoodRepository foodRepo;
+
+    @Autowired
+    private FoodService foodService;
     @PostMapping("/add/{foodId}")
     public ResponseEntity<?> addToWishlist(@PathVariable String foodId, @RequestParam String userId) {
         UserEntity user = userRepo.findByEmail(userId)
@@ -35,11 +39,16 @@ public class WishlistController {
 
     @GetMapping("/{userId}")
     public List<FoodResponse> getWishlist(@PathVariable String userId) {
+
         UserEntity user = userRepo.findByEmail(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         List<FoodEntity> foods = foodRepo.findByIdIn(user.getWishlist());
-        return foods.stream().map(FoodResponse::from).toList();
+
+        // ✅ USE SERVICE MAPPER
+        return foods.stream()
+                .map(foodService::convertToResponse)
+                .toList();
     }
 
 

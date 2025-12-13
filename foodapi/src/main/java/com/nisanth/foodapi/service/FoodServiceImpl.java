@@ -101,37 +101,33 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
-    public FoodResponse updateFood(String id, FoodRequest request, MultipartFile file) {
-
-        // Find existing entity
+    public FoodResponse updateFood(String id, FoodRequest req, MultipartFile file) {
         FoodEntity food = foodRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Food not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Food not found"));
 
-        // Update simple fields
-        food.setName(request.getName());
-        food.setDescription(request.getDescription());
-        food.setPrice(request.getPrice());
-        food.setSponsored(request.isSponsored());
-        food.setFeatured(request.isFeatured());
-        food.setStock(request.getStock());
+        food.setName(req.getName());
+        food.setDescription(req.getDescription());
 
-        // FIXED: Use correct field name
-        food.setCategoryIds(request.getCategoryIds());
+        // 🔥 PRICING
+        food.setMrp(req.getMrp());
+        food.setSellingPrice(req.getSellingPrice());
+        food.setOfferActive(req.isOfferActive());
+        food.setOfferLabel(req.getOfferLabel());
 
-        // Update stock flags
+        food.setCategoryIds(req.getCategoryIds());
+        food.setSponsored(req.isSponsored());
+        food.setFeatured(req.isFeatured());
+        food.setStock(req.getStock());
+        food.setLowStockThreshold(
+                req.getLowStockThreshold() > 0 ? req.getLowStockThreshold() : 5);
         food.setOutOfStock(food.getStock() <= 0);
 
-        // If image included → upload & replace
         if (file != null && !file.isEmpty()) {
-            String newImageUrl = uploadFile(file);
-            food.setImageUrl(newImageUrl);
+            food.setImageUrl(uploadFile(file));
         }
 
-        // Save updated entity
-        food = foodRepository.save(food);
-
-        return convertToResponse(food);
-
+        return convertToResponse(foodRepository.save(food));
     }
 
     @Override
@@ -181,46 +177,42 @@ public class FoodServiceImpl implements FoodService {
 
 
     @Override
-    public Page<FoodResponse> getFoodsPaginated(int page, int size, String category, String search, String sort) {
+    public Page<FoodResponse> getFoodsPaginated(
+            int page, int size, String category, String search, String sort) {
 
         Pageable pageable = PageRequest.of(page, size);
+        List<FoodEntity> foods = foodRepository.findAll();
 
-        List<FoodEntity> foods = foodRepository.findAllByOrderBySponsoredDescFeaturedDesc();
-
-        // FILTER BY CATEGORY
-        if (category != null && !category.equals("All")) {
+        if (category != null && !"All".equalsIgnoreCase(category)) {
             foods = foods.stream()
-                    .filter(f -> f.getCategoryIds() != null && f.getCategoryIds()
-                            .stream()
-                            .anyMatch(c -> c.equalsIgnoreCase(category)))
-                    .collect(Collectors.toList());
+                    .filter(f -> f.getCategoryIds() != null &&
+                            f.getCategoryIds().contains(category))
+                    .toList();
         }
 
-        // SEARCH FILTER
-        if (search != null && !search.isEmpty()) {
+        if (search != null && !search.isBlank()) {
             foods = foods.stream()
-                    .filter(f -> f.getName().toLowerCase().contains(search.toLowerCase()))
-                    .collect(Collectors.toList());
+                    .filter(f -> f.getName()
+                            .toLowerCase().contains(search.toLowerCase()))
+                    .toList();
         }
 
-        // SORTING
-        if ("highlyOrdered".equals(sort)) {
-            foods.sort(Comparator.comparingLong((FoodEntity f) -> orderRepository.countByOrderedItemsFoodId(f.getId())).reversed());
-        } else if ("priceLowHigh".equals(sort)) {
-            foods.sort(Comparator.comparingDouble(FoodEntity::getPrice));
+        if ("priceLowHigh".equals(sort)) {
+            foods.sort(Comparator.comparingDouble(FoodEntity::getSellingPrice));
         } else if ("priceHighLow".equals(sort)) {
-            foods.sort(Comparator.comparingDouble(FoodEntity::getPrice).reversed());
+            foods.sort(Comparator.comparingDouble(
+                    FoodEntity::getSellingPrice).reversed());
         }
 
-        // PAGINATE manually because we now have a filtered list
         int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), foods.size());
-        List<FoodResponse> pageContent = foods.subList(start, end)
+        int end = Math.min(start + size, foods.size());
+
+        List<FoodResponse> content = foods.subList(start, end)
                 .stream()
                 .map(this::convertToResponse)
-                .collect(Collectors.toList());
+                .toList();
 
-        return new PageImpl<>(pageContent, pageable, foods.size());
+        return new PageImpl<>(content, pageable, foods.size());
     }
 
 
@@ -247,43 +239,63 @@ public class FoodServiceImpl implements FoodService {
             foodRepository.deleteById(response.getId());
         }
     }
-    private FoodEntity convertToEntity(FoodRequest request) {
-        int stock = Math.max(0, request.getStock()); // prevent negative stock
-        int threshold = request.getLowStockThreshold() > 0
-                ? request.getLowStockThreshold()
-                : 5; // default fallback
+    private FoodEntity convertToEntity(FoodRequest req) {
+        int stock = Math.max(0, req.getStock());
 
         return FoodEntity.builder()
-                .name(request.getName())
-                .price(request.getPrice())
-                .description(request.getDescription())
-                .categoryIds(request.getCategoryIds())
-                .sponsored(request.isSponsored())
-                .featured(request.isFeatured())
+                .name(req.getName())
+                .description(req.getDescription())
+                .mrp(req.getMrp())
+                .sellingPrice(req.getSellingPrice())
+                .offerActive(req.isOfferActive())
+                .offerLabel(req.getOfferLabel())
+                .categoryIds(req.getCategoryIds())
+                .sponsored(req.isSponsored())
+                .featured(req.isFeatured())
                 .stock(stock)
-                .lowStockThreshold(threshold)
+                .lowStockThreshold(
+                        req.getLowStockThreshold() > 0
+                                ? req.getLowStockThreshold()
+                                : 5)
                 .outOfStock(stock == 0)
                 .build();
     }
-
-
     public FoodResponse convertToResponse(FoodEntity food) {
+
         FoodResponse res = new FoodResponse();
+
+        // BASIC
         res.setId(food.getId());
         res.setName(food.getName());
         res.setDescription(food.getDescription());
         res.setImageUrl(food.getImageUrl());
-        res.setPrice(food.getPrice());
+
+        // PRICING
+        res.setMrp(food.getMrp());
+        res.setSellingPrice(food.getSellingPrice());
+
+        int discountPercentage = 0;
+        if (food.getMrp() > 0 && food.getSellingPrice() < food.getMrp()) {
+            discountPercentage = (int) Math.round(
+                    ((food.getMrp() - food.getSellingPrice()) * 100.0) / food.getMrp()
+            );
+        }
+        res.setDiscountPercentage(discountPercentage);
+        res.setOfferLabel(food.getOfferLabel());
+
+        // backward compatibility
+        res.setPrice(food.getSellingPrice());
+
+        // FLAGS
         res.setSponsored(food.isSponsored());
         res.setFeatured(food.isFeatured());
+
+        // STOCK
         res.setStock(food.getStock());
         res.setOutOfStock(food.isOutOfStock());
-        res.setLowStockThreshold(food.getLowStockThreshold());
-
-        // NEW: lowStock if stock <= lowStockThreshold
         res.setLowStock(food.getStock() <= food.getLowStockThreshold());
 
-        // categories, reviews and orderCount logic unchanged...
+        // CATEGORIES
         List<String> categoryNames = Collections.emptyList();
         if (food.getCategoryIds() != null && !food.getCategoryIds().isEmpty()) {
             categoryNames = categoryRepository.findAllById(food.getCategoryIds())
@@ -293,6 +305,7 @@ public class FoodServiceImpl implements FoodService {
         }
         res.setCategories(categoryNames);
 
+        // REVIEWS
         List<ReviewEntity> reviews = reviewRepository.findByFoodId(food.getId());
         if (!reviews.isEmpty()) {
             double avg = reviews.stream()
@@ -302,14 +315,16 @@ public class FoodServiceImpl implements FoodService {
             res.setAverageRating(avg);
             res.setReviewCount(reviews.size());
         } else {
-            res.setAverageRating(0.0);
+            res.setAverageRating(0);
             res.setReviewCount(0);
         }
-        long orderCount = orderRepository.countByOrderedItemsFoodId(food.getId());
-        res.setOrderCount(orderCount);
+
+        // ORDERS
+        res.setOrderCount(orderRepository.countByOrderedItemsFoodId(food.getId()));
 
         return res;
     }
+
 
     @Override
     public List<Category> getCategories() {

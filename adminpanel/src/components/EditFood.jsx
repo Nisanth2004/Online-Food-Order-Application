@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getFood, updateFood, getCategories } from "../services/FoodService";
 import { toast } from "react-toastify";
 import { useParams, useNavigate } from "react-router-dom";
-import { assets } from "../assets/assets"; // same as AddFood
+import { assets } from "../assets/assets";
 
 const EditFood = () => {
   const { id } = useParams();
@@ -17,11 +17,15 @@ const EditFood = () => {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    price: "",
+    mrp: "",
+    sellingPrice: "",
+    offerActive: false,
+    offerLabel: "",
     categoryIds: [],
     sponsored: false,
     featured: false,
     stock: "",
+    lowStockThreshold: "",
   });
 
   useEffect(() => {
@@ -29,20 +33,21 @@ const EditFood = () => {
       try {
         setLoading(true);
 
-        const [foodResp, catResp] = await Promise.all([
-          getFood(id),
-          getCategories(),
-        ]);
-
+        const [foodResp, catResp] = await Promise.all([getFood(id), getCategories()]);
         setCategories(catResp || []);
+
         setForm({
           name: foodResp.name,
           description: foodResp.description,
-          price: foodResp.price,
+          mrp: foodResp.mrp,
+          sellingPrice: foodResp.sellingPrice,
+          offerActive: foodResp.offerActive,
+          offerLabel: foodResp.offerLabel || "",
           categoryIds: foodResp.categoryIds || [],
           sponsored: foodResp.sponsored,
           featured: foodResp.featured,
           stock: foodResp.stock,
+          lowStockThreshold: foodResp.lowStockThreshold || "",
         });
 
         setPreview(foodResp.imageUrl);
@@ -60,15 +65,9 @@ const EditFood = () => {
 
     if (type === "checkbox" && name === "categoryIds") {
       if (checked) {
-        setForm((p) => ({
-          ...p,
-          categoryIds: [...p.categoryIds, value],
-        }));
+        setForm((p) => ({ ...p, categoryIds: [...p.categoryIds, value] }));
       } else {
-        setForm((p) => ({
-          ...p,
-          categoryIds: p.categoryIds.filter((id) => id !== value),
-        }));
+        setForm((p) => ({ ...p, categoryIds: p.categoryIds.filter((id) => id !== value) }));
       }
     } else if (type === "checkbox") {
       setForm((p) => ({ ...p, [name]: checked }));
@@ -110,7 +109,6 @@ const EditFood = () => {
                     style={{ borderRadius: "8px" }}
                   />
                 </label>
-
                 <input
                   type="file"
                   id="image"
@@ -120,33 +118,17 @@ const EditFood = () => {
                 />
               </div>
 
-              {/* NAME */}
+              {/* NAME & DESCRIPTION */}
               <div className="mb-3">
                 <label className="form-label">Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="form-control"
-                  value={form.name}
-                  onChange={onChange}
-                  required
-                />
+                <input type="text" name="name" className="form-control" value={form.name} onChange={onChange} required />
               </div>
-
-              {/* DESCRIPTION */}
               <div className="mb-3">
                 <label className="form-label">Description</label>
-                <textarea
-                  className="form-control"
-                  rows={4}
-                  name="description"
-                  value={form.description}
-                  onChange={onChange}
-                  required
-                />
+                <textarea className="form-control" rows={4} name="description" value={form.description} onChange={onChange} required />
               </div>
 
-              {/* CATEGORY CHECKBOXES */}
+              {/* CATEGORIES */}
               <div className="mb-3">
                 <label className="form-label">Categories</label>
                 <div className="d-flex flex-wrap gap-2">
@@ -161,72 +143,63 @@ const EditFood = () => {
                         checked={form.categoryIds.includes(c.id)}
                         onChange={onChange}
                       />
-                      <label className="form-check-label" htmlFor={`cat-${c.id}`}>
-                        {c.name}
-                      </label>
+                      <label className="form-check-label" htmlFor={`cat-${c.id}`}>{c.name}</label>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* PRICE */}
+              {/* PRICING */}
               <div className="mb-3">
-                <label className="form-label">Price</label>
-                <input
-                  type="number"
-                  name="price"
-                  className="form-control"
-                  value={form.price}
-                  onChange={onChange}
-                  required
-                />
+                <label className="form-label">MRP (Original Price)</label>
+                <input type="number" className="form-control" name="mrp" value={form.mrp} onChange={onChange} min={0} required />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Selling Price</label>
+                <input type="number" className="form-control" name="sellingPrice" value={form.sellingPrice} onChange={onChange} min={0} required />
+              </div>
+
+              {/* IPO / OFFER */}
+              <div className="mb-3 form-check">
+                <input type="checkbox" className="form-check-input" id="offerActive" name="offerActive" checked={form.offerActive} onChange={onChange} />
+                <label className="form-check-label" htmlFor="offerActive">Activate IPO / Offer</label>
+                {form.offerActive && (
+                  <input
+                    type="text"
+                    placeholder="Offer Label e.g. IPO 20% OFF"
+                    className="form-control mt-2"
+                    name="offerLabel"
+                    value={form.offerLabel}
+                    onChange={onChange}
+                  />
+                )}
               </div>
 
               {/* STOCK */}
               <div className="mb-3">
-                <label className="form-label">Stock</label>
-                <input
-                  type="number"
-                  name="stock"
-                  min={0}
-                  className="form-control"
-                  value={form.stock}
-                  onChange={onChange}
-                  required
-                />
-                <small className="text-muted">Set 0 to mark out-of-stock.</small>
+                <label className="form-label">Stock (units)</label>
+                <input type="number" className="form-control" name="stock" value={form.stock} onChange={onChange} min={0} required />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Low Stock Threshold</label>
+                <input type="number" className="form-control" name="lowStockThreshold" value={form.lowStockThreshold} onChange={onChange} min={0} />
+                <small className="text-muted">Notify when stock is below this number</small>
               </div>
 
               {/* SPONSORED + FEATURED */}
               <div className="mb-3 d-flex gap-3">
                 <div className="form-check">
-                  <input
-                    type="checkbox"
-                    name="sponsored"
-                    className="form-check-input"
-                    checked={form.sponsored}
-                    onChange={onChange}
-                  />
+                  <input type="checkbox" name="sponsored" className="form-check-input" checked={form.sponsored} onChange={onChange} />
                   <label className="form-check-label">Sponsored</label>
                 </div>
-
                 <div className="form-check">
-                  <input
-                    type="checkbox"
-                    name="featured"
-                    className="form-check-input"
-                    checked={form.featured}
-                    onChange={onChange}
-                  />
+                  <input type="checkbox" name="featured" className="form-check-input" checked={form.featured} onChange={onChange} />
                   <label className="form-check-label">Featured</label>
                 </div>
               </div>
 
-              <button className="btn btn-primary" type="submit">
-                Save
-              </button>
+              <button className="btn btn-primary" type="submit">Save</button>
             </form>
-
           </div>
         </div>
       </div>

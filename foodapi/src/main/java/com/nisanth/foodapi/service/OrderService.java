@@ -1,7 +1,7 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.io.order.OrderRequest;
-import com.nisanth.foodapi.io.user.OrderResponse;
+import com.nisanth.foodapi.io.order.OrderResponse;
 import com.razorpay.RazorpayException;
 import org.springframework.web.multipart.MultipartFile;
 

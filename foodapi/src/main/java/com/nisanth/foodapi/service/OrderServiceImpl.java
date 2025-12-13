@@ -1,13 +1,14 @@
 package com.nisanth.foodapi.service;
 
 import com.nisanth.foodapi.entity.Courier;
+import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.entity.OrderEntity;
 import com.nisanth.foodapi.entity.Setting;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.*;
 import com.nisanth.foodapi.io.order.OrderItem;
 import com.nisanth.foodapi.io.order.OrderRequest;
-import com.nisanth.foodapi.io.user.OrderResponse;
+import com.nisanth.foodapi.io.order.OrderResponse;
 import com.nisanth.foodapi.io.util.DeliveryMessage;
 import com.nisanth.foodapi.repository.*;
 import com.razorpay.Order;
@@ -324,6 +325,7 @@ public class OrderServiceImpl implements OrderService {
         Setting setting = settingService.getSettings();
         double taxRate = setting.getTaxPercentage() != null ? setting.getTaxPercentage() : 0.0;
         double shipping = setting.getShippingCharge() != null ? setting.getShippingCharge() : 0.0;
+
         OrderStatus status = OrderStatus.ORDER_PLACED;
         if (request.getOrderStatus() != null) {
             try {
@@ -334,23 +336,47 @@ public class OrderServiceImpl implements OrderService {
         }
 
         List<OrderItem> finalItems = new ArrayList<>();
+
+        // ✅ FIX: pricing calculated PER ITEM
         for (OrderItem item : request.getOrderedItems()) {
-            var food = foodRepository.findById(item.getFoodId())
+
+            FoodEntity food = foodRepository.findById(item.getFoodId())
                     .orElseThrow(() -> new RuntimeException("Food not found: " + item.getFoodId()));
 
+            double mrp = food.getMrp();
+            double sellingPrice = food.getSellingPrice();
+
+            int discount = 0;
+            if (mrp > 0 && sellingPrice < mrp) {
+                discount = (int) Math.round(((mrp - sellingPrice) / mrp) * 100);
+            }
+
             finalItems.add(OrderItem.builder()
-                    .foodId(item.getFoodId())
+                    .foodId(food.getId())
                     .quantity(item.getQuantity())
-                    .price(food.getPrice())
+
+                    // 🔥 pricing snapshot
+                    .mrp(mrp)
+                    .sellingPrice(sellingPrice)
+                    .discountPercentage(discount)
+                    .offerLabel(discount > 0 ? discount + "% OFF" : null)
+                    .price(sellingPrice)
+
                     .name(food.getName())
                     .description(food.getDescription())
                     .imageUrl(food.getImageUrl())
+                    .category(
+                            food.getCategoryIds() != null && !food.getCategoryIds().isEmpty()
+                                    ? food.getCategoryIds().get(0)
+                                    : null
+                    )
                     .build());
         }
 
         double subtotal = finalItems.stream()
-                .mapToDouble(it -> it.getQuantity() * it.getPrice())
+                .mapToDouble(i -> i.getQuantity() * i.getPrice())
                 .sum();
+
         double tax = subtotal * (taxRate / 100.0);
         double grandTotal = subtotal + tax + shipping;
 
@@ -362,18 +388,18 @@ public class OrderServiceImpl implements OrderService {
 
         return OrderEntity.builder()
                 .userAddress(request.getUserAddress())
-                .amount(grandTotal)
-                .orderedItems(finalItems)
                 .phoneNumber(request.getPhoneNumber())
                 .email(request.getEmail())
+                .orderedItems(finalItems)
+                .amount(grandTotal)
                 .orderStatus(status)
-                .statusTimestamps(new HashMap<>()) // initialize timestamps
+                .statusTimestamps(new HashMap<>())
                 .courierName(request.getCourierName())
                 .courierTrackUrl(request.getCourierTrackUrl())
-                .courierTrackingId(null)
                 .stockRestored(false)
                 .build();
     }
+
 
     private OrderResponse convertToResponse(OrderEntity newOrder) {
         double subtotal = newOrder.getOrderedItems() != null ?

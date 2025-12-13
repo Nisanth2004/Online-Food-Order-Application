@@ -14,11 +14,17 @@ public class FoodRequest {
 
     private String name;
     private String description;
-    private double price;
+
+    // 🔥 PRICING
+    private double mrp;
+    private double sellingPrice;
+    private boolean offerActive;
+    private String offerLabel;
+
     private List<String> categoryIds;
     private boolean sponsored;
     private boolean featured;
     private int stock;
     private int lowStockThreshold;
-
 }
+

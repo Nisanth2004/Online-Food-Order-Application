@@ -7,18 +7,22 @@ import { fetchCategories, addCategory } from "../../services/CategoryService";
 
 const AddFood = () => {
   const [image, setImage] = useState(null);
-  const [categories, setCategories] = useState([]); // array of {id, name}
+  const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const [data, setData] = useState({
     name: "",
     description: "",
-    price: "",
-    categories: [], // array of selected category IDs
+    mrp: "",
+    sellingPrice: "",
+    offerActive: false,
+    offerLabel: "",
+    categories: [],
     sponsored: false,
     featured: false,
-    stock: "", // <-- new field
+    stock: "",
+    lowStockThreshold: "",
   });
 
   useEffect(() => {
@@ -39,10 +43,7 @@ const AddFood = () => {
 
     if (type === "checkbox" && name === "categories") {
       if (checked) {
-        setData((prev) => ({
-          ...prev,
-          categories: [...prev.categories, value],
-        }));
+        setData((prev) => ({ ...prev, categories: [...prev.categories, value] }));
       } else {
         setData((prev) => ({
           ...prev,
@@ -64,10 +65,7 @@ const AddFood = () => {
     try {
       const res = await addCategory({ name: newCategory.trim() });
       setCategories((prev) => [...prev, res.data]);
-      setData((prev) => ({
-        ...prev,
-        categories: [...prev.categories, res.data.id],
-      }));
+      setData((prev) => ({ ...prev, categories: [...prev.categories, res.data.id] }));
       setNewCategory("");
       toast.success("Category added");
     } catch (err) {
@@ -87,11 +85,15 @@ const AddFood = () => {
     const foodData = {
       name: data.name,
       description: data.description,
-      price: parseFloat(data.price) || 0,
+      mrp: parseFloat(data.mrp) || 0,
+      sellingPrice: parseFloat(data.sellingPrice) || 0,
+      offerActive: !!data.offerActive,
+      offerLabel: data.offerLabel,
       categoryIds: data.categories,
       sponsored: !!data.sponsored,
       featured: !!data.featured,
-      stock: parseInt(data.stock || "0", 10) || 0, // NEW
+      stock: parseInt(data.stock || "0", 10) || 0,
+      lowStockThreshold: parseInt(data.lowStockThreshold || "0", 10) || 0,
     };
 
     setSubmitting(true);
@@ -99,15 +101,18 @@ const AddFood = () => {
       await addFood(foodData, image);
       toast.success("Food added successfully");
 
-      // reset form
       setData({
         name: "",
         description: "",
-        price: "",
+        mrp: "",
+        sellingPrice: "",
+        offerActive: false,
+        offerLabel: "",
         categories: [],
         sponsored: false,
         featured: false,
         stock: "",
+        lowStockThreshold: "",
       });
       setImage(null);
     } catch (err) {
@@ -126,13 +131,10 @@ const AddFood = () => {
             <h2 className="mb-4">Add Food</h2>
 
             <form onSubmit={onSubmitHandler}>
+              {/* IMAGE UPLOAD */}
               <div className="mb-3">
                 <label htmlFor="image" className="form-label" style={{ cursor: "pointer" }}>
-                  <img
-                    src={image ? URL.createObjectURL(image) : assets.upload}
-                    alt="upload"
-                    width={98}
-                  />
+                  <img src={image ? URL.createObjectURL(image) : assets.upload} alt="upload" width={98} />
                 </label>
                 <input
                   type="file"
@@ -144,6 +146,7 @@ const AddFood = () => {
                 />
               </div>
 
+              {/* NAME & DESCRIPTION */}
               <div className="mb-3">
                 <label htmlFor="name" className="form-label">Name</label>
                 <input
@@ -157,7 +160,6 @@ const AddFood = () => {
                   required
                 />
               </div>
-
               <div className="mb-3">
                 <label htmlFor="description" className="form-label">Description</label>
                 <textarea
@@ -172,6 +174,7 @@ const AddFood = () => {
                 />
               </div>
 
+              {/* CATEGORIES */}
               <div className="mb-3">
                 <label className="form-label">Categories</label>
                 <div className="d-flex flex-wrap gap-2">
@@ -193,7 +196,6 @@ const AddFood = () => {
                     </div>
                   ))}
                 </div>
-
                 <div className="d-flex mt-2">
                   <input
                     type="text"
@@ -202,66 +204,109 @@ const AddFood = () => {
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
                   />
-                  <button type="button" className="btn btn-success" onClick={handleAddCategory}>
-                    Add
-                  </button>
+                  <button type="button" className="btn btn-success" onClick={handleAddCategory}>Add</button>
                 </div>
               </div>
 
+              {/* PRICING */}
               <div className="mb-3">
-                <label htmlFor="price" className="form-label">Price</label>
+                <label className="form-label">MRP (Original Price)</label>
                 <input
                   type="number"
-                  placeholder="Rs.100"
                   className="form-control"
-                  id="price"
-                  name="price"
+                  name="mrp"
                   onChange={onChangeHandler}
-                  value={data.price}
-                  required
-                />
-              </div>
-
-              {/* Inventory (stock) */}
-              <div className="mb-3">
-                <label htmlFor="stock" className="form-label">Stock (units)</label>
-                <input
-                  type="number"
-                  placeholder="100"
-                  className="form-control"
-                  id="stock"
-                  name="stock"
-                  onChange={onChangeHandler}
-                  value={data.stock}
+                  value={data.mrp}
                   min={0}
                   required
                 />
-                <small className="form-text text-muted">Set available quantity. Set 0 to mark as out-of-stock.</small>
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Selling Price</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="sellingPrice"
+                  onChange={onChangeHandler}
+                  value={data.sellingPrice}
+                  min={0}
+                  required
+                />
               </div>
 
+              {/* IPO/OFFER */}
+              <div className="mb-3 form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="offerActive"
+                  name="offerActive"
+                  checked={data.offerActive}
+                  onChange={onChangeHandler}
+                />
+                <label className="form-check-label" htmlFor="offerActive">
+                  Activate IPO / Offer
+                </label>
+                {data.offerActive && (
+                  <input
+                    type="text"
+                    placeholder="Offer Label e.g. IPO 20% OFF"
+                    className="form-control mt-2"
+                    name="offerLabel"
+                    value={data.offerLabel}
+                    onChange={onChangeHandler}
+                  />
+                )}
+              </div>
+
+              {/* STOCK */}
+              <div className="mb-3">
+                <label className="form-label">Stock (units)</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="stock"
+                  value={data.stock}
+                  onChange={onChangeHandler}
+                  min={0}
+                  required
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label">Low Stock Threshold</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  name="lowStockThreshold"
+                  value={data.lowStockThreshold}
+                  onChange={onChangeHandler}
+                  min={0}
+                />
+                <small className="text-muted">Notify when stock is below this number</small>
+              </div>
+
+              {/* CHECKBOXES */}
               <div className="mb-3 d-flex gap-3">
                 <div className="form-check">
                   <input
-                    className="form-check-input"
                     type="checkbox"
-                    id="sponsored"
+                    className="form-check-input"
                     name="sponsored"
                     checked={data.sponsored}
                     onChange={onChangeHandler}
                   />
-                  <label className="form-check-label" htmlFor="sponsored">Sponsored</label>
+                  <label className="form-check-label">Sponsored</label>
                 </div>
-
                 <div className="form-check">
                   <input
-                    className="form-check-input"
                     type="checkbox"
-                    id="featured"
+                    className="form-check-input"
                     name="featured"
                     checked={data.featured}
                     onChange={onChangeHandler}
                   />
-                  <label className="form-check-label" htmlFor="featured">Featured</label>
+                  <label className="form-check-label">Best Seller</label>
                 </div>
               </div>
 

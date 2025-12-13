@@ -5,5 +5,5 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
   withCredentials: true
 });
-// https://oil-8eta.onrender.com
+
 export default api;
