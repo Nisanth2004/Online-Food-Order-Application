@@ -62,5 +62,5 @@ public interface FoodService {
         FoodResponse convertToResponse(FoodEntity food);
 
 
-
+    double getEffectivePrice(FoodEntity food);
 }

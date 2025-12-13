@@ -67,6 +67,12 @@ const Sidebar = ({ sidebarVisible, setCategory }) => {
         >
           <i className="bi bi-list-ul me-2"></i>List Foods
         </Link>
+<Link
+  className="list-group-item list-group-item-action list-group-item-light p-3"
+  to="/admin/offers"
+>
+  <i className="bi bi-tags me-2"></i> Offers & Promotions
+</Link>
 
         {/* NEW – STOCK MANAGEMENT */}
         <Link

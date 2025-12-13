@@ -80,6 +80,10 @@ public class OrderEntity {
 
     @Builder.Default
     private boolean podVerified = false;
+
+    private String couponCode;
+    private Double discountAmount;
+
     public void addMessage(String message, LocalDateTime time, String actor, String reason) {
         if (this.deliveryMessages == null) this.deliveryMessages = new ArrayList<>();
 

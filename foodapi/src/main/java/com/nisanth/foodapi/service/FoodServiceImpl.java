@@ -4,6 +4,7 @@ import com.nisanth.foodapi.entity.*;
 import com.nisanth.foodapi.io.food.FoodRequest;
 import com.nisanth.foodapi.io.food.FoodResponse;
 import com.nisanth.foodapi.repository.*;
+import com.nisanth.foodapi.repository.offers.FlashSaleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -21,6 +22,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,12 @@ public class FoodServiceImpl implements FoodService {
 
     @Autowired
     private SettingService settingService;
+
+    @Autowired
+    private PricingService pricingService;
+
+    @Autowired
+    private FlashSaleRepository flashSaleRepository;
 
     @Override
     public String uploadFile(MultipartFile file) {
@@ -272,19 +280,22 @@ public class FoodServiceImpl implements FoodService {
 
         // PRICING
         res.setMrp(food.getMrp());
-        res.setSellingPrice(food.getSellingPrice());
 
+// override selling price
+        double finalPrice = pricingService.getEffectivePrice(food);
+        res.setSellingPrice(finalPrice);
+
+// discount calculation
         int discountPercentage = 0;
-        if (food.getMrp() > 0 && food.getSellingPrice() < food.getMrp()) {
-            discountPercentage = (int) Math.round(
-                    ((food.getMrp() - food.getSellingPrice()) * 100.0) / food.getMrp()
-            );
+        if (food.getMrp() > 0 && finalPrice < food.getMrp()) {
+            discountPercentage = (int) (((food.getMrp() - finalPrice) / food.getMrp()) * 100);
         }
         res.setDiscountPercentage(discountPercentage);
+
         res.setOfferLabel(food.getOfferLabel());
 
-        // backward compatibility
-        res.setPrice(food.getSellingPrice());
+// backward compatibility
+        res.setPrice(finalPrice);
 
         // FLAGS
         res.setSponsored(food.isSponsored());
@@ -396,6 +407,21 @@ public class FoodServiceImpl implements FoodService {
 
         stockLogRepository.save(log);
     }
+
+
+    @Override
+    public double getEffectivePrice(FoodEntity food) {
+
+        return flashSaleRepository
+                .findByFoodIdAndActiveTrueAndStartTimeBeforeAndEndTimeAfter(
+                        food.getId(),
+                        LocalDateTime.now(),
+                        LocalDateTime.now()
+                )
+                .map(FlashSaleEntity::getSalePrice)
+                .orElse(food.getSellingPrice());
+    }
+
 
 
 }

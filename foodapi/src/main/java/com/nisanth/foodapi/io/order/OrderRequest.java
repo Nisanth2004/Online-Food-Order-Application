@@ -22,6 +22,10 @@ public class OrderRequest {
     private String courierTrackingId;
     private String courierTrackUrl;
 
+    private String couponCode;
+    private Double discountAmount;
+
+
 
 
 

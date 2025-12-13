@@ -1,0 +1,41 @@
+.offer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  border-radius: 16px;
+  border: 2px solid;
+  text-decoration: none;
+  color: #333;
+  background: #fff;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.offer-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+
+.offer-card h5 {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.offer-card p {
+  font-size: 14px;
+  color: #666;
+}
+
+.offer-card .icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 26px;
+  margin-bottom: 10px;
+}

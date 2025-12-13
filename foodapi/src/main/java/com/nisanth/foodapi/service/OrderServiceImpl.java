@@ -1,9 +1,6 @@
 package com.nisanth.foodapi.service;
 
-import com.nisanth.foodapi.entity.Courier;
-import com.nisanth.foodapi.entity.FoodEntity;
-import com.nisanth.foodapi.entity.OrderEntity;
-import com.nisanth.foodapi.entity.Setting;
+import com.nisanth.foodapi.entity.*;
 import com.nisanth.foodapi.enumeration.OrderStatus;
 import com.nisanth.foodapi.io.*;
 import com.nisanth.foodapi.io.order.OrderItem;
@@ -11,6 +8,7 @@ import com.nisanth.foodapi.io.order.OrderRequest;
 import com.nisanth.foodapi.io.order.OrderResponse;
 import com.nisanth.foodapi.io.util.DeliveryMessage;
 import com.nisanth.foodapi.repository.*;
+import com.nisanth.foodapi.repository.offers.CouponRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
@@ -43,6 +41,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private CouponRepository couponRepository;
 
     @Autowired
     private CartRepository cartRepository;
@@ -344,7 +345,8 @@ public class OrderServiceImpl implements OrderService {
                     .orElseThrow(() -> new RuntimeException("Food not found: " + item.getFoodId()));
 
             double mrp = food.getMrp();
-            double sellingPrice = food.getSellingPrice();
+            double sellingPrice = foodService.getEffectivePrice(food);
+
 
             int discount = 0;
             if (mrp > 0 && sellingPrice < mrp) {
@@ -377,20 +379,28 @@ public class OrderServiceImpl implements OrderService {
                 .mapToDouble(i -> i.getQuantity() * i.getPrice())
                 .sum();
 
-        double tax = subtotal * (taxRate / 100.0);
-        double grandTotal = subtotal + tax + shipping;
+        double discountedSubtotal = applyCoupon(request.getCouponCode(), subtotal);
+
+        double tax = discountedSubtotal * (taxRate / 100.0);
+        double grandTotal = discountedSubtotal + tax + shipping;
 
         Courier defaultCourier = courierRepository.findByIsDefaultTrue().orElse(null);
         if (defaultCourier != null) {
             request.setCourierName(defaultCourier.getName());
             request.setCourierTrackUrl(defaultCourier.getTrackUrl());
         }
+        double discountAmount = subtotal - discountedSubtotal;
+
 
         return OrderEntity.builder()
                 .userAddress(request.getUserAddress())
                 .phoneNumber(request.getPhoneNumber())
                 .email(request.getEmail())
                 .orderedItems(finalItems)
+
+                .couponCode(request.getCouponCode())
+                .discountAmount(discountAmount)
+
                 .amount(grandTotal)
                 .orderStatus(status)
                 .statusTimestamps(new HashMap<>())
@@ -550,5 +560,30 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+
+    private double applyCoupon(String code, double subtotal) {
+
+        if (code == null || code.isBlank()) return subtotal;
+
+        CouponEntity coupon = couponRepository
+                .findByCodeAndActiveTrue(code)
+                .orElseThrow(() -> new RuntimeException("Invalid coupon"));
+
+        if (!coupon.isActive())
+            throw new RuntimeException("Coupon inactive");
+
+        if (coupon.getExpiryDate() != null &&
+                LocalDateTime.now().isAfter(coupon.getExpiryDate()))
+            throw new RuntimeException("Coupon expired");
+
+        if (subtotal < coupon.getMinOrderAmount())
+            throw new RuntimeException(
+                    "Minimum order ₹" + coupon.getMinOrderAmount() + " required"
+            );
+
+        double discount = subtotal * coupon.getDiscountPercent() / 100.0;
+
+        return Math.max(subtotal - discount, 0);
+    }
 
 }
