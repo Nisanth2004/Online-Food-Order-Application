@@ -1,6 +1,8 @@
 package com.nisanth.foodapi.controller;
 
+
 import com.nisanth.foodapi.entity.ReviewEntity;
+import com.nisanth.foodapi.io.review.ReviewRequest;
 import com.nisanth.foodapi.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,16 +26,21 @@ public class ReviewController {
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ReviewEntity> addReview(
             @PathVariable String foodId,
-            @RequestPart("review") ReviewEntity review,
+            @ModelAttribute ReviewRequest review,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
-        return ResponseEntity.ok(reviewService.addReview(foodId, review, image));
+        return ResponseEntity.ok(
+                reviewService.addReview(foodId, review, image)
+        );
     }
+
 
     @PutMapping("/{reviewId}/helpful")
-    public ResponseEntity<?> markHelpful(@PathVariable String reviewId) {
-        return ResponseEntity.ok(reviewService.incrementHelpful(reviewId));
+    public ResponseEntity<ReviewEntity> markHelpful(
+            @PathVariable String reviewId
+    ) {
+        return ResponseEntity.ok(
+                reviewService.incrementHelpful(reviewId)
+        );
     }
-
-
 }

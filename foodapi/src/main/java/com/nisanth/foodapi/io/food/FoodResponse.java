@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -13,18 +14,21 @@ import java.util.List;
 @Builder
 public class FoodResponse {
 
-
-
     private String id;
     private String name;
     private String description;
     private String imageUrl;
 
-    // 🔥 Pricing (Amazon style)
+    // 🔥 Pricing
     private double mrp;
     private double sellingPrice;
     private int discountPercentage;
     private String offerLabel;
+
+    // ⚡ FLASH SALE
+    private boolean flashSaleActive;
+    private Double flashSalePrice;
+    private LocalDateTime flashSaleEndTime;
 
     // ⭐ Ratings
     private double averageRating;
@@ -45,8 +49,7 @@ public class FoodResponse {
     private boolean outOfStock;
     private boolean lowStock;
 
-    // ⚠️ OPTIONAL – keep only if frontend still uses it
+    // ⚠️ backward compatibility
     private double price;
-
-
 }
+

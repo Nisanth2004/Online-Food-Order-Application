@@ -25,7 +25,6 @@ public class ReviewEntity {
     private Instant createdAt;
     private boolean verifiedPurchase;
     private String imageUrl;
-    private int helpful; // NEW FIELD
-
-
+    private int helpful;
 }
+

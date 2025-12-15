@@ -18,4 +18,8 @@ public class ReviewResponse {
     private String comment;
     private String createdAt;     // ISO string
     private boolean verifiedPurchase;
+
+    private String imageUrl;
+    private int helpful;
+
 }

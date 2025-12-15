@@ -281,21 +281,42 @@ public class FoodServiceImpl implements FoodService {
         // PRICING
         res.setMrp(food.getMrp());
 
-// override selling price
-        double finalPrice = pricingService.getEffectivePrice(food);
-        res.setSellingPrice(finalPrice);
+        Optional<FlashSaleEntity> flashSaleOpt =
+                flashSaleRepository.findByFoodIdAndActiveTrueAndStartTimeBeforeAndEndTimeAfter(
+                        food.getId(),
+                        LocalDateTime.now(),
+                        LocalDateTime.now()
+                );
 
-// discount calculation
+        double finalPrice;
+
+        if (flashSaleOpt.isPresent()) {
+            FlashSaleEntity fs = flashSaleOpt.get();
+
+            finalPrice = fs.getSalePrice();
+            res.setFlashSaleActive(true);
+            res.setFlashSalePrice(fs.getSalePrice());
+            res.setFlashSaleEndTime(fs.getEndTime());
+            res.setOfferLabel("FLASH SALE");
+
+        } else {
+            finalPrice = pricingService.getEffectivePrice(food);
+            res.setFlashSaleActive(false);
+            res.setFlashSalePrice(null);
+            res.setFlashSaleEndTime(null);
+            res.setOfferLabel(food.getOfferLabel());
+        }
+
+        res.setSellingPrice(finalPrice);
+        res.setPrice(finalPrice);
+
+        // DISCOUNT %
         int discountPercentage = 0;
         if (food.getMrp() > 0 && finalPrice < food.getMrp()) {
-            discountPercentage = (int) (((food.getMrp() - finalPrice) / food.getMrp()) * 100);
+            discountPercentage =
+                    (int) (((food.getMrp() - finalPrice) / food.getMrp()) * 100);
         }
         res.setDiscountPercentage(discountPercentage);
-
-        res.setOfferLabel(food.getOfferLabel());
-
-// backward compatibility
-        res.setPrice(finalPrice);
 
         // FLAGS
         res.setSponsored(food.isSponsored());
@@ -319,10 +340,7 @@ public class FoodServiceImpl implements FoodService {
         // REVIEWS
         List<ReviewEntity> reviews = reviewRepository.findByFoodId(food.getId());
         if (!reviews.isEmpty()) {
-            double avg = reviews.stream()
-                    .mapToInt(ReviewEntity::getRating)
-                    .average()
-                    .orElse(0.0);
+            double avg = reviews.stream().mapToInt(ReviewEntity::getRating).average().orElse(0);
             res.setAverageRating(avg);
             res.setReviewCount(reviews.size());
         } else {
@@ -335,6 +353,7 @@ public class FoodServiceImpl implements FoodService {
 
         return res;
     }
+
 
 
     @Override

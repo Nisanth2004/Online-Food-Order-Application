@@ -1,8 +1,9 @@
 /* MAIN FOOD IMAGE */
-.food-img {
+.food-imge {
   width: 100%;
   border-radius: 14px;
-  object-fit: cover;
+ 
+  height: 420px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
@@ -186,4 +187,72 @@
   .review-card {
     padding: 14px;
   }
+}
+.preview-box {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.preview-img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.remove-img {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+}
+/* FLASH SALE BOX */
+.flash-sale-box {
+  background: linear-gradient(135deg, #ff4d4f, #ff9f1c);
+  padding: 14px;
+  border-radius: 14px;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* BADGE */
+.flash-badge {
+  background: #000;
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+/* PRICE */
+.flash-price {
+  margin-top: 8px;
+}
+
+.flash-price .old-price {
+  text-decoration: line-through;
+  opacity: 0.85;
+  margin-right: 8px;
+}
+
+.flash-price .sale-price {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+/* TIMER */
+.flash-timer {
+  margin-top: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }

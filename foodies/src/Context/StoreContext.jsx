@@ -177,6 +177,9 @@ export const StoreContextProvider = (props) => {
       removeFromWishlist,
 
       token,
+      setToken, 
+      setUser,      
+        loadCartData,      
       user,
       loadingUser
     }}>

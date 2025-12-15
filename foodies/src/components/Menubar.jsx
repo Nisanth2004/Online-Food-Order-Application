@@ -13,7 +13,10 @@ const Menubar = () => {
   const uniqueItemsInCart = Object.values(quantities).filter((qty) => qty > 0).length;
   const validWishlistCount = wishlist.filter(id => foodList.some(food => food.id === id)).length;
   const logout = () => {
+    console.log("Navbar token:", token);
     localStorage.removeItem('token');
+    
+
     setToken('');
     setQuantities({});
     navigate('/');
