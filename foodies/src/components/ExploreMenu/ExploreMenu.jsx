@@ -50,7 +50,7 @@ const ExploreMenu = ({ category, setCategory }) => {
           ></i>
         </div>
       </h1>
-      <p>Explore curated lists of dishes from our categories</p>
+      <p>Explore curated lists of items from our categories</p>
       <div
         className="d-flex justify-content-start gap-3 overflow-auto explore-menu-list"
         ref={menuRef}
@@ -68,6 +68,7 @@ const ExploreMenu = ({ category, setCategory }) => {
         ))}
       </div>
       <hr />
+      
     </div>
   );
 };

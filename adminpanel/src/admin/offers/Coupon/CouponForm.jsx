@@ -7,8 +7,9 @@ import {
 import { toast } from "react-toastify";
 import { useNavigate, useParams } from "react-router-dom";
 import BackHeader from "../../../components/BackHeader";
+
 const CouponForm = () => {
-  const { id } = useParams(); // 👈 edit mode if exists
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -19,7 +20,10 @@ const CouponForm = () => {
     active: true
   });
 
-  // ✅ Load coupon for edit
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  // ✅ Load coupon in edit mode
   useEffect(() => {
     if (id) loadCoupon();
   }, [id]);
@@ -28,6 +32,7 @@ const CouponForm = () => {
     try {
       const res = await getCouponById(id);
       setForm(res.data);
+      setPreview(res.data.imageUrl);
     } catch {
       toast.error("Failed to load coupon");
     }
@@ -41,16 +46,36 @@ const CouponForm = () => {
     }));
   };
 
+  const onImageChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+
     try {
+      const formData = new FormData();
+      formData.append(
+        "data",
+        new Blob([JSON.stringify(form)], { type: "application/json" })
+      );
+
+      if (image) {
+        formData.append("image", image);
+      }
+
       if (id) {
-        await updateCoupon(id, form);
+        await updateCoupon(id, formData);
         toast.success("Coupon updated");
       } else {
-        await createCoupon(form);
+        await createCoupon(formData);
         toast.success("Coupon created");
       }
+
       navigate("/admin/offers/coupons");
     } catch {
       toast.error("Failed to save coupon");
@@ -59,58 +84,68 @@ const CouponForm = () => {
 
   return (
     <div className="container py-4">
-        <BackHeader title="Create Coupon" backTo="/admin/offers/coupons" />
-
-      <h3>{id ? "Edit Coupon" : "Create Coupon"}</h3>
+      <BackHeader title={id ? "Edit Coupon" : "Create Coupon"} backTo="/admin/offers/coupons" />
 
       <form onSubmit={submit} className="card p-4 col-md-6">
+        <input
+          className="form-control mb-3"
+          name="code"
+          placeholder="Coupon Code"
+          value={form.code}
+          onChange={onChange}
+          required
+        />
+
+        <input
+          type="number"
+          className="form-control mb-3"
+          name="discountPercent"
+          placeholder="Discount %"
+          value={form.discountPercent}
+          onChange={onChange}
+          required
+        />
+
+        <input
+          type="number"
+          className="form-control mb-3"
+          name="minOrderAmount"
+          placeholder="Min Order Amount"
+          value={form.minOrderAmount}
+          onChange={onChange}
+          required
+        />
+
+        <input
+          type="datetime-local"
+          className="form-control mb-3"
+          name="expiryDate"
+          value={form.expiryDate || ""}
+          onChange={onChange}
+          required
+        />
+
+        {/* ✅ IMAGE UPLOAD */}
         <div className="mb-3">
-          <label className="form-label">Coupon Code</label>
+          <label className="form-label">Coupon Image</label>
           <input
+            type="file"
             className="form-control"
-            name="code"
-            value={form.code}
-            onChange={onChange}
-            required
+            accept="image/*"
+            onChange={onImageChange}
           />
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Discount %</label>
-          <input
-            type="number"
-            className="form-control"
-            name="discountPercent"
-            value={form.discountPercent}
-            onChange={onChange}
-            required
+        {preview && (
+          <img
+            src={preview}
+            alt="preview"
+            className="img-fluid rounded mb-3"
+            style={{ maxHeight: "180px" }}
           />
-        </div>
+        )}
 
-        <div className="mb-3">
-          <label className="form-label">Minimum Order Amount</label>
-          <input
-            type="number"
-            className="form-control"
-            name="minOrderAmount"
-            value={form.minOrderAmount}
-            onChange={onChange}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Expiry Date</label>
-          <input
-            type="datetime-local"
-            className="form-control"
-            name="expiryDate"
-            value={form.expiryDate || ""}
-            onChange={onChange}
-            required
-          />
-        </div>
-
+        측
         <div className="form-check mb-3">
           <input
             type="checkbox"

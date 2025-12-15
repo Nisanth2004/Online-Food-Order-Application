@@ -1,58 +1,99 @@
-/* Main hero section */
+/* ===== HERO SECTION ===== */
 .header {
+  position: relative;
   padding: 4rem;
-  border-radius: 0.3rem;
-  margin-bottom: 1rem;
-  margin-top: 0.25rem;
-  color: whitesmoke;
+  margin: 0.5rem 0 1rem;
+  border-radius: 14px;
+  color: #1f3d2b;
 
-  background-image: url(../../assets/header2.png);
+  /* Background image */
+  background-image: url("../../assets/header3.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 
   display: flex;
   align-items: center;
-  min-height: 380px;        /* ensures proper hero height */
+  min-height: 420px;
+  overflow: hidden;
 }
 
-/* Text container */
+/* Soft green overlay for readability */
+.header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(236, 248, 239, 0.92) 0%,
+    rgba(236, 248, 239, 0.75) 50%,
+    rgba(236, 248, 239, 0.45) 100%
+  );
+  z-index: 1;
+}
+
+/* Content above overlay */
 .header .container-fluid {
-  max-width: 700px;
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
 }
 
-/* Mobile Fixes */
+/* ===== TEXT STYLING ===== */
+.header h1 {
+  color: #1b7a46;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.header p {
+  color: #2f5d45;
+  line-height: 1.6;
+  margin-bottom: 1.8rem;
+}
+
+/* ===== CTA BUTTON ===== */
+.header .btn {
+  background: linear-gradient(135deg, #1b7a46, #2fa36b);
+  border: none;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 12px 32px;
+  border-radius: 30px;
+  box-shadow: 0 8px 20px rgba(27, 122, 70, 0.25);
+  transition: all 0.3s ease;
+}
+
+.header .btn:hover {
+  background: linear-gradient(135deg, #16653a, #278a5c);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(27, 122, 70, 0.35);
+}
+
+/* ===== TABLET ===== */
 @media (max-width: 768px) {
   .header {
-    padding: 2.5rem 1.5rem;
-    min-height: 300px;
-    text-align: center;        /* center text */
-  }
-
-  .header .container-fluid {
-    padding: 0;
+    padding: 3rem 2rem;
+    min-height: 340px;
+    text-align: center;
   }
 
   .header h1 {
-    font-size: 1.8rem !important; /* resize title */
+    font-size: 2rem !important;
   }
 
   .header p {
-    font-size: 1rem !important;   /* smaller subtitle */
-    margin: 10px auto;
-  }
-
-  .header .btn {
-    font-size: 0.9rem;
-    padding: 8px 20px;
+    font-size: 1.05rem !important;
+    margin: 0 auto 1.5rem;
   }
 }
 
-/* Extra small (phones <480px) */
+/* ===== MOBILE ===== */
 @media (max-width: 480px) {
   .header {
-    padding: 2rem 1rem;
-    min-height: 260px;
+    padding: 2.2rem 1.2rem;
+    min-height: 280px;
   }
 
   .header h1 {
@@ -60,11 +101,11 @@
   }
 
   .header p {
-    font-size: 0.9rem !important;
+    font-size: 0.95rem !important;
   }
 
   .header .btn {
-    padding: 7px 18px;
-    font-size: 0.85rem;
+    padding: 10px 24px;
+    font-size: 0.9rem;
   }
 }

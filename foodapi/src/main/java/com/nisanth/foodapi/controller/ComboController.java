@@ -4,8 +4,10 @@ import com.nisanth.foodapi.entity.ComboEntity;
 import com.nisanth.foodapi.entity.FoodEntity;
 import com.nisanth.foodapi.repository.FoodRepository;
 import com.nisanth.foodapi.repository.offers.ComboRepository;
+import com.nisanth.foodapi.service.FoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,37 +21,61 @@ public class ComboController {
     @Autowired
     private ComboRepository comboRepository;
 
+    @Autowired
+    private FoodService fileUploadService;
+
+    @Autowired
+    private FoodRepository foodRepository;
+
+    // ✅ GET ALL
     @GetMapping
     public List<ComboEntity> getAllCombos() {
         return comboRepository.findAll();
     }
 
+    // ✅ GET BY ID
     @GetMapping("/{id}")
     public ComboEntity getComboById(@PathVariable String id) {
         return comboRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Combo not found"));
     }
 
-    @PostMapping
-    public ComboEntity createCombo(@RequestBody ComboEntity combo) {
+    // ✅ CREATE WITH IMAGE
+    @PostMapping(consumes = "multipart/form-data")
+    public ComboEntity createCombo(
+            @RequestPart("data") ComboEntity combo,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) {
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = fileUploadService.uploadFile(image);
+            combo.setImageUrl(imageUrl);
+        }
         return comboRepository.save(combo);
     }
 
-    @PutMapping("/{id}")
+    // ✅ UPDATE WITH IMAGE
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ComboEntity updateCombo(
             @PathVariable String id,
-            @RequestBody ComboEntity combo) {
-
+            @RequestPart("data") ComboEntity combo,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) {
         combo.setId(id);
+
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = fileUploadService.uploadFile(image);
+            combo.setImageUrl(imageUrl);
+        }
         return comboRepository.save(combo);
     }
 
+    // ✅ DELETE
     @DeleteMapping("/{id}")
     public void deleteCombo(@PathVariable String id) {
         comboRepository.deleteById(id);
     }
 
-    // ACTIVE combos (already working)
+    // ✅ ACTIVE COMBOS (for slider)
     @GetMapping("/active")
     public List<Map<String, Object>> getActiveCombos() {
         LocalDateTime now = LocalDateTime.now();
@@ -62,8 +88,28 @@ public class ComboController {
                     res.put("id", combo.getId());
                     res.put("name", combo.getName());
                     res.put("comboPrice", combo.getComboPrice());
+                    res.put("imageUrl", combo.getImageUrl()); // ✅ IMPORTANT
                     return res;
                 })
                 .toList();
     }
+
+    @GetMapping("/{id}/details")
+    public Map<String, Object> getComboDetails(@PathVariable String id) {
+        ComboEntity combo = comboRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Combo not found"));
+
+        List<FoodEntity> foods = foodRepository.findAllById(combo.getFoodIds());
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("id", combo.getId());
+        res.put("name", combo.getName());
+        res.put("imageUrl", combo.getImageUrl());
+        res.put("originalPrice", combo.getOriginalPrice());
+        res.put("comboPrice", combo.getComboPrice());
+        res.put("foods", foods);
+
+        return res;
+    }
+
 }

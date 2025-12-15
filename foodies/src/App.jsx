@@ -17,6 +17,8 @@ import Footer from "./components/Footer/Footer";
 import WishList from "./components/WishList/WishList";
 import OrderTracking from "./Pages/OrderTracking/OrderTracking";
 import ScrollToTop from "./ScrollToTop/ScrollToTop";
+import AboutUs from "./Pages/AboutUs/AboutUs";
+import ComboDetails from "./Pages/ComboDetails/ComboDetails";
 
 
 const App = () => {
@@ -39,6 +41,9 @@ const App = () => {
         <Route path="/explore" element={<ExploreFood />} />
         <Route path="/food/:id" element={<FoodDetails />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/combo/:id" element={<ComboDetails />} />
+
         <Route path="/order" element={token ? <PlaceOrder /> : <Login />} />
         <Route path="/login" element={token ? <Home /> : <Login />} />
         <Route path="/register" element={token ? <Home /> : <Register />} />

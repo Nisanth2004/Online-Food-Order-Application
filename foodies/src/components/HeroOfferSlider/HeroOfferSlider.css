@@ -1,0 +1,55 @@
+.hero-slider {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+/* MOBILE – BIG */
+.hero-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;   /* 🔥 VERY BIG on mobile */
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.4s ease-in-out;
+}
+
+/* TABLET */
+@media (min-width: 768px) {
+  .hero-img {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* DESKTOP */
+@media (min-width: 1200px) {
+  .hero-img {
+    aspect-ratio: 21 / 9;  /* CINEMATIC */
+  }
+}
+
+/* DOTS */
+.hero-dots {
+  position: absolute;
+  bottom: 14px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255,255,255,0.65);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  width: 22px;
+  border-radius: 10px;
+  background: #fff;
+}

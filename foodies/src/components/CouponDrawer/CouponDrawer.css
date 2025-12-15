@@ -1,0 +1,73 @@
+.coupon-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.coupon-drawer {
+  background: white;
+  width: 100%;
+  max-height: 80vh;
+  border-radius: 20px 20px 0 0;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .coupon-drawer {
+    max-width: 420px;
+    margin-bottom: 40px;
+    border-radius: 20px;
+  }
+}
+
+.coupon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coupon-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px dashed #ddd;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.coupon-card.applied {
+  border-color: #28a745;
+  background: #eafaf0;
+}
+
+.coupon-card.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.coupon-left img {
+  width: 50px;
+}
+
+.coupon-middle h5 {
+  margin: 0;
+}
+
+.coupon-right button {
+  border: none;
+  background: #ff7e5f;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.applied-badge {
+  color: #28a745;
+  font-weight: bold;
+}

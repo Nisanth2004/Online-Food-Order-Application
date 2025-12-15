@@ -23,4 +23,6 @@ public class CouponEntity {
 
     private boolean active;
     private LocalDateTime expiryDate;
+
+    private String imageUrl;
 }

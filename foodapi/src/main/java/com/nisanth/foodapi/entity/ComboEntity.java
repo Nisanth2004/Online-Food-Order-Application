@@ -34,4 +34,5 @@ public class ComboEntity {
     // ✅ REQUIRED for festival / flash logic
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private String imageUrl;
 }

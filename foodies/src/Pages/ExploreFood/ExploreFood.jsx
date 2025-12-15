@@ -29,6 +29,7 @@ const ExploreFood = () => {
   return (
     <div className="container mt-4 explore-container px-3">
       {/* Header */}
+    
       <div className="text-center mb-4">
         <h2 className="fw-bold text-gradient fs-5 fs-md-2">Explore Delicious Foods 🍽️</h2>
         <p className="text-muted fs-6">

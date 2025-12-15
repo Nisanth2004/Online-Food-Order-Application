@@ -9,6 +9,10 @@ const PlaceOrder = () => {
   const { foodList, quantities, setQuantities, token } = useContext(StoreContext);
   const navigate = useNavigate();
 
+const { discount, appliedCoupon } = useContext(StoreContext);
+const { comboCart } = useContext(StoreContext);
+
+
   // -------------------------------
   // 1️⃣ SAFE CART ITEMS
   // -------------------------------
@@ -46,14 +50,21 @@ const PlaceOrder = () => {
   // -------------------------------
   // 3️⃣ TOTAL CALCULATION
   // -------------------------------
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * (quantities[item.id] || 1),
-    0
-  );
+  const comboTotal = comboCart
+  ? comboCart.comboPrice * comboCart.qty
+  : 0;
 
-  const shipping = subtotal === 0 ? 0 : settings.shippingCharge;
-  const tax = subtotal === 0 ? 0 : (subtotal * settings.taxPercentage) / 100;
-  const total = subtotal + shipping + tax;
+const subtotal =
+  cartItems.reduce(
+    (acc, item) => acc + item.price * quantities[item.id],
+    0
+  ) + comboTotal;
+
+const shipping = subtotal === 0 ? 0 : settings.shippingCharge;
+const tax = (subtotal * settings.taxPercentage) / 100;
+const total = subtotal + shipping + tax;
+const finalTotal = Math.max(total - discount, 0);
+
 
   // -------------------------------
   // 4️⃣ ADDRESS FORM
@@ -114,17 +125,31 @@ const PlaceOrder = () => {
       userAddress: `${data.firstName} ${data.lastName},${data.address},${data.city},${data.state},${data.zip}`,
       phoneNumber: data.phoneNumber,
       email: data.email,
+      couponCode: appliedCoupon || null,
+couponDiscount: discount || 0,
+total: finalTotal,
+
 
       // Items
-      orderedItems: cartItems.map((item) => ({
-        foodId: item.id,
-        quantity: quantities[item.id],
-        price: item.price * quantities[item.id],
-        category: item.category,
-        imageUrl: item.imageUrl,
-        description: item.description,
-        name: item.name,
-      })),
+   orderedItems: [
+  ...(comboCart ? [{
+    type: "COMBO",
+    comboId: comboCart.id,
+    quantity: comboCart.qty,
+    price: comboCart.comboPrice * comboCart.qty,
+    name: comboCart.name,
+    imageUrl: comboCart.imageUrl
+  }] : []),
+
+  ...cartItems.map(item => ({
+    type: "FOOD",
+    foodId: item.id,
+    quantity: quantities[item.id],
+    price: item.price * quantities[item.id],
+    name: item.name
+  }))
+],
+
 
       // Amounts
       subtotal: subtotal,
@@ -257,39 +282,75 @@ const PlaceOrder = () => {
             </h4>
 
             <ul className="list-group mb-3">
-              {cartItems.length > 0 ? (
-                cartItems.map((item) => (
-                  <li key={item.id} className="list-group-item d-flex justify-content-between lh-sm">
-                    <div>
-                      <h6 className="my-0">{item.name}</h6>
-                      <small className="text-body-secondary">
-                        Qty: {quantities[item.id] || 1}
-                      </small>
-                    </div>
-                    <span className="text-body-secondary">
-                      ₹{(item.price * (quantities[item.id] || 1)).toFixed(2)}
-                    </span>
-                  </li>
-                ))
-              ) : (
-                <p className="text-center text-muted">Your cart is empty</p>
-              )}
 
-              <li className="list-group-item d-flex justify-content-between">
-                <span>Shipping</span>
-                <span>₹{(shipping ?? 0).toFixed(2)}</span>
-              </li>
+  {/* COMBO ITEM */}
+  {comboCart && (
+    <li className="list-group-item d-flex justify-content-between lh-sm">
+      <div>
+        <h6 className="my-0">{comboCart.name}</h6>
+        <small className="text-body-secondary">
+          Combo × {comboCart.qty}
+        </small>
+      </div>
+      <span className="text-body-secondary">
+        ₹{(comboCart.comboPrice * comboCart.qty).toFixed(2)}
+      </span>
+    </li>
+  )}
 
-              <li className="list-group-item d-flex justify-content-between">
-                <span>Tax ({settings.taxPercentage || 0}%)</span>
-                <span>₹{(tax ?? 0).toFixed(2)}</span>
-              </li>
+  {/* NORMAL FOOD ITEMS */}
+  {cartItems.length > 0 ? (
+    cartItems.map((item) => (
+      <li
+        key={item.id}
+        className="list-group-item d-flex justify-content-between lh-sm"
+      >
+        <div>
+          <h6 className="my-0">{item.name}</h6>
+          <small className="text-body-secondary">
+            Qty: {quantities[item.id] || 1}
+          </small>
+        </div>
+        <span className="text-body-secondary">
+          ₹{(item.price * (quantities[item.id] || 1)).toFixed(2)}
+        </span>
+      </li>
+    ))
+  ) : (
+    !comboCart && (
+      <p className="text-center text-muted">Your cart is empty</p>
+    )
+  )}
 
-              <li className="list-group-item d-flex justify-content-between">
-                <strong>Total</strong>
-                <strong>₹{(total ?? 0).toFixed(2)}</strong>
-              </li>
-            </ul>
+  {/* SUBTOTAL */}
+  <li className="list-group-item d-flex justify-content-between">
+    <span>Subtotal</span>
+    <strong>₹{subtotal.toFixed(2)}</strong>
+  </li>
+
+  <li className="list-group-item d-flex justify-content-between">
+    <span>Shipping</span>
+    <span>₹{shipping.toFixed(2)}</span>
+  </li>
+
+  <li className="list-group-item d-flex justify-content-between">
+    <span>Tax ({settings.taxPercentage || 0}%)</span>
+    <span>₹{tax.toFixed(2)}</span>
+  </li>
+
+  {discount > 0 && (
+    <li className="list-group-item d-flex justify-content-between text-success">
+      <span>Discount</span>
+      <span>-₹{discount.toFixed(2)}</span>
+    </li>
+  )}
+
+  <li className="list-group-item d-flex justify-content-between">
+    <strong>Total</strong>
+    <strong>₹{finalTotal.toFixed(2)}</strong>
+  </li>
+</ul>
+
           </div>
 
           {/* ---------- ADDRESS FORM ---------- */}

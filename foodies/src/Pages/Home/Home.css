@@ -1,0 +1,64 @@
+.home-page {
+  background: #f6fbf7;
+}
+
+/* 🌿 Welcome Message */
+.welcome-box {
+  margin: 24px 0 32px;
+  padding: 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.welcome-box h2 {
+  color: #2e7d32;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.welcome-box p {
+  color: #4e6e57;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.about-hero {
+  background: linear-gradient(
+      rgba(20, 90, 40, 0.65),
+      rgba(20, 90, 40, 0.65)
+    ),
+    url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6");
+  background-size: cover;
+  background-position: center;
+  border-radius: 28px;
+  margin: 24px;
+}
+
+.about-hero-content {
+  padding: 110px 24px;
+  text-align: center;
+  color: #eaffef;
+}
+
+.about-hero h1 {
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.about-hero p {
+  font-size: 18px;
+  margin: 14px 0 24px;
+}
+
+/* CTA */
+.cta-btn {
+  background: #66bb6a;
+  color: #0b3d1b;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+}

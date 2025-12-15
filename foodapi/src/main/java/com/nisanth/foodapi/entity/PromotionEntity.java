@@ -27,4 +27,8 @@ public class PromotionEntity {
     private boolean active;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+
+    private String redirectType; // CATEGORY | COMBO | FOOD | URL
+    private String redirectValue;
+
 }

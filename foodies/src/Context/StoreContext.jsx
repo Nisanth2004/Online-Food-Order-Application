@@ -13,6 +13,7 @@ import jwt_decode from "jwt-decode";
 export const StoreContext = createContext(null);
 
 export const StoreContextProvider = (props) => {
+
   const [foodList, setFoodList] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
@@ -22,26 +23,41 @@ export const StoreContextProvider = (props) => {
   const [shippingCharge, setShippingCharge] = useState(0);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // ------------------ CART FUNCTIONS ------------------ //
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+ const [discount, setDiscount] = useState(0);
+
+  // 🔥 COMBO STATE
+  const [comboCart, setComboCart] = useState(null);
+
+  // ------------------ FOOD CART ------------------ //
   const increaseQty = async (foodId) => {
     const food = foodList.find(f => f.id === foodId);
     if (!food) return;
+
     const currentQty = quantities[foodId] || 0;
     if (currentQty >= food.stock) {
       toast.warning(`Only ${food.stock} stock available`);
       return;
     }
+
     setQuantities(prev => ({ ...prev, [foodId]: currentQty + 1 }));
     await addToCart(foodId, token);
   };
 
   const decreaseQty = async (foodId) => {
-    setQuantities(prev => ({ ...prev, [foodId]: prev[foodId] > 0 ? prev[foodId] - 1 : 0 }));
+    setQuantities(prev => ({
+      ...prev,
+      [foodId]: Math.max((prev[foodId] || 0) - 1, 0)
+    }));
     await removeQtyFromCart(foodId, token);
   };
 
   const removeFromCart = (foodId) => {
-    setQuantities(prev => { const updated = { ...prev }; delete updated[foodId]; return updated; });
+    setQuantities(prev => {
+      const updated = { ...prev };
+      delete updated[foodId];
+      return updated;
+    });
   };
 
   const loadCartData = async (token) => {
@@ -49,63 +65,67 @@ export const StoreContextProvider = (props) => {
     setQuantities(items);
   };
 
-  // ------------------ WISHLIST FUNCTIONS ------------------ //
+  // ------------------ 🔥 COMBO CART ------------------ //
+
+  const addComboToCart = (combo) => {
+  if (comboCart) {
+    toast.error("Only one combo allowed per order");
+    return;
+  }
+
+  setComboCart({
+    id: combo.id,
+    name: combo.name,
+    comboPrice: combo.comboPrice,
+    qty: 1,
+    imageUrl: combo.imageUrl
+  });
+
+  toast.success("Combo added to cart");
+};
+
+
+  const increaseComboQty = () => {
+    setComboCart(prev => ({
+      ...prev,
+      qty: prev.qty + 1
+    }));
+  };
+
+  const decreaseComboQty = () => {
+    setComboCart(prev => {
+      if (prev.qty === 1) return prev;
+      return { ...prev, qty: prev.qty - 1 };
+    });
+  };
+
+  const removeComboFromCart = () => {
+    setComboCart(null);
+    toast.success("Combo removed from cart");
+  };
+
+  // ------------------ WISHLIST ------------------ //
   const addToWishlist = async (foodId) => {
-    if (!user?.id) {
-      toast.error("Login required");
-      return;
-    }
-    try {
-      await addToWishlistAPI(foodId, user.id, token);
-      setWishlist(prev => [...prev, foodId]);
-    } catch (err) {
-      console.error("Add to wishlist failed", err);
-      toast.error("Failed to add to wishlist");
-    }
+    if (!user?.id) return toast.error("Login required");
+    await addToWishlistAPI(foodId, user.id, token);
+    setWishlist(prev => [...prev, foodId]);
   };
 
   const removeFromWishlist = async (foodId) => {
-    if (!user?.id) {
-      toast.error("Login required");
-      return;
-    }
-    try {
-      await removeFromWishlistAPI(foodId, user.id, token);
-      setWishlist(prev => prev.filter(id => id !== foodId));
-      toast.success("Your item had been removed from wishlist")
-    } catch (err) {
-      console.error("Remove from wishlist failed", err);
-      toast.error("Failed to remove from wishlist");
-    }
+    await removeFromWishlistAPI(foodId, user.id, token);
+    setWishlist(prev => prev.filter(id => id !== foodId));
   };
 
-  // ------------------ USER TOKEN & STATE ------------------ //
+  // ------------------ AUTH ------------------ //
   useEffect(() => {
-    if (!token) {
-      setUser(null);
-      setLoadingUser(false);
-      return;
-    }
+    if (!token) return setLoadingUser(false);
 
     try {
       const decoded = jwt_decode(token);
-      const now = Date.now() / 1000;
-
-      // Check token expiration
-      if (decoded.exp && decoded.exp < now) {
-        setToken("");
-        setUser(null);
-        localStorage.removeItem("token");
-      } else {
-        const userId = decoded.id || decoded.sub || decoded.userId || decoded.user_id || decoded.username || decoded.email;
-        const username = decoded.username || decoded.email || decoded.sub || decoded.userId || "User";
-        setUser({ id: userId, username });
-      }
-    } catch (err) {
-      console.error("Invalid token decoding", err);
-      setUser(null);
-      localStorage.removeItem("token");
+      setUser({ id: decoded.id || decoded.sub, username: decoded.username });
+    } catch {
       setToken("");
+      localStorage.removeItem("token");
     } finally {
       setLoadingUser(false);
     }
@@ -113,60 +133,54 @@ export const StoreContextProvider = (props) => {
 
   // ------------------ INITIAL LOAD ------------------ //
   useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await fetchFoodList();
-        setFoodList(data.foods || []);
+    async function load() {
+      const data = await fetchFoodList();
+      setFoodList(data.foods || []);
 
-        const setting = await getSettings();
-        setTaxRate(setting.taxPercentage || 0);
-        setShippingCharge(setting.shippingCharge || 0);
+      const setting = await getSettings();
+      setTaxRate(setting.taxPercentage || 0);
+      setShippingCharge(setting.shippingCharge || 0);
 
-        if (!token) return;
-
+      if (token) {
         await loadCartData(token);
-
-        const decoded = jwt_decode(token);
-        const userId = decoded.id || decoded.sub || decoded.userId || decoded.user_id || decoded.username || decoded.email;
-        const wishlistData = await fetchWishlistAPI(userId, token);
-        setWishlist(wishlistData || []);
-      } catch (err) {
-        console.error("Failed to load initial data", err);
-        localStorage.removeItem("token");
-        setToken("");
-        setUser(null);
-        setQuantities({});
-        setWishlist([]);
-      } finally {
-        setLoadingUser(false);
       }
     }
-
-    loadData();
+    load();
   }, []);
 
-  // ------------------ CONTEXT VALUE ------------------ //
-  const contextValue = {
-    foodList,
-    setFoodList,
-    quantities,
-    increaseQty,
-    decreaseQty,
-    removeFromCart,
-    token,
-    user,
-    setToken,
-    setUser,
-    setQuantities,
-    loadCartData,
-    taxRate,
-    shippingCharge,
-    wishlist,
-    setWishlist,
-    addToWishlist,
-    removeFromWishlist,
-    loadingUser
-  };
+  return (
+    <StoreContext.Provider value={{
+      foodList,
+      quantities,
+      setFoodList, 
+      increaseQty,
+      decreaseQty,
+      removeFromCart,
+      setQuantities,
 
-  return <StoreContext.Provider value={contextValue}>{props.children}</StoreContext.Provider>;
+      comboCart,
+      addComboToCart,
+      increaseComboQty,
+      decreaseComboQty,
+      removeComboFromCart,
+
+      taxRate,
+      shippingCharge,
+
+      appliedCoupon,
+      setAppliedCoupon,
+      discount,
+      setDiscount,
+
+      wishlist,
+      addToWishlist,
+      removeFromWishlist,
+
+      token,
+      user,
+      loadingUser
+    }}>
+      {props.children}
+    </StoreContext.Provider>
+  );
 };

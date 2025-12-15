@@ -20,13 +20,21 @@ import north from './north.jpeg'
 import youtube from './youtube.png'
 import instagram from './instagram.png'
 import whatsapp from './whatsapp.png'
+import cert1 from './cert1.webp'
+
+import cert2 from './cert2.webp'
+import cert3 from './cert3.webp'
+
+import girl from './girl.webp'
 export const assets={
     logo,
     main_logo,
     second_logo,
     second_logo1,
     cart,
+    cert1,cert2,cert3,
     profile,
+    girl,
     delivery,
     logo5,youtube,instagram,whatsapp
     

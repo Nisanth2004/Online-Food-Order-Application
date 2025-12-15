@@ -1,14 +1,29 @@
-export const calculateCartTotals = (cartItems, quantities, taxRate, shippingCharge) => {
+export const calculateCartTotals = (
+  cartItems,
+  quantities,
+  taxRate,
+  shippingCharge,
+  combos = []
+) => {
+  let subtotal = 0;
 
-  const subtotal = cartItems.reduce((acc, food) => {
-    const qty = quantities[food.id] || 0;
-    const price = food.price || 0;
-    return acc + qty * price;
-  }, 0);
+  // FOOD ITEMS
+  cartItems.forEach(item => {
+    subtotal += item.price * quantities[item.id];
+  });
 
-  const shipping = subtotal > 0 ? shippingCharge : 0;
-  const tax = subtotal * (taxRate / 100);
-  const total = subtotal + shipping + tax;
+  // COMBOS
+  combos.forEach(combo => {
+    subtotal += combo.comboPrice;
+  });
 
-  return { subtotal, shipping, tax, total };
+  const tax = (subtotal * taxRate) / 100;
+  const shipping = shippingCharge;
+
+  return {
+    subtotal,
+    tax,
+    shipping,
+    total: subtotal + tax + shipping
+  };
 };

@@ -1,0 +1,84 @@
+/* =========================
+   SECTION
+========================= */
+.offer-rail {
+  margin: 32px 0;
+}
+.clickable {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.clickable:hover {
+  transform: scale(1.02);
+}
+
+.offer-rail h4 {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+.banner-slide img {
+  transition: transform 0.6s ease;
+}
+
+.banner-wrapper:hover img {
+  transform: scale(1.03);
+}
+
+/* =========================
+   SLIDER WRAPPER
+========================= */
+.banner-wrapper {
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+/* =========================
+   TRACK
+========================= */
+.banner-track {
+  display: flex;
+  transition: transform 0.6s ease-in-out;
+}
+
+/* =========================
+   SLIDE
+========================= */
+.banner-slide {
+  flex: 0 0 100%;
+}
+
+/* AMAZON STYLE IMAGE */
+.banner-slide img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 5;
+  object-fit: cover;
+  display: block;
+}
+
+/* =========================
+   DOTS
+========================= */
+.banner-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  width: 20px;
+  border-radius: 10px;
+  background: #000;
+}

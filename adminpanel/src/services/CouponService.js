@@ -7,11 +7,15 @@ export const getCoupons = () =>
 export const getCouponById = (id) =>
   api.get(`/api/admin/coupons/${id}`);
 
-export const createCoupon = (data) =>
-  api.post("/api/admin/coupons", data);
+export const createCoupon = (formData) =>
+  api.post("/api/admin/coupons", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
 
-export const updateCoupon = (id, data) =>
-  api.put(`/api/admin/coupons/${id}`, data);
+export const updateCoupon = (id, formData) =>
+  api.put(`/api/admin/coupons/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
 
 export const deleteCoupon = (id) =>
   api.delete(`/api/admin/coupons/${id}`);
