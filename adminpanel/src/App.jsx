@@ -9,6 +9,7 @@ import Orders from "./pages/Orders/Orders";
 import OrderDetails from "./pages/OrderDetails";
 import Customers from "./pages/Customers/Customers";
 import CourierManagement from "./pages/CourierManagement/CourierManagement";
+import { AdminFoodProvider } from "./context/AdminFoodContext";
 
 /* ===== Layout Components ===== */
 import Sidebar from "./components/Sidebar/Sidebar";
@@ -47,80 +48,83 @@ import CouponForm from "./admin/offers/Coupon/CouponForm";
 
 
 const App = () => {
+  const [sidebarVisible, setSidebarVisisble] = useState(true);
 
+  const toggleSidebar = () => {
+    setSidebarVisisble(!sidebarVisible);
+  };
 
-  const [sidebarVisible,setSidebarVisisble]=useState(true)
-
-  const toggleSidebar=()=>{
-    setSidebarVisisble(!sidebarVisible)
-  }
   return (
-    <div className="d-flex" id="wrapper">
-            {/* Sidebar--> */}
-            <Sidebar sidebarVisible={sidebarVisible} />
-            
-            {/* Page content wrapper--> */}
-            <div id="page-content-wrapper">
-              <Menubar  toggleSidebar={toggleSidebar}/>
-                {/* Top navigation--> */}
-                <ToastContainer/> 
-               
-                {/* Page content */}
-                <div className="container-fluid">
-                  <Routes>
-  {/* Food */}
-  <Route path="/" element={<ListFood />} />
-  <Route path="/add" element={<AddFood />} />
-  <Route path="/list" element={<ListFood />} />
-  <Route path="/edit/:id" element={<EditFood />} />
+    <AdminFoodProvider>
+      {/* 👆 Provider stays mounted across route changes */}
 
-  {/* Orders */}
-  <Route path="/orders" element={<Orders />} />
-  <Route path="/orders/:id" element={<OrderDetails />} />
-  <Route path="/admin-cancel-requests" element={<AdminCancelRequests />} />
+      <div className="d-flex" id="wrapper">
+        {/* Sidebar */}
+        <Sidebar sidebarVisible={sidebarVisible} />
 
-  {/* Stock */}
-  <Route path="/stock-management" element={<StockManagement />} />
-  <Route path="/analytics" element={<StockAnalytics />} />
-  <Route path="/logs" element={<StockLogs />} />
-  <Route path="/admin/stock-dashboard" element={<StockDashboard />} />
+        {/* Page content wrapper */}
+        <div id="page-content-wrapper">
+          <Menubar toggleSidebar={toggleSidebar} />
 
-  {/* Users */}
-  <Route path="/customers" element={<Customers />} />
-  <Route path="/courier" element={<CourierManagement />} />
-  <Route path="/reviews" element={<AdminReview />} />
+          <ToastContainer />
 
-  {/* Settings */}
-  <Route path="/admin/settings" element={<AdminSettings />} />
+          <div className="container-fluid">
+            <Routes>
+              {/* Food */}
+              <Route path="/" element={<ListFood />} />
+              <Route path="/add" element={<AddFood />} />
+              <Route path="/list" element={<ListFood />} />
+              <Route path="/edit/:id" element={<EditFood />} />
 
-  {/* Offers Dashboard */}
-  <Route path="/admin/offers" element={<OffersDashboard />} />
+              {/* Orders */}
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/orders/:id" element={<OrderDetails />} />
+              <Route path="/admin-cancel-requests" element={<AdminCancelRequests />} />
 
-  {/* Combos */}
-  <Route path="/admin/offers/combos" element={<ComboList />} />
-  <Route path="/admin/offers/combos/new" element={<ComboForm />} />
-  <Route path="/admin/offers/combos/edit/:id" element={<ComboForm />} />
+              {/* Stock */}
+              <Route path="/stock-management" element={<StockManagement />} />
+              <Route path="/analytics" element={<StockAnalytics />} />
+              <Route path="/logs" element={<StockLogs />} />
+              <Route path="/admin/stock-dashboard" element={<StockDashboard />} />
 
-  {/* Promotions */}
-  <Route path="/admin/offers/promotions" element={<PromotionList />} />
-  <Route path="/admin/offers/promotions/new" element={<PromotionForm />} />
-  <Route path="/admin/offers/promotions/edit/:id" element={<PromotionForm />} />
+              {/* Users */}
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/courier" element={<CourierManagement />} />
+              <Route path="/reviews" element={<AdminReview />} />
 
-  {/* Flash Sales */}
-  <Route path="/admin/offers/flash-sales" element={<FlashSaleList />} />
-  <Route path="/admin/offers/flash-sales/new" element={<FlashSaleForm />} />
-  <Route path="/admin/offers/flash-sales/edit/:id" element={<FlashSaleForm />} />
+              {/* Settings */}
+              <Route path="/admin/settings" element={<AdminSettings />} />
 
-  {/* Coupons */}
-  <Route path="/admin/offers/coupons" element={<CouponList />} />
-  <Route path="/admin/offers/coupons/new" element={<CouponForm />} />
-  <Route path="/admin/offers/coupons/edit/:id" element={<CouponForm />} />
-</Routes>
+              {/* Offers */}
+              <Route path="/admin/offers" element={<OffersDashboard />} />
 
-                </div>
-            </div>
+              {/* Combos */}
+              <Route path="/admin/offers/combos" element={<ComboList />} />
+              <Route path="/admin/offers/combos/new" element={<ComboForm />} />
+              <Route path="/admin/offers/combos/edit/:id" element={<ComboForm />} />
+
+              {/* Promotions */}
+              <Route path="/admin/offers/promotions" element={<PromotionList />} />
+              <Route path="/admin/offers/promotions/new" element={<PromotionForm />} />
+              <Route path="/admin/offers/promotions/edit/:id" element={<PromotionForm />} />
+
+              {/* Flash Sales */}
+              <Route path="/admin/offers/flash-sales" element={<FlashSaleList />} />
+              <Route path="/admin/offers/flash-sales/new" element={<FlashSaleForm />} />
+              <Route path="/admin/offers/flash-sales/edit/:id" element={<FlashSaleForm />} />
+
+              {/* Coupons */}
+              <Route path="/admin/offers/coupons" element={<CouponList />} />
+              <Route path="/admin/offers/coupons/new" element={<CouponForm />} />
+              <Route path="/admin/offers/coupons/edit/:id" element={<CouponForm />} />
+            </Routes>
+          </div>
         </div>
-  )
-}
+      </div>
 
-export default App
+    </AdminFoodProvider>
+  );
+};
+
+export default App;
+

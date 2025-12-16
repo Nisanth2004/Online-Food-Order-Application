@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getFoodList } from "../../../services/FoodService";
 import {
   createCombo,
@@ -33,24 +33,20 @@ const ComboForm = () => {
 
   const loadFoods = async () => {
     const res = await getFoodList(0, 100);
-    setFoods(res.foods);
+    setFoods(res.foods || []);
   };
 
   const loadCombo = async () => {
     const res = await getComboById(id);
     setForm(res.data);
-
-    // show existing image if present
-    if (res.data.imageUrl) {
-      setPreview(res.data.imageUrl);
-    }
+    if (res.data.imageUrl) setPreview(res.data.imageUrl);
   };
 
   const toggleFood = (foodId) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       foodIds: prev.foodIds.includes(foodId)
-        ? prev.foodIds.filter(id => id !== foodId)
+        ? prev.foodIds.filter((id) => id !== foodId)
         : [...prev.foodIds, foodId]
     }));
   };
@@ -58,26 +54,27 @@ const ComboForm = () => {
   const onImageChange = (e) => {
     const file = e.target.files[0];
     setImage(file);
-
-    if (file) {
-      setPreview(URL.createObjectURL(file));
-    }
+    if (file) setPreview(URL.createObjectURL(file));
   };
+
+  // 🔵 CALCULATE TOTAL PRICE OF SELECTED FOODS
+  const totalFoodPrice = useMemo(() => {
+    return foods
+      .filter((f) => form.foodIds.includes(f.id))
+      .reduce((sum, f) => sum + (f.sellingPrice || 0), 0);
+  }, [foods, form.foodIds]);
 
   const submit = async (e) => {
     e.preventDefault();
 
     try {
       const formData = new FormData();
-
       formData.append(
         "data",
         new Blob([JSON.stringify(form)], { type: "application/json" })
       );
 
-      if (image) {
-        formData.append("image", image);
-      }
+      if (image) formData.append("image", image);
 
       if (id) {
         await updateCombo(id, formData);
@@ -88,7 +85,7 @@ const ComboForm = () => {
       }
 
       navigate("/admin/offers/combos");
-    } catch (err) {
+    } catch {
       toast.error("Failed to save combo");
     }
   };
@@ -100,24 +97,20 @@ const ComboForm = () => {
         backTo="/admin/offers/combos"
       />
 
-      <form onSubmit={submit} className="card p-4 col-md-7">
+      <form onSubmit={submit} className="card p-4">
+        {/* COMBO NAME */}
         <input
           className="form-control mb-3"
           placeholder="Combo Name"
           value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
         />
 
         {/* IMAGE */}
         <div className="mb-3">
           <label className="form-label">Combo Image</label>
-          <input
-            type="file"
-            className="form-control"
-            accept="image/*"
-            onChange={onImageChange}
-          />
+          <input type="file" className="form-control" onChange={onImageChange} />
         </div>
 
         {preview && (
@@ -125,34 +118,77 @@ const ComboForm = () => {
             src={preview}
             alt="Preview"
             className="img-fluid rounded mb-3"
-            style={{ maxHeight: "180px" }}
+            style={{ maxHeight: 180 }}
           />
         )}
 
-        <h6>Select Foods</h6>
-        {foods.map(f => (
-          <div key={f.id} className="form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              checked={form.foodIds.includes(f.id)}
-              onChange={() => toggleFood(f.id)}
-            />
-            <label className="form-check-label ms-2">
-              {f.name} – ₹{f.sellingPrice}
-            </label>
-          </div>
-        ))}
+        {/* FOOD TABLE */}
+        <h5 className="mt-3 mb-2">Select Foods</h5>
 
+        <div className="table-responsive">
+          <table className="table table-bordered align-middle">
+            <thead className="table-light">
+              <tr>
+                <th>Select</th>
+                <th>Name</th>
+                <th>Price (₹)</th>
+                <th>Stock</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {foods.map((f) => (
+                <tr key={f.id}>
+                  <td className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={form.foodIds.includes(f.id)}
+                      onChange={() => toggleFood(f.id)}
+                      disabled={f.stock === 0}
+                    />
+                  </td>
+
+                  <td>{f.name}</td>
+
+                  <td>₹{f.sellingPrice}</td>
+
+                  <td>
+                    {f.stock === 0 ? (
+                      <span className="badge bg-danger">Out</span>
+                    ) : (
+                      <span className="badge bg-success">{f.stock}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* TOTAL PRICE PREVIEW */}
+      <div className="alert alert-info mt-3">
+  <div className="fw-semibold">
+    Total Selected Food Price: ₹{totalFoodPrice.toFixed(2)}
+  </div>
+  <div className="small text-muted mt-1">
+    Reference total shown to help admin set the final combo price
+  </div>
+</div>
+
+
+        {/* COMBO PRICE */}
         <input
           type="number"
-          className="form-control mt-3"
-          placeholder="Combo Price"
+          className="form-control mt-2"
+          placeholder="Final Combo Price"
           value={form.comboPrice}
-          onChange={e => setForm({ ...form, comboPrice: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, comboPrice: e.target.value })
+          }
           required
         />
 
+        {/* TIME */}
         <div className="row mt-3">
           <div className="col">
             <label>Start Time</label>
@@ -160,26 +196,34 @@ const ComboForm = () => {
               type="datetime-local"
               className="form-control"
               value={form.startTime}
-              onChange={e => setForm({ ...form, startTime: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, startTime: e.target.value })
+              }
             />
           </div>
+
           <div className="col">
             <label>End Time</label>
             <input
               type="datetime-local"
               className="form-control"
               value={form.endTime}
-              onChange={e => setForm({ ...form, endTime: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, endTime: e.target.value })
+              }
             />
           </div>
         </div>
 
+        {/* ACTIVE */}
         <div className="form-check mt-3">
           <input
             type="checkbox"
             className="form-check-input"
             checked={form.active}
-            onChange={e => setForm({ ...form, active: e.target.checked })}
+            onChange={(e) =>
+              setForm({ ...form, active: e.target.checked })
+            }
           />
           <label className="form-check-label ms-2">Active</label>
         </div>

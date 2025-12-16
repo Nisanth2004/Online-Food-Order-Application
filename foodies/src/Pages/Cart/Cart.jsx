@@ -23,6 +23,7 @@ const Cart = () => {
     setDiscount,
     setAppliedCoupon,
     comboCart,
+    cartLoading,
     increaseComboQty,
     decreaseComboQty,
     removeComboFromCart
@@ -98,6 +99,54 @@ const Cart = () => {
       toast.error("Invalid coupon");
     }
   };
+  
+ if (cartLoading) {
+  return (
+    <div className="container py-5 cart-page">
+      <h1 className="cart-title text-center mb-5">
+        <span className="gradient-text">Your Cart</span>
+      </h1>
+
+      <div className="row">
+        {/* LEFT SIDE SKELETON */}
+        <div className="col-lg-8">
+          {[1, 2].map(i => (
+            <div
+              key={i}
+              className="card cart-card shadow-soft border-0 mb-4 skeleton-card"
+            >
+              <div className="card-body d-flex gap-3">
+                <div className="skeleton-img"></div>
+
+                <div className="flex-grow-1">
+                  <div className="skeleton-line w-50 mb-2"></div>
+                  <div className="skeleton-line w-30 mb-3"></div>
+                  <div className="skeleton-qty"></div>
+                </div>
+
+                <div className="skeleton-price"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* RIGHT SIDE SUMMARY SKELETON */}
+        <div className="col-lg-4">
+          <div className="card cart-summary shadow-soft border-0 skeleton-card">
+            <div className="card-body">
+              <div className="skeleton-line w-100 mb-3"></div>
+              <div className="skeleton-line w-100 mb-3"></div>
+              <div className="skeleton-line w-100 mb-3"></div>
+              <div className="skeleton-line w-60 mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 
   return (
     <div className="container py-5 cart-page">

@@ -1,5 +1,8 @@
 package com.nisanth.foodapi.io.order;
 
+import lombok.*;
+
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -7,19 +10,28 @@ import lombok.Data;
 @Builder
 public class OrderItem {
 
-    private String foodId;
+    // 🔥 REQUIRED
+    private String type; // FOOD or COMBO
+
+    private String foodId;   // used if FOOD
+    private String comboId;  // used if COMBO
+
     private Integer quantity;
 
     // 🔥 pricing snapshot
-    private double mrp;
-    private double sellingPrice;
-    private int discountPercentage;
+    private Double mrp;
+    private Double sellingPrice;
+
+    @Builder.Default
+    private Integer discountPercentage = 0;
     private String offerLabel;
 
-    private double price; // final unit price
+    @NonNull
+    private Double price;
 
     private String category;
     private String imageUrl;
     private String description;
     private String name;
 }
+

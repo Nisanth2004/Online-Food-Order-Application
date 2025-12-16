@@ -8,6 +8,7 @@ import com.nisanth.foodapi.io.order.OrderRequest;
 import com.nisanth.foodapi.io.order.OrderResponse;
 import com.nisanth.foodapi.io.util.DeliveryMessage;
 import com.nisanth.foodapi.repository.*;
+import com.nisanth.foodapi.repository.offers.ComboRepository;
 import com.nisanth.foodapi.repository.offers.CouponRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
@@ -32,6 +33,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private CourierRepository courierRepository;
+
+    @Autowired
+    private ComboRepository comboRepository;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -86,14 +90,44 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> reservedList = new ArrayList<>();
         try {
             for (OrderItem item : request.getOrderedItems()) {
-                if (item.getQuantity() == null || item.getQuantity() <= 0)
-                    throw new RuntimeException("Invalid quantity for item: " + item.getFoodId());
 
-                boolean reserved = foodService.tryReserveStock(item.getFoodId(), item.getQuantity());
-                if (!reserved) throw new RuntimeException("Insufficient stock or item unavailable: " + item.getName());
+                if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                    throw new RuntimeException("Invalid quantity");
+                }
 
-                reservedList.add(item);
+                if ("FOOD".equalsIgnoreCase(item.getType())) {
+
+                    if (item.getFoodId() == null) {
+                        throw new RuntimeException("Food ID missing");
+                    }
+
+                    boolean reserved = foodService.tryReserveStock(
+                            item.getFoodId(),
+                            item.getQuantity()
+                    );
+
+                    if (!reserved) {
+                        throw new RuntimeException("Insufficient stock for food");
+                    }
+
+                    reservedList.add(item);
+                }
+
+                else if ("COMBO".equalsIgnoreCase(item.getType())) {
+
+                    if (item.getComboId() == null) {
+                        throw new RuntimeException("Combo ID missing");
+                    }
+
+                    // 🔒 No stock reservation for combo (or handle later if needed)
+                    reservedList.add(item);
+                }
+
+                else {
+                    throw new RuntimeException("Invalid item type");
+                }
             }
+
 
             OrderEntity newOrder = convertToEntity(request);
             newOrder.setOrderStatus(OrderStatus.ORDER_PLACED);
@@ -120,10 +154,17 @@ public class OrderServiceImpl implements OrderService {
 
         } catch (RuntimeException ex) {
             for (OrderItem r : reservedList) {
-                try {
-                    foodService.releaseReservedStock(r.getFoodId(), r.getQuantity() != null ? r.getQuantity() : 0);
-                } catch (Exception ignore) {}
+
+                if ("FOOD".equalsIgnoreCase(r.getType())) {
+                    try {
+                        foodService.releaseReservedStock(
+                                r.getFoodId(),
+                                r.getQuantity()
+                        );
+                    } catch (Exception ignore) {}
+                }
             }
+
             throw ex;
         }
     }
@@ -306,7 +347,13 @@ public class OrderServiceImpl implements OrderService {
         if (order.getOrderedItems() == null) return;
         for (var item : order.getOrderedItems()) {
             try {
-                foodService.releaseReservedStock(item.getFoodId(), item.getQuantity() != null ? item.getQuantity() : 0);
+                if ("FOOD".equalsIgnoreCase(item.getType())) {
+                    foodService.releaseReservedStock(
+                            item.getFoodId(),
+                            item.getQuantity()
+                    );
+                }
+
             } catch (Exception e) {
                 throw new RuntimeException("Failed to restore stock for item: " + item.getFoodId(), e);
             }
@@ -341,39 +388,82 @@ public class OrderServiceImpl implements OrderService {
         // ✅ FIX: pricing calculated PER ITEM
         for (OrderItem item : request.getOrderedItems()) {
 
-            FoodEntity food = foodRepository.findById(item.getFoodId())
-                    .orElseThrow(() -> new RuntimeException("Food not found: " + item.getFoodId()));
+            if ("FOOD".equalsIgnoreCase(item.getType())) {
 
-            double mrp = food.getMrp();
-            double sellingPrice = foodService.getEffectivePrice(food);
+                if (item.getFoodId() == null) {
+                    throw new RuntimeException("Food ID missing");
+                }
 
+                FoodEntity food = foodRepository.findById(item.getFoodId())
+                        .orElseThrow(() -> new RuntimeException("Food not found"));
 
-            int discount = 0;
-            if (mrp > 0 && sellingPrice < mrp) {
-                discount = (int) Math.round(((mrp - sellingPrice) / mrp) * 100);
+                double mrp = food.getMrp();
+                double sellingPrice = foodService.getEffectivePrice(food);
+
+                int discount = (mrp > sellingPrice)
+                        ? (int) Math.round(((mrp - sellingPrice) / mrp) * 100)
+                        : 0;
+
+                finalItems.add(OrderItem.builder()
+                        .type("FOOD")
+                        .foodId(food.getId())
+                        .quantity(item.getQuantity())
+                        .mrp(mrp)
+                        .sellingPrice(sellingPrice)
+                        .discountPercentage(discount)
+                        .offerLabel(discount > 0 ? discount + "% OFF" : null)
+                        .price(sellingPrice)
+                        .name(food.getName())
+                        .description(food.getDescription())
+                        .imageUrl(food.getImageUrl())
+                        .category(
+                                food.getCategoryIds() != null && !food.getCategoryIds().isEmpty()
+                                        ? food.getCategoryIds().get(0)
+                                        : null
+                        )
+                        .build());
             }
 
-            finalItems.add(OrderItem.builder()
-                    .foodId(food.getId())
-                    .quantity(item.getQuantity())
+            else if ("COMBO".equalsIgnoreCase(item.getType())) {
 
-                    // 🔥 pricing snapshot
-                    .mrp(mrp)
-                    .sellingPrice(sellingPrice)
-                    .discountPercentage(discount)
-                    .offerLabel(discount > 0 ? discount + "% OFF" : null)
-                    .price(sellingPrice)
+                if (item.getComboId() == null) {
+                    throw new RuntimeException("Combo ID missing");
+                }
 
-                    .name(food.getName())
-                    .description(food.getDescription())
-                    .imageUrl(food.getImageUrl())
-                    .category(
-                            food.getCategoryIds() != null && !food.getCategoryIds().isEmpty()
-                                    ? food.getCategoryIds().get(0)
-                                    : null
-                    )
-                    .build());
+                ComboEntity combo = comboRepository.findById(item.getComboId())
+                        .orElseThrow(() -> new RuntimeException("Combo not found"));
+
+                double mrp = combo.getOriginalPrice();
+                double sellingPrice = combo.getComboPrice();
+
+                int discount = (mrp > sellingPrice)
+                        ? (int) Math.round(((mrp - sellingPrice) / mrp) * 100)
+                        : 0;
+
+                finalItems.add(OrderItem.builder()
+                        .type("COMBO")
+                        .comboId(combo.getId())
+                        .quantity(item.getQuantity())
+
+                        // ✅ CORRECT PRICE FIELDS
+                        .mrp(mrp)
+                        .sellingPrice(sellingPrice)
+                        .discountPercentage(discount)
+                        .offerLabel(discount > 0 ? discount + "% OFF" : null)
+
+                        .price(sellingPrice)
+                        .name(combo.getName())
+                        .description("Combo Offer")
+                        .imageUrl(combo.getImageUrl())
+                        .category("COMBO")
+                        .build());
+            }
+
+            else {
+                throw new RuntimeException("Invalid item type");
+            }
         }
+
 
         double subtotal = finalItems.stream()
                 .mapToDouble(i -> i.getQuantity() * i.getPrice())
@@ -412,8 +502,15 @@ public class OrderServiceImpl implements OrderService {
 
 
     private OrderResponse convertToResponse(OrderEntity newOrder) {
-        double subtotal = newOrder.getOrderedItems() != null ?
-                newOrder.getOrderedItems().stream().mapToDouble(i -> i.getQuantity() * i.getPrice()).sum() : 0;
+        double subtotal = newOrder.getOrderedItems() != null
+                ? newOrder.getOrderedItems().stream()
+                .mapToDouble(i ->
+                        (i.getQuantity() != null ? i.getQuantity() : 0) * i.getPrice()
+                )
+                .sum()
+                : 0;
+
+
 
         Setting setting = settingService.getSettings();
         double taxRate = setting.getTaxPercentage() != null ? setting.getTaxPercentage() : 0.0;

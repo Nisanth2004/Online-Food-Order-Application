@@ -1,6 +1,8 @@
 package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.entity.FlashSaleEntity;
+import com.nisanth.foodapi.entity.FoodEntity;
+import com.nisanth.foodapi.repository.FoodRepository;
 import com.nisanth.foodapi.repository.offers.FlashSaleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,9 @@ public class FlashSaleController {
 
     @Autowired
     private FlashSaleRepository flashSaleRepository;
+
+    @Autowired
+    private FoodRepository foodRepository;
 
     // 🔹 GET ALL (ADMIN)
     @GetMapping
@@ -32,6 +37,13 @@ public class FlashSaleController {
     // 🔹 CREATE
     @PostMapping
     public FlashSaleEntity create(@RequestBody FlashSaleEntity flashSale) {
+
+        FoodEntity food = foodRepository.findById(flashSale.getFoodId())
+                .orElseThrow(() -> new RuntimeException("Food not found"));
+
+        // ✅ SET FOOD NAME HERE
+        flashSale.setFoodName(food.getName());
+
         return flashSaleRepository.save(flashSale);
     }
 
@@ -45,6 +57,7 @@ public class FlashSaleController {
                 .orElseThrow(() -> new RuntimeException("Flash sale not found"));
 
         existing.setFoodId(updated.getFoodId());
+        existing.setFoodName(updated.getFoodName());
         existing.setSalePrice(updated.getSalePrice());
         existing.setStartTime(updated.getStartTime());
         existing.setEndTime(updated.getEndTime());

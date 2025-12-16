@@ -21,6 +21,7 @@ public class FlashSaleEntity {
 
     private String foodId; // FK → Food.id
     private double salePrice;
+    private String foodName;
 
 
     private boolean active;

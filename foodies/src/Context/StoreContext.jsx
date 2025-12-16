@@ -24,12 +24,20 @@ export const StoreContextProvider = (props) => {
   const [loadingUser, setLoadingUser] = useState(true);
 
   const [appliedCoupon, setAppliedCoupon] = useState(null);
- const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState(0);
 
-  // 🔥 COMBO STATE
-  const [comboCart, setComboCart] = useState(null);
+  const [cartLoading, setCartLoading] = useState(true);
 
-  // ------------------ FOOD CART ------------------ //
+
+  /* 🔥 COMBO CART (PERSISTENT) */
+  const [comboCart, setComboCart] = useState(() => {
+    const stored = localStorage.getItem("comboCart");
+    return stored ? JSON.parse(stored) : null;
+  });
+
+  /* --------------------------------------------------
+     FOOD CART
+  -------------------------------------------------- */
   const increaseQty = async (foodId) => {
     const food = foodList.find(f => f.id === foodId);
     if (!food) return;
@@ -60,51 +68,66 @@ export const StoreContextProvider = (props) => {
     });
   };
 
-  const loadCartData = async (token) => {
+ const loadCartData = async (token) => {
+  try {
+    setCartLoading(true);
     const items = await getCartData(token);
     setQuantities(items);
-  };
-
-  // ------------------ 🔥 COMBO CART ------------------ //
-
-  const addComboToCart = (combo) => {
-  if (comboCart) {
-    toast.error("Only one combo allowed per order");
-    return;
+  } finally {
+    setCartLoading(false);
   }
-
-  setComboCart({
-    id: combo.id,
-    name: combo.name,
-    comboPrice: combo.comboPrice,
-    qty: 1,
-    imageUrl: combo.imageUrl
-  });
-
-  toast.success("Combo added to cart");
 };
 
 
+  /* --------------------------------------------------
+     🔥 COMBO CART (FULLY FIXED)
+  -------------------------------------------------- */
+
+  const addComboToCart = (combo) => {
+    if (comboCart) {
+      toast.error("Only one combo allowed per order");
+      return;
+    }
+
+    const comboItem = {
+      id: combo.id,
+      name: combo.name,
+      comboPrice: combo.comboPrice,
+      qty: 1,
+      imageUrl: combo.imageUrl
+    };
+
+    setComboCart(comboItem);
+    localStorage.setItem("comboCart", JSON.stringify(comboItem));
+    toast.success("Combo added to cart");
+  };
+
   const increaseComboQty = () => {
-    setComboCart(prev => ({
-      ...prev,
-      qty: prev.qty + 1
-    }));
+    setComboCart(prev => {
+      const updated = { ...prev, qty: prev.qty + 1 };
+      localStorage.setItem("comboCart", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const decreaseComboQty = () => {
     setComboCart(prev => {
       if (prev.qty === 1) return prev;
-      return { ...prev, qty: prev.qty - 1 };
+      const updated = { ...prev, qty: prev.qty - 1 };
+      localStorage.setItem("comboCart", JSON.stringify(updated));
+      return updated;
     });
   };
 
   const removeComboFromCart = () => {
     setComboCart(null);
+    localStorage.removeItem("comboCart");
     toast.success("Combo removed from cart");
   };
 
-  // ------------------ WISHLIST ------------------ //
+  /* --------------------------------------------------
+     WISHLIST
+  -------------------------------------------------- */
   const addToWishlist = async (foodId) => {
     if (!user?.id) return toast.error("Login required");
     await addToWishlistAPI(foodId, user.id, token);
@@ -116,7 +139,9 @@ export const StoreContextProvider = (props) => {
     setWishlist(prev => prev.filter(id => id !== foodId));
   };
 
-  // ------------------ AUTH ------------------ //
+  /* --------------------------------------------------
+     AUTH
+  -------------------------------------------------- */
   useEffect(() => {
     if (!token) return setLoadingUser(false);
 
@@ -131,28 +156,33 @@ export const StoreContextProvider = (props) => {
     }
   }, [token]);
 
-  // ------------------ INITIAL LOAD ------------------ //
+  /* --------------------------------------------------
+     INITIAL LOAD
+  -------------------------------------------------- */
   useEffect(() => {
-    async function load() {
-      const data = await fetchFoodList();
-      setFoodList(data.foods || []);
+  async function load() {
+    const data = await fetchFoodList();
+    setFoodList(data.foods || []);
 
-      const setting = await getSettings();
-      setTaxRate(setting.taxPercentage || 0);
-      setShippingCharge(setting.shippingCharge || 0);
+    const setting = await getSettings();
+    setTaxRate(setting.taxPercentage || 0);
+    setShippingCharge(setting.shippingCharge || 0);
 
-      if (token) {
-        await loadCartData(token);
-      }
+    if (token) {
+      await loadCartData(token);
+    } else {
+      setCartLoading(false); 
     }
-    load();
-  }, []);
+  }
+  load();
+}, []);
+
 
   return (
     <StoreContext.Provider value={{
       foodList,
       quantities,
-      setFoodList, 
+      setFoodList,
       increaseQty,
       decreaseQty,
       removeFromCart,
@@ -177,11 +207,12 @@ export const StoreContextProvider = (props) => {
       removeFromWishlist,
 
       token,
-      setToken, 
-      setUser,      
-        loadCartData,      
+      setToken,
+      setUser,
+      loadCartData,
       user,
-      loadingUser
+      loadingUser,
+       cartLoading
     }}>
       {props.children}
     </StoreContext.Provider>
