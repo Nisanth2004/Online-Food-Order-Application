@@ -1,17 +1,44 @@
-.filter-input {
-  min-width: 160px;
-  height: 42px;
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e0e0e0 25%,
+    #f0f0f0 37%,
+    #e0e0e0 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
   border-radius: 8px;
 }
 
-.filter-btn {
-  min-width: 150px;
-  height: 42px;
-  border-radius: 8px;
-}
-
-@media (max-width: 768px) {
-  .filter-input, .filter-btn {
-    width: 100%;
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
   }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.filter-skeleton {
+  width: 160px;
+  height: 42px;
+}
+
+.skeleton-img {
+  width: 48px;
+  height: 48px;
+}
+
+.skeleton-text {
+  height: 14px;
+  width: 220px;
+}
+
+.skeleton-text.small {
+  width: 180px;
+}
+
+.skeleton-badge {
+  width: 90px;
+  height: 24px;
 }

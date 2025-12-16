@@ -4,24 +4,57 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "./Orders.css";
 import { useNavigate } from "react-router-dom";
-
-// ⬅️ Import your custom axios instance
 import customAxios from "../../services/CustomAxiosInstance";
 
+/* ------------------ DATE FORMAT ------------------ */
 const formatDate = (dateStr) => {
   if (!dateStr) return "Not Available";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "Not Available";
 
   const pad = (n) => (n < 10 ? `0${n}` : n);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+    d.getDate()
+  )} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
+/* ------------------ SKELETON COMPONENTS ------------------ */
+const FilterSkeleton = () => (
+  <div className="d-flex flex-wrap gap-2 mb-4">
+    {[...Array(6)].map((_, i) => (
+      <div key={i} className="skeleton filter-skeleton" />
+    ))}
+  </div>
+);
+
+const OrderRowSkeleton = () => (
+  <tr>
+    <td>
+      <div className="skeleton skeleton-img" />
+    </td>
+    <td>
+      <div className="skeleton skeleton-text mb-2" />
+      <div className="skeleton skeleton-text small" />
+      <div className="skeleton skeleton-text small" />
+    </td>
+    <td>
+      <div className="skeleton skeleton-text" />
+    </td>
+    <td>
+      <div className="skeleton skeleton-text" />
+    </td>
+    <td>
+      <div className="skeleton skeleton-badge" />
+    </td>
+  </tr>
+);
+
+/* ------------------ MAIN COMPONENT ------------------ */
 const Orders = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [minPrice, setMinPrice] = useState("");
@@ -29,37 +62,16 @@ const Orders = () => {
   const [dateFilter, setDateFilter] = useState("All");
   const [customDate, setCustomDate] = useState("");
 
-  // 🔵 FETCH ORDERS USING CUSTOM AXIOS
+  /* ------------------ FETCH ORDERS ------------------ */
   const fetchOrders = async () => {
     try {
+      setLoading(true);
       const response = await customAxios.get("/api/orders/all");
       setData((response.data || []).reverse());
     } catch (error) {
       console.error("Error fetching orders:", error);
-    }
-  };
-
-  // 🔵 UPDATE STATUS USING CUSTOM AXIOS
-  const updateStatus = async (event, orderId) => {
-    const newStatus = event.target.value;
-
-    try {
-      await customAxios.patch(
-        `/api/orders/status/${orderId}`,
-        {},
-        {
-          params: { status: newStatus },
-        }
-      );
-
-      setData((prevData) =>
-        prevData.map((order) =>
-          order.id === orderId ? { ...order, orderStatus: newStatus } : order
-        )
-      );
-    } catch (error) {
-      console.error("Error updating order status:", error.response || error);
-      alert("Failed to update order status.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,6 +79,7 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
+  /* ------------------ FILTER LOGIC ------------------ */
   const filteredOrders = useMemo(() => {
     return (data || [])
       .filter((order) => {
@@ -87,7 +100,9 @@ const Orders = () => {
             return false;
         }
 
-        if (statusFilter !== "All" && order.orderStatus !== statusFilter) return false;
+        if (statusFilter !== "All" && order.orderStatus !== statusFilter)
+          return false;
+
         if (minPrice && order.amount < parseFloat(minPrice)) return false;
         if (maxPrice && order.amount > parseFloat(maxPrice)) return false;
 
@@ -96,22 +111,33 @@ const Orders = () => {
           const items = (order.orderedItems || [])
             .map((i) => i?.name || "")
             .join(",");
+
           const matchText = `
-                ${order.userAddress || ""}
-                ${order.phoneNumber || ""}
-                ${items}
-                ${order.id || ""}
-                ${order.email || ""}
-                ${order.userName || ""}
-            `.toLowerCase();
+            ${order.userAddress || ""}
+            ${order.phoneNumber || ""}
+            ${items}
+            ${order.id || ""}
+            ${order.email || ""}
+            ${order.userName || ""}
+          `.toLowerCase();
+
           return matchText.includes(term);
         }
 
         return true;
       })
       .sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
-  }, [data, statusFilter, searchTerm, minPrice, maxPrice, dateFilter, customDate]);
+  }, [
+    data,
+    statusFilter,
+    searchTerm,
+    minPrice,
+    maxPrice,
+    dateFilter,
+    customDate,
+  ]);
 
+  /* ------------------ STATUS DISPLAY ------------------ */
   const getDisplayName = (status) => {
     switch (status) {
       case "PREPARING":
@@ -125,6 +151,7 @@ const Orders = () => {
     }
   };
 
+  /* ------------------ EXPORT EXCEL ------------------ */
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       filteredOrders.map((o) => ({
@@ -144,19 +171,27 @@ const Orders = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([excelBuffer]), `Orders_${new Date().toISOString()}.xlsx`);
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    saveAs(
+      new Blob([excelBuffer]),
+      `Orders_${new Date().toISOString()}.xlsx`
+    );
   };
 
   return (
     <div className="container">
 
       {/* FILTER PANEL */}
-      <div className="d-flex flex-wrap align-items-center gap-2 mt-4 mb-4">
-
-        <div className="col-md-2">
+      {loading ? (
+        <FilterSkeleton />
+      ) : (
+        <div className="d-flex flex-wrap align-items-center gap-2 mt-4 mb-4">
+          {/* status */}
           <select
-            className="form-control"
+            className="form-control filter-input"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -165,11 +200,10 @@ const Orders = () => {
             <option value="OUT_FOR_DELIVERY">Out For Delivery</option>
             <option value="DELIVERED">Delivered</option>
           </select>
-        </div>
 
-        <div className="col-md-2">
+          {/* date */}
           <select
-            className="form-control"
+            className="form-control filter-input"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
           >
@@ -178,52 +212,42 @@ const Orders = () => {
             <option value="Yesterday">Yesterday</option>
             <option value="Custom">Choose Date</option>
           </select>
-        </div>
 
-        {dateFilter === "Custom" && (
-          <div className="col-md-2">
+          {dateFilter === "Custom" && (
             <input
               type="date"
-              className="form-control"
+              className="form-control filter-input"
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
             />
-          </div>
-        )}
+          )}
 
-        <div className="col-md-2">
           <input
             type="text"
-            className="form-control"
-            placeholder="Search name/phone/id"
+            className="form-control filter-input"
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
 
-        <div className="col-md-1">
           <input
             type="number"
-            className="form-control"
+            className="form-control filter-input"
             placeholder="Min ₹"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
-        </div>
 
-        <div className="col-md-1">
           <input
             type="number"
-            className="form-control"
+            className="form-control filter-input"
             placeholder="Max ₹"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
           />
-        </div>
 
-        <div className="col-md-2">
           <button
-            className="btn btn-secondary w-100"
+            className="btn btn-secondary filter-btn"
             onClick={() => {
               setStatusFilter("All");
               setSearchTerm("");
@@ -233,66 +257,69 @@ const Orders = () => {
               setCustomDate("");
             }}
           >
-            Reset Filters
+            Reset
           </button>
-        </div>
 
-        <div className="col-md-2">
-          <button className="btn btn-success w-100" onClick={exportToExcel}>
+          <button
+            className="btn btn-success filter-btn"
+            onClick={exportToExcel}
+          >
             Export Excel
           </button>
         </div>
-      </div>
+      )}
 
       {/* ORDER TABLE */}
       <div className="card p-3">
         <table className="table">
           <tbody>
-            {filteredOrders.length ? (
-              filteredOrders.map((order, index) => (
-                <tr
-                  key={index}
-                  onClick={() => navigate(`/orders/${order.id}`)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td>
-                    <img src={assets.parcel} height={48} width={48} alt="" />
-                  </td>
+            {loading
+              ? [...Array(5)].map((_, i) => <OrderRowSkeleton key={i} />)
+              : filteredOrders.length
+              ? filteredOrders.map((order, index) => (
+                  <tr
+                    key={index}
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>
+                      <img src={assets.parcel} height={48} width={48} alt="" />
+                    </td>
 
-                  <td>
-                    <div>
-                      {order.orderedItems?.map((item, idx) =>
-                        idx === order.orderedItems.length - 1
-                          ? `${item.name} x${item.quantity}`
-                          : `${item.name} x${item.quantity}, `
-                      )}
-                    </div>
-                    <div>📍 {order.userAddress}</div>
-                    <div>📞 {order.phoneNumber}</div>
-                    <div className="text-muted small">
-                      Date: {formatDate(order.createdDate)}
-                    </div>
-                  </td>
+                    <td>
+                      <div>
+                        {order.orderedItems?.map((item, idx) =>
+                          idx === order.orderedItems.length - 1
+                            ? `${item.name} x${item.quantity}`
+                            : `${item.name} x${item.quantity}, `
+                        )}
+                      </div>
+                      <div>📍 {order.userAddress}</div>
+                      <div>📞 {order.phoneNumber}</div>
+                      <div className="text-muted small">
+                        Date: {formatDate(order.createdDate)}
+                      </div>
+                    </td>
 
-                  <td>₹{order.amount.toFixed(2)}</td>
-                  <td>Items: {order.orderedItems?.length}</td>
+                    <td>₹{order.amount.toFixed(2)}</td>
+                    <td>Items: {order.orderedItems?.length}</td>
 
-                  <td>
-                    <span
-                      className={`status-badge status-${order.orderStatus?.toLowerCase()}`}
-                    >
-                      {getDisplayName(order.orderStatus)}
-                    </span>
+                    <td>
+                      <span
+                        className={`status-badge status-${order.orderStatus?.toLowerCase()}`}
+                      >
+                        {getDisplayName(order.orderStatus)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              : (
+                <tr>
+                  <td colSpan={5} className="text-center">
+                    No orders found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="text-center">
-                  No orders found
-                </td>
-              </tr>
-            )}
+              )}
           </tbody>
         </table>
       </div>

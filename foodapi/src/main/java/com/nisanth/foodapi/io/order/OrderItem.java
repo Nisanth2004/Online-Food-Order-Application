@@ -26,8 +26,9 @@ public class OrderItem {
     private Integer discountPercentage = 0;
     private String offerLabel;
 
-    @NonNull
-    private Double price;
+    @Builder.Default
+    private Double price = 0.0;
+
 
     private String category;
     private String imageUrl;
