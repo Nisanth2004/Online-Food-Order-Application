@@ -16,6 +16,7 @@ const ComboForm = () => {
   const [foods, setFoods] = useState([]);
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
     name: "",
@@ -57,15 +58,61 @@ const ComboForm = () => {
     if (file) setPreview(URL.createObjectURL(file));
   };
 
-  // 🔵 CALCULATE TOTAL PRICE OF SELECTED FOODS
+  /* 🔵 TOTAL FOOD PRICE */
   const totalFoodPrice = useMemo(() => {
     return foods
       .filter((f) => form.foodIds.includes(f.id))
       .reduce((sum, f) => sum + (f.sellingPrice || 0), 0);
   }, [foods, form.foodIds]);
 
+  /* ---------------- VALIDATION ---------------- */
+  const validate = () => {
+    const newErrors = {};
+
+    if (!form.name.trim()) {
+      newErrors.name = "Combo name is required";
+    }
+
+    if (form.foodIds.length === 0) {
+      newErrors.foodIds = "Select at least one food item";
+    }
+
+    if (!form.comboPrice) {
+      newErrors.comboPrice = "Combo price is required";
+    } else if (Number(form.comboPrice) <= 0) {
+      newErrors.comboPrice = "Combo price must be greater than 0";
+    } else if (
+      totalFoodPrice > 0 &&
+      Number(form.comboPrice) >= totalFoodPrice
+    ) {
+      newErrors.comboPrice =
+        "Combo price must be less than total food price";
+    }
+
+    if (!form.startTime) {
+      newErrors.startTime = "Start time is required";
+    }
+
+    if (!form.endTime) {
+      newErrors.endTime = "End time is required";
+    }
+
+    if (
+      form.startTime &&
+      form.endTime &&
+      new Date(form.endTime) <= new Date(form.startTime)
+    ) {
+      newErrors.endTime = "End time must be after start time";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+
+    if (!validate()) return;
 
     try {
       const formData = new FormData();
@@ -100,12 +147,14 @@ const ComboForm = () => {
       <form onSubmit={submit} className="card p-4">
         {/* COMBO NAME */}
         <input
-          className="form-control mb-3"
+          className="form-control mb-1"
           placeholder="Combo Name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          required
         />
+        {errors.name && (
+          <div className="text-danger mb-2">{errors.name}</div>
+        )}
 
         {/* IMAGE */}
         <div className="mb-3">
@@ -124,6 +173,9 @@ const ComboForm = () => {
 
         {/* FOOD TABLE */}
         <h5 className="mt-3 mb-2">Select Foods</h5>
+        {errors.foodIds && (
+          <div className="text-danger mb-2">{errors.foodIds}</div>
+        )}
 
         <div className="table-responsive">
           <table className="table table-bordered align-middle">
@@ -135,7 +187,6 @@ const ComboForm = () => {
                 <th>Stock</th>
               </tr>
             </thead>
-
             <tbody>
               {foods.map((f) => (
                 <tr key={f.id}>
@@ -147,11 +198,8 @@ const ComboForm = () => {
                       disabled={f.stock === 0}
                     />
                   </td>
-
                   <td>{f.name}</td>
-
                   <td>₹{f.sellingPrice}</td>
-
                   <td>
                     {f.stock === 0 ? (
                       <span className="badge bg-danger">Out</span>
@@ -165,28 +213,29 @@ const ComboForm = () => {
           </table>
         </div>
 
-        {/* TOTAL PRICE PREVIEW */}
-      <div className="alert alert-info mt-3">
-  <div className="fw-semibold">
-    Total Selected Food Price: ₹{totalFoodPrice.toFixed(2)}
-  </div>
-  <div className="small text-muted mt-1">
-    Reference total shown to help admin set the final combo price
-  </div>
-</div>
-
+        {/* TOTAL PRICE */}
+        <div className="alert alert-info mt-3">
+          <div className="fw-semibold">
+            Total Selected Food Price: ₹{totalFoodPrice.toFixed(2)}
+          </div>
+          <div className="small text-muted mt-1">
+            Reference total shown to help admin set the final combo price
+          </div>
+        </div>
 
         {/* COMBO PRICE */}
         <input
           type="number"
-          className="form-control mt-2"
+          className="form-control mt-1"
           placeholder="Final Combo Price"
           value={form.comboPrice}
           onChange={(e) =>
             setForm({ ...form, comboPrice: e.target.value })
           }
-          required
         />
+        {errors.comboPrice && (
+          <div className="text-danger mb-2">{errors.comboPrice}</div>
+        )}
 
         {/* TIME */}
         <div className="row mt-3">
@@ -200,6 +249,11 @@ const ComboForm = () => {
                 setForm({ ...form, startTime: e.target.value })
               }
             />
+            {errors.startTime && (
+              <div className="text-danger mt-1">
+                {errors.startTime}
+              </div>
+            )}
           </div>
 
           <div className="col">
@@ -212,6 +266,11 @@ const ComboForm = () => {
                 setForm({ ...form, endTime: e.target.value })
               }
             />
+            {errors.endTime && (
+              <div className="text-danger mt-1">
+                {errors.endTime}
+              </div>
+            )}
           </div>
         </div>
 

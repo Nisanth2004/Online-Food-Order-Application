@@ -17,6 +17,7 @@ const fadeUp = {
   return (
     <main className="container home-page">
 
+
       {/* 🌿 HERO ORGANIC OFFERS */}
       
 

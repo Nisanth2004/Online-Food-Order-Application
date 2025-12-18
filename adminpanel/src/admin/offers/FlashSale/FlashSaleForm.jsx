@@ -17,8 +17,10 @@ const FlashSaleForm = () => {
     active: true
   });
 
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
-    getFoodList(0, 100).then(res => setFoods(res.foods));
+    getFoodList(0, 100).then(res => setFoods(res.foods || []));
   }, []);
 
   const selectedFood = useMemo(
@@ -26,41 +28,76 @@ const FlashSaleForm = () => {
     [foods, form.foodId]
   );
 
+  /* ---------------- VALIDATION ---------------- */
+  const validate = () => {
+    const newErrors = {};
+
+    if (!form.foodId) {
+      newErrors.foodId = "Please select a food item";
+    }
+
+    if (!form.salePrice) {
+      newErrors.salePrice = "Flash sale price is required";
+    } else if (Number(form.salePrice) <= 0) {
+      newErrors.salePrice = "Price must be greater than 0";
+    }
+
+    if (!form.startTime) {
+      newErrors.startTime = "Start time is required";
+    }
+
+    if (!form.endTime) {
+      newErrors.endTime = "End time is required";
+    }
+
+    if (
+      form.startTime &&
+      form.endTime &&
+      new Date(form.endTime) <= new Date(form.startTime)
+    ) {
+      newErrors.endTime = "End time must be after start time";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+
+    if (!validate()) return;
+
     await createFlashSale(form);
     toast.success("Flash sale created");
     navigate("/admin/offers/flash-sales");
   };
 
   const timeLeft = () => {
-  if (!form.endTime) return "";
-  const diff = new Date(form.endTime) - new Date();
+    if (!form.endTime) return "";
+    const diff = new Date(form.endTime) - new Date();
 
-  if (diff <= 0) return "Flash sale expired";
+    if (diff <= 0) return "Flash sale expired";
 
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
 
-  if (hours > 0) {
-    return `${hours} hr ${minutes} min remaining`;
-  }
-  return `${minutes} minutes remaining`;
-};
-
+    if (hours > 0) {
+      return `${hours} hr ${minutes} min remaining`;
+    }
+    return `${minutes} minutes remaining`;
+  };
 
   const formatDateTime = (value) => {
-  if (!value) return "";
-  return new Date(value).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
-  });
-};
-
+    if (!value) return "";
+    return new Date(value).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    });
+  };
 
   return (
     <div className="container py-4">
@@ -73,6 +110,10 @@ const FlashSaleForm = () => {
 
         {/* FOOD TABLE */}
         <h6 className="mb-2">Select Food Item</h6>
+        {errors.foodId && (
+          <div className="text-danger mb-2">{errors.foodId}</div>
+        )}
+
         <div className="table-responsive mb-3">
           <table className="table table-bordered align-middle">
             <thead className="table-light">
@@ -94,7 +135,6 @@ const FlashSaleForm = () => {
                       onChange={() =>
                         setForm({ ...form, foodId: f.id })
                       }
-                      required
                     />
                   </td>
                   <td>{f.name}</td>
@@ -127,49 +167,56 @@ const FlashSaleForm = () => {
         {/* SALE PRICE */}
         <input
           type="number"
-          className="form-control mb-3"
+          className="form-control mb-1"
           placeholder="Flash Sale Price"
           value={form.salePrice}
           onChange={e =>
             setForm({ ...form, salePrice: e.target.value })
           }
-          required
         />
+        {errors.salePrice && (
+          <div className="text-danger mb-2">{errors.salePrice}</div>
+        )}
 
-        {/* TIME */}
-       <label>Start Time</label>
-<input
-  type="datetime-local"
-  className="form-control mb-1"
-  value={form.startTime}
-  onChange={e =>
-    setForm({ ...form, startTime: e.target.value })
-  }
-/>
+        {/* START TIME */}
+        <label>Start Time</label>
+        <input
+          type="datetime-local"
+          className="form-control mb-1"
+          value={form.startTime}
+          onChange={e =>
+            setForm({ ...form, startTime: e.target.value })
+          }
+        />
+        {errors.startTime && (
+          <div className="text-danger mb-2">{errors.startTime}</div>
+        )}
 
-{form.startTime && (
-  <div className="small text-muted mb-3">
-    📅 Starts on: <strong>{formatDateTime(form.startTime)}</strong>
-  </div>
-)}
+        {form.startTime && (
+          <div className="small text-muted mb-3">
+            📅 Starts on: <strong>{formatDateTime(form.startTime)}</strong>
+          </div>
+        )}
 
+        {/* END TIME */}
+        <label>End Time</label>
+        <input
+          type="datetime-local"
+          className="form-control mb-1"
+          value={form.endTime}
+          onChange={e =>
+            setForm({ ...form, endTime: e.target.value })
+          }
+        />
+        {errors.endTime && (
+          <div className="text-danger mb-2">{errors.endTime}</div>
+        )}
 
-       <label>End Time</label>
-<input
-  type="datetime-local"
-  className="form-control mb-1"
-  value={form.endTime}
-  onChange={e =>
-    setForm({ ...form, endTime: e.target.value })
-  }
-/>
-
-{form.endTime && (
-  <div className="small text-muted mb-2">
-    ⏰ Ends on: <strong>{formatDateTime(form.endTime)}</strong>
-  </div>
-)}
-
+        {form.endTime && (
+          <div className="small text-muted mb-2">
+            ⏰ Ends on: <strong>{formatDateTime(form.endTime)}</strong>
+          </div>
+        )}
 
         {form.endTime && (
           <div className="alert alert-warning py-2">
