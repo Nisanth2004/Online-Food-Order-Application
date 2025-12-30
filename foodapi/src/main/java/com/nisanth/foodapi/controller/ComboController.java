@@ -88,7 +88,7 @@ public class ComboController {
                     res.put("id", combo.getId());
                     res.put("name", combo.getName());
                     res.put("comboPrice", combo.getComboPrice());
-                    res.put("imageUrl", combo.getImageUrl()); // ✅ IMPORTANT
+                    res.put("imageUrl", combo.getImageUrl());
                     return res;
                 })
                 .toList();

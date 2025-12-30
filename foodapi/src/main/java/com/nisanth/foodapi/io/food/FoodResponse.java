@@ -51,5 +51,10 @@ public class FoodResponse {
 
     // ⚠️ backward compatibility
     private double price;
+    private long soldCount;
+    private boolean bestSeller;
+
+
+
 }
 

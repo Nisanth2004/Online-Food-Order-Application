@@ -37,4 +37,8 @@ public class FoodEntity {
     private int stock;
     private int lowStockThreshold = 5;
     private boolean outOfStock;
+    private long soldCount;
+
+    private boolean bestSeller;
+
 }

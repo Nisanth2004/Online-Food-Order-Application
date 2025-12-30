@@ -266,6 +266,8 @@ public class FoodServiceImpl implements FoodService {
                                 ? req.getLowStockThreshold()
                                 : 5)
                 .outOfStock(stock == 0)
+                .soldCount(0L)
+                .bestSeller(false)
                 .build();
     }
     public FoodResponse convertToResponse(FoodEntity food) {
@@ -321,6 +323,8 @@ public class FoodServiceImpl implements FoodService {
         // FLAGS
         res.setSponsored(food.isSponsored());
         res.setFeatured(food.isFeatured());
+        res.setSoldCount(food.getSoldCount());
+
 
         // STOCK
         res.setStock(food.getStock());
@@ -350,6 +354,8 @@ public class FoodServiceImpl implements FoodService {
 
         // ORDERS
         res.setOrderCount(orderRepository.countByOrderedItemsFoodId(food.getId()));
+        res.setBestSeller(food.isBestSeller());
+
 
         return res;
     }
@@ -440,6 +446,48 @@ public class FoodServiceImpl implements FoodService {
                 .map(FlashSaleEntity::getSalePrice)
                 .orElse(food.getSellingPrice());
     }
+
+    @Override
+    public List<FoodResponse> getBestSellers() {
+        return foodRepository.findTop8ByBestSellerTrueOrderBySoldCountDesc()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<FoodResponse> getTopSellingFoods() {
+        return foodRepository.findTop8ByOrderBySoldCountDesc()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<FoodResponse> getFeaturedFoods() {
+        return foodRepository.findTop8ByFeaturedTrue()
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
+    public void increaseSoldCount(String foodId, int qty) {
+
+        FoodEntity food = foodRepository.findById(foodId)
+                .orElseThrow(() -> new RuntimeException("Food not found"));
+
+        long updatedSoldCount = food.getSoldCount() + qty;
+        food.setSoldCount(updatedSoldCount);
+
+        // ⭐ AUTO BEST SELLER LOGIC
+        food.setBestSeller(updatedSoldCount >= 50);
+
+        foodRepository.save(food);
+    }
+
+
+
 
 
 

@@ -56,7 +56,10 @@ const FoodDetails = () => {
         setSortedReviews(sortReviews(list, "latest"));
 
         const saleRes = await api.get("/api/admin/flash-sales/active");
-        const activeSale = saleRes.data.find((s) => s.foodId === id);
+    const activeSale = saleRes.data.find(
+  (s) => String(s.foodId) === String(id)
+);
+
         setFlashSale(activeSale || null);
       } catch {
         toast.error("Error displaying food details");
@@ -65,6 +68,9 @@ const FoodDetails = () => {
 
     loadFoodDetails();
   }, [id]);
+
+  const finalPrice = flashSale ? flashSale.salePrice : data.price;
+
 
   /* ---------------- FLASH SALE TIMER ---------------- */
   useEffect(() => {
@@ -168,15 +174,22 @@ const FoodDetails = () => {
   };
 
   /* ---------------- UI HELPERS ---------------- */
-  const renderStars = (rating) =>
-    [...Array(5)].map((_, i) => (
-      <i
+  const renderStars = (rating) => (
+  <div className="flex items-center gap-1">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <Star
         key={i}
-        className={`fa-star me-1 fs-5 ${
-          i < rating ? "fas text-warning" : "far text-secondary"
-        }`}
+        size={28}
+        className={
+          i <= rating
+            ? "fill-yellow-400 text-yellow-400"
+            : "text-gray-300"
+        }
       />
-    ));
+    ))}
+  </div>
+);
+
 
   const averageRating =
     reviews.length > 0
@@ -209,8 +222,9 @@ const FoodDetails = () => {
                 <span className="flash-badge">FLASH SALE</span>
 
                 <div className="flash-price">
-                  <span className="old-price">₹{data.price}</span>
-                  <span className="sale-price">₹{flashSale.salePrice}</span>
+                  <span className="old-price">₹{data.mrp}</span>
+<span className="sale-price">₹{flashSale.salePrice}</span>
+
                 </div>
 
                 <div className="flash-timer">
@@ -218,7 +232,8 @@ const FoodDetails = () => {
                 </div>
               </div>
             ) : (
-              <h3 className="text-success mb-3">₹{data.price}</h3>
+          <h3 className="text-success mb-3">₹{finalPrice}</h3>
+
             )}
 
             <p className="lead">{data.description}</p>

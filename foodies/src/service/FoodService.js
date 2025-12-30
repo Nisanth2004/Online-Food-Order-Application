@@ -32,3 +32,20 @@ export const fetchFoodDetails = async (id) => {
     throw error;
   }
 };
+
+
+
+export const fetchBestSellers = async () => {
+  const res = await api.get("/api/foods/best-sellers");
+  return res.data;
+};
+
+export const fetchTopSelling = async () => {
+  const res = await api.get("/api/foods/top-selling");
+  return res.data;
+};
+
+export const fetchFeaturedFoods = async () => {
+  const res = await api.get("/api/foods/featured");
+  return res.data;
+};

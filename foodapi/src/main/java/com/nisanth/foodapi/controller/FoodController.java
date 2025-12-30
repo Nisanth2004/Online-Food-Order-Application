@@ -147,4 +147,21 @@ public class FoodController {
         foodService.setStock(id, value);
         return ResponseEntity.ok("Stock set to " + value);
     }
+
+
+    @GetMapping("/best-sellers")
+    public List<FoodResponse> bestSellers() {
+        return foodService.getBestSellers();
+    }
+
+    @GetMapping("/top-selling")
+    public List<FoodResponse> topSelling() {
+        return foodService.getTopSellingFoods();
+    }
+
+    @GetMapping("/featured")
+    public List<FoodResponse> featuredFoods() {
+        return foodService.getFeaturedFoods();
+    }
+
 }

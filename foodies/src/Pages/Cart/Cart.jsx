@@ -1,14 +1,52 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState,useEffect } from 'react';
 import './Cart.css';
 import { StoreContext } from '../../Context/StoreContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { calculateCartTotals } from '../../util/cartUtils';
 import toast from "react-hot-toast";
 import api from '../../../../adminpanel/src/services/CustomAxiosInstance';
+import CouponDrawer from '../../components/CouponDrawer/CouponDrawer';
+
+
 
 const Cart = () => {
   const navigate = useNavigate();
-  const [coupon, setCoupon] = useState("");
+  
+  const [couponDrawerOpen, setCouponDrawerOpen] = useState(false);
+const [coupons, setCoupons] = useState([]);
+  const [coupon, setCoupon] = useState(""); // ✅ FIXED
+useEffect(() => {
+  api.get("/api/admin/coupons/active")
+    .then(res => setCoupons(res.data))
+    .catch(() => toast.error("Failed to load coupons"));
+}, []);
+
+const handleApplyCoupon = async (coupon) => {
+  try {
+    const res = await api.post(
+      "/api/admin/coupons/apply",
+      null,
+      {
+        params: {
+          code: coupon.code,
+          subtotal: finalSubtotal
+        }
+      }
+    );
+
+    setDiscount(res.data.discount);
+    setAppliedCoupon(res.data.code);
+
+    toast.success(`Coupon ${res.data.code} applied`);
+    setCouponDrawerOpen(false);
+  } catch (err) {
+    toast.error(
+      err?.response?.data?.message || "Invalid or inactive coupon"
+    );
+  }
+};
+
+
 
   const {
     increaseQty,
@@ -22,6 +60,7 @@ const Cart = () => {
     discount,
     setDiscount,
     setAppliedCoupon,
+     appliedCoupon,
     comboCart,
     cartLoading,
     increaseComboQty,
@@ -99,7 +138,12 @@ const Cart = () => {
       toast.error("Invalid coupon");
     }
   };
-  
+  const handleRemoveCoupon = () => {
+  setDiscount(0);
+  setAppliedCoupon(null);
+  toast.success("Coupon removed");
+};
+
  if (cartLoading) {
   return (
     <div className="container py-5 cart-page">
@@ -328,19 +372,32 @@ const Cart = () => {
             <div className="card cart-summary shadow-soft border-0">
               <div className="card-body">
 
-                <input
-                  className="form-control mt-3"
-                  placeholder="Enter coupon code"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value)}
-                />
+                 {/* VIEW COUPONS */}
+                 {appliedCoupon && (
+  <div className="coupon-applied-strip">
+    🎉 Coupon <strong>{appliedCoupon}</strong> applied
+  </div>
+)}
 
-                <button
-                  className="btn btn-outline-success w-100 mt-2"
-                  onClick={applyCoupon}
-                >
-                  Apply Coupon
-                </button>
+              <div
+  className="coupon-cta-card"
+  onClick={() => setCouponDrawerOpen(true)}
+>
+  <div className="coupon-cta-left">
+    <div className="coupon-icon">🎟</div>
+    <div>
+      <h6>Apply Coupon</h6>
+      <p>Save more on this order</p>
+    </div>
+  </div>
+
+  <div className="coupon-cta-right">
+    <span className="view-text">View</span>
+    <span className="arrow">›</span>
+  </div>
+</div>
+
+
 
                 <h4 className="fw-bold mb-4 mt-4">Order Summary</h4>
 
@@ -386,6 +443,17 @@ const Cart = () => {
         )}
 
       </div>
+
+      {/* COUPON DRAWER */}
+      <CouponDrawer
+        open={couponDrawerOpen}
+        onClose={() => setCouponDrawerOpen(false)}
+        coupons={coupons}
+        appliedCoupon={appliedCoupon}
+        subtotal={finalSubtotal}
+        onApply={handleApplyCoupon}
+        onRemove={handleRemoveCoupon} 
+      />
     </div>
   );
 };

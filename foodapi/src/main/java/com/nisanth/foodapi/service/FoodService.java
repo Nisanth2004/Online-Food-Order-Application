@@ -63,4 +63,12 @@ public interface FoodService {
 
 
     double getEffectivePrice(FoodEntity food);
+
+    List<FoodResponse> getBestSellers();
+    List<FoodResponse> getTopSellingFoods();
+    List<FoodResponse> getFeaturedFoods();
+
+    void increaseSoldCount(String foodId, int qty);
+
 }
+

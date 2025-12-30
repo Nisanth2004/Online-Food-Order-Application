@@ -3,7 +3,7 @@ import {
   createCoupon,
   getCouponById,
   updateCoupon,
-  checkCouponCode // ✅ assumed API
+  
 } from "../../../services/CouponService";
 import { toast } from "react-toastify";
 import { useNavigate, useParams } from "react-router-dom";

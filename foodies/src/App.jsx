@@ -29,7 +29,7 @@ const App = () => {
   const hideLayout = ["/login", "/register"].includes(location.pathname);
 
   return (
-    <div>
+    <div  className="min-h-screen flex flex-col font-poppins">
       {!hideLayout && <Menubar />}
       <ScrollToTop/>
       <ToastContainer />

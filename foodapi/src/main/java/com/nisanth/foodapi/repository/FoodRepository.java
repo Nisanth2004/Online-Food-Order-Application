@@ -53,4 +53,12 @@ public interface FoodRepository extends MongoRepository<FoodEntity, String> {
 
     List<FoodEntity> findByIdIn(List<String> ids);
 
+    List<FoodEntity> findTop8ByBestSellerTrueOrderBySoldCountDesc();
+
+    // 🔥 Top Selling
+    List<FoodEntity> findTop8ByOrderBySoldCountDesc();
+
+    // 🔥 Featured Only
+    List<FoodEntity> findTop8ByFeaturedTrue();
+
 }

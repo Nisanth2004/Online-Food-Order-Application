@@ -183,7 +183,19 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(existingOrder);
 
         if ("paid".equalsIgnoreCase(status)) {
+
+            // ✅ UPDATE soldCount AFTER PAYMENT
+            for (OrderItem item : existingOrder.getOrderedItems()) {
+                if ("FOOD".equalsIgnoreCase(item.getType())) {
+                    foodService.increaseSoldCount(
+                            item.getFoodId(),
+                            item.getQuantity()
+                    );
+                }
+            }
+
             cartRepository.deleteByUserId(existingOrder.getUserId());
+
             String emailBody = generateOrderEmailHtml(existingOrder);
             emailService.sendOrderEmail(
                     existingOrder.getEmail(),
@@ -191,6 +203,7 @@ public class OrderServiceImpl implements OrderService {
                     emailBody
             );
         }
+
     }
 
     // ------------------- GET ORDERS -------------------

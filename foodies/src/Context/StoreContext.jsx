@@ -25,6 +25,7 @@ export const StoreContextProvider = (props) => {
 
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discount, setDiscount] = useState(0);
+  const [appliedCouponDetails, setAppliedCouponDetails] = useState(null);
 
   const [cartLoading, setCartLoading] = useState(true);
 
@@ -156,6 +157,43 @@ export const StoreContextProvider = (props) => {
     }
   }, [token]);
 
+  const applyCoupon = (coupon, subtotal) => {
+  if (subtotal < coupon.minOrderAmount) {
+    toast.error(
+      `Add ₹${coupon.minOrderAmount - subtotal} more to apply this coupon`
+    );
+    return false;
+  }
+
+  const discountAmount =
+    (subtotal * coupon.discountPercent) / 100;
+
+  setAppliedCoupon(coupon.code);
+  setAppliedCouponDetails(coupon);
+  setDiscount(discountAmount);
+
+  toast.success("Coupon applied");
+  return true;
+};
+useEffect(() => {
+  if (!appliedCouponDetails) return;
+
+  const cartSubtotal = Object.entries(quantities).reduce(
+    (sum, [id, qty]) => {
+      const food = foodList.find(f => f.id === id);
+      return food ? sum + food.price * qty : sum;
+    },
+    0
+  ) + (comboCart ? comboCart.comboPrice * comboCart.qty : 0);
+
+  if (cartSubtotal < appliedCouponDetails.minOrderAmount) {
+    setAppliedCoupon(null);
+    setAppliedCouponDetails(null);
+    setDiscount(0);
+    toast.error("Coupon removed (minimum order not met)");
+  }
+}, [quantities, comboCart]);
+
   /* --------------------------------------------------
      INITIAL LOAD
   -------------------------------------------------- */
@@ -197,10 +235,13 @@ export const StoreContextProvider = (props) => {
       taxRate,
       shippingCharge,
 
-      appliedCoupon,
-      setAppliedCoupon,
-      discount,
-      setDiscount,
+      
+  appliedCoupon,
+  appliedCouponDetails,
+  applyCoupon,
+  setAppliedCoupon,
+  discount,
+  setDiscount,
 
       wishlist,
       addToWishlist,

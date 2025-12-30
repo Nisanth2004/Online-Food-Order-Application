@@ -4,102 +4,114 @@ import { assets } from "../../assets/assets";
 
 const Footer = () => {
   return (
-    <footer className="bg-light text-dark mt-5 border-top">
-      <div className="container-fluid py-5 px-4">
-        
-        {/* ✅ Highlights Section */}
-        <div className="row text-center mb-5 g-4">
-          <div className="col-6 col-md-3">
-            <div
-              className="bg-white shadow rounded-circle d-inline-flex align-items-center justify-content-center"
-              style={{ width: "80px", height: "80px" }}
-            >
-              <FaHome className="fs-2 text-success" />
+    <footer className="bg-gray-50 border-t mt-10">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+
+        {/* 🔥 Highlights Section */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center mb-12">
+          {[
+            { icon: <FaHome />, text: "100% Homemade" },
+            { icon: <FaLeaf />, text: "No Artificial Additives" },
+            { icon: <FaTruck />, text: "Local Farm Sourcing" },
+            { icon: <FaCheckCircle />, text: "Quality Tested" },
+          ].map((item, index) => (
+            <div key={index} className="flex flex-col items-center">
+              <div className="w-20 h-20 bg-white rounded-full shadow flex items-center justify-center text-green-600 text-2xl hover:scale-105 transition">
+                {item.icon}
+              </div>
+              <p className="mt-4 font-semibold text-gray-700">
+                {item.text}
+              </p>
             </div>
-            <p className="mt-3 fw-semibold">100% Homemade</p>
-          </div>
-          <div className="col-6 col-md-3">
-            <div
-              className="bg-white shadow rounded-circle d-inline-flex align-items-center justify-content-center"
-              style={{ width: "80px", height: "80px" }}
-            >
-              <FaLeaf className="fs-2 text-success" />
-            </div>
-            <p className="mt-3 fw-semibold">No Artificial Additives</p>
-          </div>
-          <div className="col-6 col-md-3">
-            <div
-              className="bg-white shadow rounded-circle d-inline-flex align-items-center justify-content-center"
-              style={{ width: "80px", height: "80px" }}
-            >
-              <FaTruck className="fs-2 text-success" />
-            </div>
-            <p className="mt-3 fw-semibold">Sourced from Local Farms</p>
-          </div>
-          <div className="col-6 col-md-3">
-            <div
-              className="bg-white shadow rounded-circle d-inline-flex align-items-center justify-content-center"
-              style={{ width: "80px", height: "80px" }}
-            >
-              <FaCheckCircle className="fs-2 text-success" />
-            </div>
-            <p className="mt-3 fw-semibold">Quality Tested</p>
-          </div>
+          ))}
         </div>
 
-        {/* ✅ Main Footer Section */}
-        <div className="row text-md-start text-center mb-5 px-md-5">
-          {/* Brand Section */}
-          <div className="col-md-4 mb-4">
-            <h4 className="fw-bold text-success">Cocogrand Organics</h4>
-            <p className="mt-3">
+        {/* 🔥 Main Footer Content */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center md:text-left">
+
+          {/* Brand */}
+          <div>
+            <h3 className="text-xl font-bold text-green-600">
+              Cocogrand Organics
+            </h3>
+            <p className="mt-4 text-gray-600 leading-relaxed">
               🌱 Pure, organic, and farm-fresh products delivered to your home.
               <br />
-              Good Food, Good Health ✨
+              <span className="font-medium">Good Food, Good Health ✨</span>
             </p>
-            <p className="mb-1"><strong>GST No:</strong> 33QWPWS6777HIZH</p>
-            <p className="mb-1"><strong>FSSAI:</strong> 22423022000177</p>
+            <p className="mt-3 text-sm text-gray-500">
+              <strong>GST:</strong> 33QWPWS6777HIZH
+            </p>
+            <p className="text-sm text-gray-500">
+              <strong>FSSAI:</strong> 22423022000177
+            </p>
           </div>
 
-          {/* Contact Section */}
-          <div className="col-md-4 mb-4">
-            <h5 className="fw-bold">Contact Us</h5>
-            <p className="mt-3 mb-1">📍 Cuddalore to Virudhachalam Main Road, Tamil Nadu - 607804</p>
-            <p className="mb-1">📞 +91 70922 33420 | +91 80726 78237</p>
-            <p className="mb-1">📧 support@cocograndorganics.com</p>
+          {/* Contact */}
+          <div>
+            <h4 className="font-semibold text-lg text-gray-800">
+              Contact Us
+            </h4>
+            <ul className="mt-4 space-y-2 text-gray-600 text-sm">
+              <li>📍 Cuddalore – Virudhachalam Main Road, TN</li>
+              <li>📞 +91 70922 33420</li>
+              <li>📞 +91 80726 78237</li>
+              <li>📧 support@cocograndorganics.com</li>
+            </ul>
           </div>
 
-          {/* Quick Links */}
-          <div className="col-md-4 mb-4">
-            <h5 className="fw-bold">Quick Links</h5>
-            <ul className="list-unstyled mt-3">
-              <li><a href="/" className="text-dark text-decoration-none d-block mb-2">Home</a></li>
-              <li><a href="/shop" className="text-dark text-decoration-none d-block mb-2">Shop</a></li>
-              <li><a href="/about" className="text-dark text-decoration-none d-block mb-2">About Us</a></li>
-              <li><a href="/contact" className="text-dark text-decoration-none d-block">Contact Us</a></li>
+          {/* Links */}
+          <div>
+            <h4 className="font-semibold text-lg text-gray-800">
+              Quick Links
+            </h4>
+            <ul className="mt-4 space-y-2 text-sm">
+              {["Home", "Shop", "About Us", "Contact"].map((link) => (
+                <li key={link}>
+                  <a
+                    href={`/${link.toLowerCase().replace(" ", "")}`}
+                    className="text-gray-600 hover:text-green-600 transition"
+                  >
+                    {link}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <hr className="my-4" />
+        {/* Divider */}
+        <div className="border-t my-10"></div>
 
-        {/* ✅ Social Media Icons */}
-        <div className="text-center mb-4">
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="mx-3">
-            <img src={assets.youtube} alt="YouTube" style={{ width: "40px", height: "40px" }} />
+        {/* 🔥 Social Icons */}
+        <div className="flex justify-center gap-6 mb-6">
+          <a href="https://youtube.com" target="_blank">
+            <img
+              src={assets.youtube}
+              alt="YouTube"
+              className="w-9 h-9 hover:scale-110 transition"
+            />
           </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="mx-3">
-            <img src={assets.instagram} alt="Instagram" style={{ width: "40px", height: "40px" }} />
+          <a href="https://instagram.com" target="_blank">
+            <img
+              src={assets.instagram}
+              alt="Instagram"
+              className="w-9 h-9 hover:scale-110 transition"
+            />
           </a>
-          <a href="https://wa.me/919943322935" target="_blank" rel="noopener noreferrer" className="mx-3">
-            <img src={assets.whatsapp} alt="WhatsApp" style={{ width: "40px", height: "40px" }} />
+          <a href="https://wa.me/919943322935" target="_blank">
+            <img
+              src={assets.whatsapp}
+              alt="WhatsApp"
+              className="w-9 h-9 hover:scale-110 transition"
+            />
           </a>
         </div>
 
-        {/* ✅ Copyright */}
-        <div className="text-center small text-muted pb-2">
-          © {new Date().getFullYear()} Cocogrand Organics | All Rights Reserved
-        </div>
+        {/* Copyright */}
+        <p className="text-center text-xs text-gray-500">
+          © {new Date().getFullYear()} Cocogrand Organics. All rights reserved.
+        </p>
       </div>
     </footer>
   );
