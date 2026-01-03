@@ -385,3 +385,10 @@
   font-size: 14px;
   margin-bottom: 12px;
 }
+.combo-cart-card .quantity-box {
+  justify-content: center;
+}
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

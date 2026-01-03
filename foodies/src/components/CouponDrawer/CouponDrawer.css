@@ -148,3 +148,80 @@
   background: #ffecec;
 }
 
+.best-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  border-radius: 4px;
+}
+/* =========================
+   SKELETON LOADER
+========================= */
+
+.skeleton-card {
+  border: 1px dashed #eee;
+  background: #fafafa;
+}
+
+.skeleton-tag {
+  width: 54px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e0e0e0;
+}
+
+.skeleton-middle {
+  flex: 1;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.skeleton-btn {
+  width: 70px;
+  height: 28px;
+  border-radius: 20px;
+  background: #e0e0e0;
+}
+
+/* Width helpers */
+.w-40 { width: 40%; }
+.w-60 { width: 60%; }
+.w-80 { width: 80%; }
+
+/* Shimmer animation */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150px;
+  height: 100%;
+  width: 150px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.6),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(300%);
+  }
+}
+

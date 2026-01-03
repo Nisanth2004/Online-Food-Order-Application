@@ -1,5 +1,6 @@
-package com.nisanth.foodapi.service;
+package com.nisanth.foodapi.service.impl;
 
+import com.nisanth.foodapi.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;

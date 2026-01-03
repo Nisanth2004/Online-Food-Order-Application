@@ -1,10 +1,13 @@
-package com.nisanth.foodapi.service;
+package com.nisanth.foodapi.service.impl;
 
 import com.nisanth.foodapi.entity.*;
 import com.nisanth.foodapi.io.food.FoodRequest;
 import com.nisanth.foodapi.io.food.FoodResponse;
 import com.nisanth.foodapi.repository.*;
 import com.nisanth.foodapi.repository.offers.FlashSaleRepository;
+import com.nisanth.foodapi.service.FoodService;
+import com.nisanth.foodapi.service.PricingService;
+import com.nisanth.foodapi.service.SettingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -192,11 +195,22 @@ public class FoodServiceImpl implements FoodService {
         List<FoodEntity> foods = foodRepository.findAll();
 
         if (category != null && !"All".equalsIgnoreCase(category)) {
-            foods = foods.stream()
-                    .filter(f -> f.getCategoryIds() != null &&
-                            f.getCategoryIds().contains(category))
-                    .toList();
+
+            Optional<Category> categoryEntity =
+                    categoryRepository.findByNameIgnoreCase(category);
+
+            if (categoryEntity.isPresent()) {
+                String categoryId = categoryEntity.get().getId();
+
+                foods = foods.stream()
+                        .filter(f -> f.getCategoryIds() != null &&
+                                f.getCategoryIds().contains(categoryId))
+                        .toList();
+            } else {
+                foods = Collections.emptyList();
+            }
         }
+
 
         if (search != null && !search.isBlank()) {
             foods = foods.stream()

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import api from '../../../../adminpanel/src/services/CustomAxiosInstance';
 import CouponDrawer from '../../components/CouponDrawer/CouponDrawer';
 
+import { useRef } from "react";
 
 
 const Cart = () => {
@@ -15,11 +16,21 @@ const Cart = () => {
   const [couponDrawerOpen, setCouponDrawerOpen] = useState(false);
 const [coupons, setCoupons] = useState([]);
   const [coupon, setCoupon] = useState(""); // ✅ FIXED
+const autoCouponToastShown = useRef(false);
+const [couponLoading, setCouponLoading] = useState(true);
+
+
+  const MAX_COMBO_QTY = 2;
+
 useEffect(() => {
+  setCouponLoading(true);
+
   api.get("/api/admin/coupons/active")
     .then(res => setCoupons(res.data))
-    .catch(() => toast.error("Failed to load coupons"));
+    .catch(() => toast.error("Failed to load coupons"))
+    .finally(() => setCouponLoading(false));
 }, []);
+
 
 const handleApplyCoupon = async (coupon) => {
   try {
@@ -34,6 +45,7 @@ const handleApplyCoupon = async (coupon) => {
       }
     );
 
+    // ✅ remove previous coupon automatically
     setDiscount(res.data.discount);
     setAppliedCoupon(res.data.code);
 
@@ -45,6 +57,7 @@ const handleApplyCoupon = async (coupon) => {
     );
   }
 };
+
 
 
 
@@ -141,8 +154,45 @@ const handleApplyCoupon = async (coupon) => {
   const handleRemoveCoupon = () => {
   setDiscount(0);
   setAppliedCoupon(null);
+  autoCouponToastShown.current = false; // 👈 reset
   toast.success("Coupon removed");
 };
+
+
+const findBestCoupon = (coupons, subtotal) => {
+  let best = null;
+  let maxDiscount = 0;
+
+  coupons.forEach(coupon => {
+    if (subtotal >= coupon.minOrderAmount) {
+      const discount = (subtotal * coupon.discountPercent) / 100;
+      if (discount > maxDiscount) {
+        maxDiscount = discount;
+        best = coupon;
+      }
+    }
+  });
+
+  return best;
+};
+useEffect(() => {
+  if (!coupons.length) return;
+  if (appliedCoupon) return;
+
+  const bestCoupon = findBestCoupon(coupons, finalSubtotal);
+
+  if (bestCoupon) {
+    handleApplyCoupon(bestCoupon);
+
+    if (!autoCouponToastShown.current) {
+      toast.success(`Best coupon ${bestCoupon.code} auto-applied 🎉`);
+      autoCouponToastShown.current = true;
+    }
+  }
+}, [finalSubtotal, coupons]);
+
+
+
 
  if (cartLoading) {
   return (
@@ -225,62 +275,72 @@ const handleApplyCoupon = async (coupon) => {
 
                 {/* COMBO CARD */}
                 {comboCart && (
-                  <div
-                    className="card mb-4 shadow-soft combo-cart-card"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => navigate(`/combos/${comboCart.id}`)}
-                  >
-                    <div className="card-body d-flex justify-content-between align-items-center">
+                   <div
+    className="cart-item combo-cart-item mb-4"
+    onClick={() => navigate(`/combos/${comboCart.id}`)}
+  >
+    <div className="d-flex justify-content-between align-items-center">
 
-                      <div className="d-flex align-items-center gap-3">
-                        <img
-                          src={comboCart.imageUrl}
-                          alt={comboCart.name}
-                          style={{ width: 80, borderRadius: 12 }}
-                        />
+      <div className="d-flex align-items-center gap-3">
+        <img
+          src={comboCart.imageUrl}
+          alt={comboCart.name}
+          className="cart-img"
+        />
 
-                        <div>
-                          <h5 className="mb-1">{comboCart.name}</h5>
-                          <p className="mb-1">
-                            ₹{comboCart.comboPrice} × {comboCart.qty}
-                          </p>
-                          <strong className="text-success">
-                            ₹{comboCart.comboPrice * comboCart.qty}
-                          </strong>
-                        </div>
-                      </div>
+        <div>
+          <h5 className="mb-1">{comboCart.name}</h5>
+          <p className="mb-1">
+            ₹{comboCart.comboPrice} × {comboCart.qty}
+          </p>
+          <strong className="text-success">
+            ₹{comboCart.comboPrice * comboCart.qty}
+          </strong>
+        </div>
+      </div>
+                      
+<div className="quantity-box animated-box">
 
-                      <div className="d-flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            decreaseComboQty();
-                          }}
-                        >
-                          −
-                        </button>
+  {/* MINUS */}
+  <button
+    className="qty-btn"
+    onClick={(e) => {
+      e.stopPropagation();
+      if (comboCart.qty === 1) {
+        removeComboFromCart();
+      } else {
+        decreaseComboQty();
+      }
+    }}
+  >
+    −
+  </button>
 
-                        <span>{comboCart.qty}</span>
+  <span className="qty-display">{comboCart.qty}</span>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            increaseComboQty();
-                          }}
-                        >
-                          +
-                        </button>
+  {/* PLUS */}
+  <button
+    className="qty-btn"
+    disabled={comboCart.qty >= MAX_COMBO_QTY}
+    title={
+      comboCart.qty >= MAX_COMBO_QTY
+        ? `Only ${MAX_COMBO_QTY} combo items per order`
+        : "Increase quantity"
+    }
+    onClick={(e) => {
+      e.stopPropagation();
+      if (comboCart.qty < MAX_COMBO_QTY) {
+        increaseComboQty();
+      }
+    }}
+  >
+    +
+  </button>
 
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeComboFromCart();
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </div>
+</div>
+
+
+
 
                     </div>
                   </div>
@@ -453,6 +513,8 @@ const handleApplyCoupon = async (coupon) => {
         subtotal={finalSubtotal}
         onApply={handleApplyCoupon}
         onRemove={handleRemoveCoupon} 
+         autoAppliedCoupon={appliedCoupon}
+         loading={couponLoading}
       />
     </div>
   );

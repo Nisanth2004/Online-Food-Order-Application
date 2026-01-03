@@ -1,9 +1,11 @@
-package com.nisanth.foodapi.service;
+package com.nisanth.foodapi.service.impl;
 
 import com.nisanth.foodapi.entity.CartEntity;
 import com.nisanth.foodapi.io.cart.CartRequest;
 import com.nisanth.foodapi.io.cart.CartResponse;
 import com.nisanth.foodapi.repository.CartRepository;
+import com.nisanth.foodapi.service.CartService;
+import com.nisanth.foodapi.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +15,7 @@ import java.util.Optional;
 
 @Service
 @AllArgsConstructor
-public class CartServiceImpl implements CartService{
+public class CartServiceImpl implements CartService {
 
    private final CartRepository cartRepository;
    private final UserService userService;

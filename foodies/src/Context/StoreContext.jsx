@@ -103,22 +103,36 @@ export const StoreContextProvider = (props) => {
     toast.success("Combo added to cart");
   };
 
-  const increaseComboQty = () => {
-    setComboCart(prev => {
-      const updated = { ...prev, qty: prev.qty + 1 };
-      localStorage.setItem("comboCart", JSON.stringify(updated));
-      return updated;
-    });
-  };
+  const MAX_COMBO_QTY = 2;
+const increaseComboQty = () => {
+  setComboCart(prev => {
+    if (prev.qty >= MAX_COMBO_QTY) {
+      toast.error(`Maximum ${MAX_COMBO_QTY} combos allowed`);
+      return prev;
+    }
 
-  const decreaseComboQty = () => {
-    setComboCart(prev => {
-      if (prev.qty === 1) return prev;
-      const updated = { ...prev, qty: prev.qty - 1 };
-      localStorage.setItem("comboCart", JSON.stringify(updated));
-      return updated;
-    });
-  };
+    const updated = { ...prev, qty: prev.qty + 1 };
+    localStorage.setItem("comboCart", JSON.stringify(updated));
+    return updated;
+  });
+};
+
+const decreaseComboQty = () => {
+  setComboCart(prev => {
+    if (!prev) return null;
+
+    if (prev.qty <= 1) {
+      localStorage.removeItem("comboCart"); // ✅ REQUIRED
+      return null;
+    }
+
+    const updated = { ...prev, qty: prev.qty - 1 };
+    localStorage.setItem("comboCart", JSON.stringify(updated));
+    return updated;
+  });
+};
+
+
 
   const removeComboFromCart = () => {
     setComboCart(null);

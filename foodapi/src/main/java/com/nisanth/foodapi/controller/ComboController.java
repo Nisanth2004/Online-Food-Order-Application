@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +90,10 @@ public class ComboController {
                     res.put("name", combo.getName());
                     res.put("comboPrice", combo.getComboPrice());
                     res.put("imageUrl", combo.getImageUrl());
+
+                    res.put("startTime", combo.getStartTime());
+                    res.put("endTime", combo.getEndTime());
+                    res.put("serverTime", LocalDateTime.now());
                     return res;
                 })
                 .toList();
@@ -109,7 +114,27 @@ public class ComboController {
         res.put("comboPrice", combo.getComboPrice());
         res.put("foods", foods);
 
+        // ✅ CONVERT TO EPOCH (CRITICAL)
+        res.put(
+                "startTime",
+                combo.getStartTime()
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli()
+        );
+
+        res.put(
+                "endTime",
+                combo.getEndTime()
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli()
+        );
+
+        res.put("serverTime", System.currentTimeMillis());
+
         return res;
     }
+
 
 }
