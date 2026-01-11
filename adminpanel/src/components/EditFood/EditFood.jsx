@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { getFood, updateFood, getCategories } from "../services/FoodService";
+import { getFood, updateFood, getCategories } from "../../services/FoodService";
 import { toast } from "react-toastify";
 import { useParams, useNavigate } from "react-router-dom";
-import { assets } from "../assets/assets";
+import { assets } from "../../assets/assets";
 
 const EditFood = () => {
   const { id } = useParams();

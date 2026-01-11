@@ -1,7 +1,7 @@
 package com.nisanth.foodapi.config;
 
 import com.nisanth.foodapi.filters.JwtAuthenticationFilter;
-import com.nisanth.foodapi.service.AppUserDetailsService;
+import com.nisanth.foodapi.service.security.UnifiedUserDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 public class SecurityConfig {
 
-    private final AppUserDetailsService userDetailsService;
+    private final UnifiedUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -48,8 +48,11 @@ public class SecurityConfig {
                                 "/api/admin/**",
                                 "/api/partner/**",
                                 "/api/orders/admin/**",
-                                "/api/orders/hub/**"
+                                "/api/orders/hub/**",
+                                "/api/access/**",
+                                "/api/vendor/**"
                         ).permitAll()
+                        .requestMatchers("/api/vendor/**").hasRole("VENDOR")
                         .requestMatchers(
                                 "/api/orders/cancel/**",
                                 "/api/orders/request-cancel/**",

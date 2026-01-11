@@ -2,7 +2,7 @@ package com.nisanth.foodapi.controller;
 
 import com.nisanth.foodapi.io.auth.AuthenticationRequest;
 import com.nisanth.foodapi.io.auth.AuthenticationResponse;
-import com.nisanth.foodapi.service.AppUserDetailsService;
+import com.nisanth.foodapi.service.security.UnifiedUserDetailsService;
 import com.nisanth.foodapi.util.JwtUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final AppUserDetailsService userDetailsService;
+    private final UnifiedUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
 
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAdminFood } from "../context/AdminFoodContext";
+import { useAdminFood } from "../../context/AdminFoodContext";
 
 const DEFAULT_IMAGE = "/mnt/data/f931bf2b-1981-424f-bb48-85d109bc47aa.png";
 
